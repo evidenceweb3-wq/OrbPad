@@ -100,7 +100,7 @@
         import { createClient } from '@supabase/supabase-js';
         import BN from 'bn.js';
 
-        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+        const connection = new Connection('https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931', 'confirmed');
         const onlineSdk = new OnlinePumpSdk(connection);
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
