@@ -60,7 +60,7 @@
             <input id="tokenName" placeholder="Nombre del Token" />
             <input id="tokenSymbol" placeholder="Símbolo (ej. MTK)" />
             <input id="tokenImage" type="file" accept="image/*" />
-            <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial</button>
+            <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial (0.1 SOL)</button>
             <p id="createStatus" class="status"></p>
         </div>
 
@@ -130,8 +130,9 @@
         const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
 
-        import { Connection, PublicKey, Keypair, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
-        import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount } from '@nirholas/pump-sdk';
+        // IMPORTS (Añadimos VersionedTransaction, TransactionMessage y newBondingCurve)
+        import { Connection, PublicKey, Keypair, Transaction, LAMPORTS_PER_SOL, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
+        import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount, newBondingCurve } from '@nirholas/pump-sdk';
         import { createClient } from '@supabase/supabase-js';
         import BN from 'bn.js';
 
@@ -144,7 +145,6 @@
         let currentMint = null;
         let activeImageUrl = null;
 
-        // Inicializar canvas para el chart
         const canvas = document.getElementById('chartCanvas');
         const ctx = canvas.getContext('2d');
         
@@ -195,7 +195,7 @@
             return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        // 3. Crear Token
+        // 3. Crear Token (CORREGIDO CON VERSIONED TRANSACTION Y CURVA INICIAL)
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
@@ -213,18 +213,32 @@
                 const mintKeypair = Keypair.generate();
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
-                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
                 
-                const tokensOut = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: null, bondingCurve: null, amount: solToSpend });
-
-                const instructions = await PUMP_SDK.createV2AndBuyInstructions({
-                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, slippage: 0.01,
+                // Compra inicial de 0.1 SOL
+                const solToSpend = new BN(0.1 * LAMPORTS_PER_SOL);
+                
+                // Obtener la curva inicial real
+                const initialCurve = newBondingCurve(global);
+                const tokensOut = getBuyTokenAmountFromSolAmount({ 
+                    global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend 
                 });
 
-                const tx = new Transaction().add(...instructions);
-                tx.feePayer = userPublicKey;
-                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-                tx.partialSign(mintKeypair);
+                const instructions = await PUMP_SDK.createV2AndBuyInstructions({
+                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, 
+                    creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, 
+                    slippage: 0.01, mayhemMode: false, cashback: false
+                });
+
+                // EMPAQUETAR COMO VERSIONED TRANSACTION PARA PHANTOM
+                const { blockhash } = await connection.getLatestBlockhash('confirmed');
+                const messageV0 = new TransactionMessage({
+                    payerKey: userPublicKey,
+                    recentBlockhash: blockhash,
+                    instructions: instructions,
+                }).compileToV0Message();
+
+                const tx = new VersionedTransaction(messageV0);
+                tx.sign([mintKeypair]); // Firmar el Mint localmente
 
                 const signed = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signed.serialize());
@@ -239,11 +253,12 @@
                 document.getElementById('tokenImagePreview').src = activeImageUrl;
                 document.getElementById('tokenDisplay').style.display = 'block';
                 
-                await loadTokenData(mintAddress); // Cargar métricas
+                await loadTokenData(mintAddress);
                 
                 supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]).catch(()=>{});
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
+                console.error(err);
             }
         });
 
@@ -256,16 +271,14 @@
                 currentMint = new PublicKey(mintStr);
                 const bondingCurve = await onlineSdk.fetchBondingCurve(currentMint);
                 
-                // CORRECCIÓN: En SDKs actuales puede llamarse virtualQuoteReserves o virtualSolReserves
                 const vSol = bondingCurve.virtualQuoteReserves ? bondingCurve.virtualQuoteReserves : bondingCurve.virtualSolReserves;
                 const vToken = bondingCurve.virtualTokenReserves;
                 
                 if (!vSol || !vToken) throw new Error('Formato de bonding curve no reconocido.');
 
-                // Fórmula oficial: (virtualSolReserves * mintSupply) / virtualTokenReserves
                 const mcapLamports = vSol.mul(bondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
-                const progressPct = Math.min((mcapSol / 69) * 100, 100); // 69 SOL = 100% en Devnet
+                const progressPct = Math.min((mcapSol / 69) * 100, 100);
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
 
                 document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
@@ -284,15 +297,13 @@
         function drawChart(currentMcap) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const w = canvas.width, h = canvas.height;
-            const maxTarget = 69; // SOL
+            const maxTarget = 69; 
             const ptX = (Math.min(currentMcap, maxTarget) / maxTarget) * (w - 40) + 20;
             const ptY = h - 20 - (Math.min(currentMcap, maxTarget) / maxTarget) * (h - 40);
 
-            // Línea curva
             ctx.beginPath(); ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
             ctx.moveTo(20, h - 20); ctx.quadraticCurveTo(w / 2, h - 20, w - 20, 20); ctx.stroke();
 
-            // Punto actual
             ctx.beginPath(); ctx.fillStyle = '#14F195'; ctx.arc(ptX, ptY, 5, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#888'; ctx.font = '11px monospace';
             ctx.fillText(`${currentMcap.toFixed(2)} SOL`, ptX - 20, ptY - 10);
@@ -316,10 +327,16 @@
                 const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
                 const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
 
-                const tx = new Transaction().add(...instructions);
-                tx.feePayer = userPublicKey;
-                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                const { blockhash } = await connection.getLatestBlockhash('confirmed');
+                const messageV0 = new TransactionMessage({
+                    payerKey: userPublicKey,
+                    recentBlockhash: blockhash,
+                    instructions: instructions,
+                }).compileToV0Message();
+
+                const tx = new VersionedTransaction(messageV0);
                 const signed = await wallet.signTransaction(tx);
+                
                 const sig = await connection.sendRawTransaction(signed.serialize());
                 await connection.confirmTransaction(sig, 'confirmed');
                 
@@ -327,6 +344,7 @@
                 await loadTokenData(currentMint.toBase58());
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
+                console.error(err);
             }
         });
 
@@ -346,10 +364,16 @@
                 const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
                 const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
 
-                const tx = new Transaction().add(...instructions);
-                tx.feePayer = userPublicKey;
-                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                const { blockhash } = await connection.getLatestBlockhash('confirmed');
+                const messageV0 = new TransactionMessage({
+                    payerKey: userPublicKey,
+                    recentBlockhash: blockhash,
+                    instructions: instructions,
+                }).compileToV0Message();
+
+                const tx = new VersionedTransaction(messageV0);
                 const signed = await wallet.signTransaction(tx);
+                
                 const sig = await connection.sendRawTransaction(signed.serialize());
                 await connection.confirmTransaction(sig, 'confirmed');
                 
@@ -357,6 +381,7 @@
                 await loadTokenData(currentMint.toBase58());
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
+                console.error(err);
             }
         });
     </script>
