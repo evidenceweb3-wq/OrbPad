@@ -38,6 +38,7 @@
     .btn-primary:disabled { background: #555; cursor: not-allowed; }
 
     .btn-nonce { width: 100%; background: var(--purple); color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 0.85rem;}
+    .btn-nonce:disabled { background: #555; cursor: not-allowed; }
 
     .token-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
     .token-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
@@ -93,34 +94,20 @@
   <div id="app-layout" class="app-layout hidden">
     
     <div class="sidebar">
-      
-      <!-- SECCIÓN NUEVA: IMPORTAR TOKEN -->
       <div class="card">
-        <h3>📥 Importar Token</h3>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Pega la dirección Genesis y el Mint de un token creado ayer.</p>
-        <div class="input-group">
-          <label>Genesis Address</label>
-          <input type="text" id="import-genesis" placeholder="Ej: GxY...">
-        </div>
-        <div class="input-group">
-          <label>Base Mint</label>
-          <input type="text" id="import-mint" placeholder="Ej: 4kL...">
-        </div>
-        <button id="import-btn" class="btn-primary" style="background: var(--purple); color: white;">Cargar Token</button>
-      </div>
-
-      <div class="card">
-        <h3>⚙️ Configurar Nonce</h3>
-        <button id="setup-nonce-btn" class="btn-nonce">Generar Nonce (Opcional)</button>
+        <h3>⚙️ Paso 1: Configurar Nonce (Obligatorio)</h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Evita que la red de Devnet rechace tu token por lentitud.</p>
+        <button id="setup-nonce-btn" class="btn-nonce">Generar Nonce</button>
         <div class="input-group" style="margin-top:10px;">
-          <input type="text" id="nonce-address" placeholder="Nonce..." readonly style="display:none;">
+          <label>Tu Nonce Address</label>
+          <input type="text" id="nonce-address" placeholder="Pega tu nonce aqui..." readonly>
         </div>
       </div>
 
       <div class="card">
-        <h3>✨ Crear Lanzamiento</h3>
+        <h3>✨ Paso 2: Crear Lanzamiento</h3>
         <div class="input-group">
-          <label>Nombre</label>
+          <label>Nombre del Token</label>
           <input type="text" id="token-name" placeholder="Ej: Epic ORB" value="Epic ORB">
         </div>
         <div class="input-group">
@@ -128,14 +115,14 @@
           <input type="text" id="token-symbol" placeholder="Ej: EORB" value="EORB">
         </div>
         <div class="input-group">
-          <label>Logo</label>
+          <label>Logo (PNG/JPG)</label>
           <input type="file" id="logo-input" accept="image/png, image/jpeg">
         </div>
-        <button id="create-btn" class="btn-primary" disabled>Lanzar Token (0.1 SOL)</button>
+        <button id="create-btn" class="btn-primary" disabled>Lanzar Token (0.1 SOL Inicial)</button>
       </div>
 
       <div class="card" style="flex: 1; display: flex; flex-direction: column;">
-        <h3>📚 Mis Tokens (DB)</h3>
+        <h3>📚 Mis Tokens</h3>
         <div id="token-list" class="token-list">
           <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">No hay tokens.</p>
         </div>
@@ -147,7 +134,7 @@
         <div class="token-title">
           <img id="active-img" src="https://via.placeholder.com/48" alt="Token">
           <div>
-            <h2 id="active-name">Selecciona o Importa</h2>
+            <h2 id="active-name">Selecciona un Token</h2>
             <span id="active-symbol">---</span>
           </div>
         </div>
@@ -188,7 +175,7 @@
 
   <div id="error-box">
     <div class="error-header">
-      <span>❌ Error Detectado</span>
+      <span>❌ Error Detectado (Detalles técnicos)</span>
       <button onclick="document.getElementById('error-box').style.display='none'">Cerrar [X]</button>
     </div>
     <div id="error-content"></div>
@@ -206,6 +193,8 @@
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
+    
+    // ✅ RPC DE HELIUS
     const RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -255,6 +244,8 @@
         if (savedNonce) {
           document.getElementById('nonce-address').value = savedNonce;
           document.getElementById('create-btn').disabled = false;
+          document.getElementById('setup-nonce-btn').textContent = 'Nonce Ya Configurado';
+          document.getElementById('setup-nonce-btn').disabled = true;
         }
 
         loadTokens();
@@ -265,48 +256,19 @@
       }
     });
 
-    // 2. IMPORTAR TOKEN
-    document.getElementById('import-btn').addEventListener('click', async () => {
-      if (!umi) return showToast('Conecta wallet primero.', 'error');
-      
-      const genesis = document.getElementById('import-genesis').value.trim();
-      const mint = document.getElementById('import-mint').value.trim();
-
-      if (!genesis || !mint) return showToast('Ingresa ambas direcciones.', 'error');
-
-      try {
-        currentGenesis = genesis;
-        currentBaseMint = mint;
-
-        // Actualizar UI
-        document.getElementById('active-img').src = "https://via.placeholder.com/48";
-        document.getElementById('active-name').textContent = "Token Importado";
-        document.getElementById('active-symbol').textContent = "IMP";
-
-        showToast('Cargando datos de la curva...', 'info');
-        
-        // Forzar la actualización de stats y gráfico
-        await updateStats(currentGenesis);
-        await updateChart(currentGenesis);
-        
-        showToast('✅ Token cargado. Puedes comprar/vender.', 'success');
-      } catch (e) {
-        showToast('Error al importar: ' + e.message, 'error');
-      }
-    });
-
-    // 3. CREAR NONCE
+    // 2. CREAR NONCE
     document.getElementById('setup-nonce-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet primero.', 'error');
+      
       const btn = document.getElementById('setup-nonce-btn');
-      btn.disabled = true; btn.textContent = 'Generando...';
+      btn.disabled = true; btn.textContent = 'Firmando...';
 
       try {
-        showToast('Firmando creación de Nonce...', 'info');
         const { Connection, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.95.3');
         
         const connection = new Connection(RPC, 'confirmed');
         const nonceKeypair = Keypair.generate();
+        
         const fromPubkey = new PublicKey(umi.identity.publicKey.toString());
 
         const tx = new Transaction().add(
@@ -334,20 +296,21 @@
         
         document.getElementById('nonce-address').value = nonceStr;
         document.getElementById('create-btn').disabled = false;
+        btn.textContent = 'Nonce Configurado ✅';
         
-        showToast('✅ Nonce creado y guardado', 'success');
+        showToast('✅ Nonce listo. Ya puedes crear tu token.', 'success');
       } catch (error) {
         console.error(error);
-        showToast('Error creando nonce: ' + error.message, 'error');
-        btn.disabled = false; btn.textContent = 'Generar Nonce (Opcional)';
+        showToast('Error: ' + error.message, 'error');
+        btn.disabled = false; btn.textContent = 'Reintentar Generar Nonce';
       }
     });
 
-    // 4. LOAD TOKENS
+    // 3. LOAD TOKENS
     async function loadTokens() {
       const { data } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
       const list = document.getElementById('token-list');
-      list.innerHTML = (data && data.length) ? '' : '<p style="color:#888;text-align:center;">No hay tokens en DB.</p>';
+      list.innerHTML = (data && data.length) ? '' : '<p style="color:#888;text-align:center;">No hay tokens aún.</p>';
       
       if(!data) return;
       data.forEach(t => {
@@ -365,7 +328,7 @@
       });
     }
 
-    // 5. SELECT TOKEN
+    // 4. SELECT TOKEN
     async function selectToken(token, el) {
       document.querySelectorAll('.token-item').forEach(e => e.classList.remove('active'));
       el.classList.add('active');
@@ -380,15 +343,12 @@
       updateChart(currentGenesis);
     }
 
-    // 6. CREATE TOKEN (Con Reintentos)
+    // 5. CREATE TOKEN
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
       if (!file) return showToast('Sube un logo.', 'error');
       
-      const nonceAddress = document.getElementById('nonce-address').value;
-      if (!nonceAddress) return showToast('Genera el Nonce primero.', 'error');
-
       const btn = document.getElementById('create-btn');
       btn.disabled = true; btn.textContent = 'Creando...';
 
@@ -396,10 +356,12 @@
         showToast('Subiendo imagen...', 'info');
         const reader = new FileReader();
         const b64 = await new Promise(r => { reader.onload = e => r(e.target.result.split(',')[1]); reader.readAsDataURL(file); });
+        
         const { data: up, error: upErr } = await supabase.functions.invoke('upload-to-irys', { body: { fileBase64: b64, fileName: file.name, fileType: file.type } });
         if (upErr) throw upErr;
+        if (up.error) throw new Error(up.error);
 
-        showToast('Preparando lanzamiento...', 'info');
+        showToast('Preparando transacciones...', 'info');
         const { createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const launchInput = {
@@ -425,22 +387,7 @@
           return signatures;
         };
 
-        let res;
-        let maxRetries = 3;
-        
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
-            break; 
-          } catch (err) {
-            if (err.message?.includes('Blockhash') && attempt < maxRetries) {
-              showToast(`Red lenta, reintentando (${attempt}/${maxRetries})...`, 'info');
-              await new Promise(r => setTimeout(r, 3000));
-            } else {
-              throw err;
-            }
-          }
-        }
+        const res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
         
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB, token_name: launchInput.token.name, token_symbol: launchInput.token.symbol,
@@ -453,11 +400,11 @@
         console.error(err);
         showToast(err.message || 'Error al crear', 'error');
       } finally {
-        btn.disabled = false; btn.textContent = 'Lanzar Token (0.1 SOL)';
+        btn.disabled = false; btn.textContent = 'Lanzar Token (0.1 SOL Inicial)';
       }
     });
 
-    // 7. UPDATE STATS
+    // 6. UPDATE STATS Y CHART
     async function updateStats(genesis) {
       try {
         const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
@@ -475,7 +422,6 @@
       } catch (e) { console.warn('Stats err', e); }
     }
 
-    // 8. CHART
     function initChart() {
       if (candleSeries) return;
       const chart = LightweightCharts.createChart(document.getElementById('chart'), {
@@ -497,7 +443,7 @@
       candleSeries.setData(Array.from(candles.values()));
     }
 
-    // 9. TRADE
+    // 7. TRADE
     async function executeTrade(type) {
       if (!umi || !currentGenesis) return showToast('Selecciona un token.', 'error');
       const amount = parseFloat(document.getElementById('trade-amount').value);
