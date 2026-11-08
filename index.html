@@ -131,22 +131,25 @@
 
       createBtn.disabled = true;
       
-      try {
-        showStatus('⏳ Cargando Irys y Genesis...', 'info');
+           try {
+        showStatus('⏳ Cargando Genesis y el Uploader de Irys...', 'info');
         
-        // CARGA DINÁMICA DE IRYS Y GENESIS
-        const { WebUploader } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload@0.0.15/+esm');
-const { WebSolana } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload-solana@0.0.15/+esm');
-        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.0.1');
-        
+        // 1. Importamos Genesis, el Uploader de Irys y la utilidad para convertir archivos
+        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
+        const { irysUploader } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-uploader-irys@1.5.0/+esm');
+        const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@0.9.1');
+
+        // 2. Registramos los plugins en la instancia de Umi
         umi.use(genesis());
+        umi.use(irysUploader({ address: "https://devnet.irys.xyz" })); 
 
         showStatus('⏳ Subiendo logo a Irys...', 'info');
-        const provider = window.phantom?.solana || window.solana;
-        const irysUploader = await WebUploader(WebSolana).withProvider(provider);
-        const file = fileInput.files[0];
-        const receipt = await irysUploader.uploadFile(file, { tags: [{ name: "Content-Type", value: file.type }] });
-        const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
+        
+        // 3. Convertimos el archivo del input al formato que entiende Umi
+        const file = await createGenericFileFromBrowserFile(fileInput.files[0]);
+        
+        // 4. Subimos el archivo usando el método nativo de Umi
+        const [imageUrl] = await umi.uploader.upload([file]);
         
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
