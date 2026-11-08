@@ -36,8 +36,8 @@
     <!-- 2. CREAR TOKEN -->
     <div class="card">
         <h2>2. Crear Token en Pump.fun</h2>
-        <p><small>La imagen se sube a IPFS vía Pinata (obligatorio para Pump.fun).</small></p>
-        <input id="pinataJwt" type="password" placeholder="Pinata JWT (obtén uno gratis en pinata.cloud)" />
+        <p><small>La imagen y los metadatos se suben a IPFS vía Pinata (obligatorio para Pump.fun).</small></p>
+        <input id="pinataJwt" type="password" placeholder="Pinata JWT (gratis en pinata.cloud → API Keys)" />
         <input id="tokenName" placeholder="Nombre del Token" />
         <input id="tokenSymbol" placeholder="Símbolo (ej. MTK)" />
         <input id="tokenDescription" placeholder="Descripción (opcional)" />
@@ -87,10 +87,10 @@
 
     <script type="module">
         // ==========================================
-        // CONFIGURACIÓN - ¡RELLENA ESTOS VALORES!
+        // CONFIGURACIÓN (ya con tus credenciales)
         // ==========================================
-        const SUPABASE_URL = 'TU_SUPABASE_URL_AQUI';
-        const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY_AQUI';
+        const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
 
         // ==========================================
         // IMPORTS
@@ -183,7 +183,7 @@
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
-                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL); // Compra inicial de 0.01 SOL
+                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
                 const tokensOut = getBuyTokenAmountFromSolAmount({
                     global,
                     feeConfig,
@@ -192,7 +192,6 @@
                     amount: solToSpend,
                 });
 
-                // El SDK oficial usa createV2AndBuyInstructions para creación atómica.
                 const instructions = await PUMP_SDK.createV2AndBuyInstructions({
                     global,
                     feeConfig,
@@ -204,7 +203,7 @@
                     user: userPublicKey,
                     amount: tokensOut,
                     solAmount: solToSpend,
-                    slippage: 0.01, // 1% de slippage
+                    slippage: 0.01,
                 });
 
                 const tx = new Transaction().add(...instructions);
@@ -220,10 +219,19 @@
                 statusEl.textContent = `✅ Token "${name}" creado.\nMint: ${mintAddress}\nTx: ${txId}`;
                 document.getElementById('mintAddressInput').value = mintAddress;
 
-                // Registrar en Supabase
-                await supabase.from('launchpad_tokens').insert([{
-                    mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58(),
-                }]);
+                // Registrar en Supabase (opcional, no rompe si falla)
+                try {
+                    const { error: dbError } = await supabase.from('launchpad_tokens').insert([{
+                        mint_address: mintAddress,
+                        name,
+                        symbol,
+                        metadata_uri: metadataUri,
+                        creator_wallet: userPublicKey.toBase58(),
+                    }]);
+                    if (dbError) console.warn('Aviso Supabase:', dbError.message);
+                } catch (e) {
+                    console.warn('Supabase no disponible:', e.message);
+                }
             } catch (err) {
                 console.error(err);
                 statusEl.textContent = `❌ ${err.message}`;
@@ -242,15 +250,12 @@
             try {
                 currentMint = new PublicKey(mintStr);
                 const bondingCurve = await onlineSdk.fetchBondingCurve(currentMint);
-                const global = await onlineSdk.fetchGlobal();
 
-                // La fórmula del market cap es: virtualSolReserves * mintSupply / virtualTokenReserves
                 const mcapLamports = bondingCurve.virtualSolReserves.mul(bondingCurve.tokenTotalSupply).div(bondingCurve.virtualTokenReserves);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
                 document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
 
-                // Progreso de graduación (basado en la fórmula de Pump.fun)
-                const progressPct = (mcapSol / 69000) * 100; // El objetivo de graduación es ~69k SOL en Devnet.
+                const progressPct = (mcapSol / 69000) * 100;
                 document.getElementById('progress').textContent = `${Math.min(progressPct, 100).toFixed(2)}%`;
                 document.getElementById('price').textContent = `${(mcapSol / (bondingCurve.tokenTotalSupply.toNumber() / 1e6)).toExponential(4)} SOL`;
                 document.getElementById('graduated').textContent = bondingCurve.complete ? 'Sí' : 'No';
@@ -263,7 +268,7 @@
         });
 
         // ==========================================
-        // 5. CHART (Intento con API pública, fallback a punto actual)
+        // 5. CHART (intento con API pública, fallback a punto actual)
         // ==========================================
         async function drawChart(mint, currentMcapSol) {
             const canvas = document.getElementById('chartCanvas');
@@ -272,7 +277,6 @@
 
             let history = [];
             try {
-                // Endpoint no oficial de la comunidad. Puede dejar de funcionar.
                 const res = await fetch(`https://frontend-api-v3.pump.fun/trades/all/${mint.toBase58()}?limit=100`);
                 if (res.ok) {
                     const trades = await res.json();
@@ -358,7 +362,7 @@
                 const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
                 if (!tokenInput || tokenInput <= 0) throw new Error('Cantidad de tokens inválida.');
 
-                const amount = new BN(Math.floor(tokenInput * 1_000_000)); // Asumiendo 6 decimales
+                const amount = new BN(Math.floor(tokenInput * 1_000_000));
 
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
