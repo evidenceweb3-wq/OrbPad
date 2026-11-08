@@ -1,392 +1,388 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Epic ORB Launchpad</title>
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 850px; margin: 3rem auto; background: #121212; color: #fff; padding: 20px; }
-    h1 { color: #14F195; text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem; }
-    .subtitle { text-align: center; color: #aaa; margin-bottom: 2rem; }
-    .card { background: #1e1e1e; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #333; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-    .input-group { margin-bottom: 1rem; }
-    .input-group label { display: block; margin-bottom: 0.5rem; font-size: 14px; color: #ccc; }
-    .input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; box-sizing: border-box; font-size: 16px; }
-    button { padding: 14px 20px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; transition: all 0.2s; width: 100%; }
-    button:hover { opacity: 0.9; transform: translateY(-1px); }
-    button:disabled { background: #444; cursor: not-allowed; transform: none; }
-    #login-btn { background: #9945FF; color: white; margin-bottom: 2rem; }
-    #create-launch-btn { background: #14F195; color: #000; }
-    .btn-buy { background: #14F195; color: #000; }
-    .btn-sell { background: #ff6b6b; color: #fff; }
-    #status { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; font-size: 14px; word-break: break-all; text-align: center; }
-    .success { background: #1e3a2b; color: #14F195; border: 1px solid #14F195; }
-    .error { background: #3a1e1e; color: #ff6b6b; border: 1px solid #ff6b6b; }
-    .info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; }
-    .hidden { display: none; }
-    .flex-row { display: flex; gap: 16px; }
-    .flex-row > div { flex: 1; }
-    .token-card { display: flex; gap: 20px; align-items: center; background: #252525; border-radius: 12px; padding: 20px; margin-top: 20px; border-left: 5px solid #14F195; }
-    .token-card img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #14F195; object-fit: cover; }
-    .token-info { flex: 1; }
-    .token-info h2 { margin: 0 0 5px 0; font-size: 1.8rem; }
-    .token-info .symbol { color: #14F195; font-weight: bold; font-size: 1.2rem; }
-    .token-stats { display: flex; gap: 30px; margin-top: 15px; }
-    .stat { display: flex; flex-direction: column; }
-    .stat .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-    .stat .value { font-size: 1.4rem; font-weight: bold; color: #fff; }
-    .stat .value.price { color: #14F195; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launchpad Pump.fun - Devnet</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background: #0f0f0f; color: #e0e0e0; }
+        h1, h2, h3 { color: #fff; }
+        button { background: #9945FF; color: white; border: none; padding: 0.7rem 1.3rem; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 0.3rem 0; width: 100%; }
+        button:hover:not(:disabled) { background: #7a35d6; }
+        button:disabled { background: #444; cursor: not-allowed; }
+        input, select { padding: 0.55rem; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; margin: 0.3rem 0; width: 100%; box-sizing: border-box; }
+        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .status { font-size: 0.9rem; color: #14F195; margin-top: 0.6rem; word-break: break-all; white-space: pre-wrap; }
+        .error { color: #ff6b6b; }
+        .metric { display: inline-block; background: #222; border-radius: 8px; padding: 0.6rem 1rem; margin: 0.3rem 0.3rem 0.3rem 0; font-size: 0.9rem; }
+        .metric strong { color: #14F195; display: block; font-size: 1.1rem; }
+        hr { border: 0; border-top: 1px solid #333; margin: 1.2rem 0; }
+        small { color: #888; }
+        canvas { width: 100%; height: auto; background: #111; border-radius: 8px; margin-top: 1rem; }
+    </style>
 </head>
 <body>
-  <h1>🚀 Epic ORB Launchpad</h1>
-  <p class="subtitle">Lanza tu token con Bonding Curve o compra/vende tokens existentes.</p>
 
-  <button id="login-btn">🔐 Conectar Wallet e Iniciar Sesión</button>
+    <h1>🚀 Launchpad Pump.fun (Devnet)</h1>
+    <p><small>Token creado directamente en el programa de Pump.fun. Bonding curve, market cap y progreso de graduación.</small></p>
 
-  <div id="create-section" class="card hidden">
-    <h3>✨ Crear Token (Bonding Curve)</h3>
-    <div class="input-group">
-      <label>Nombre del Token</label>
-      <input type="text" id="token-name" placeholder="Ej: Epic ORB Token" value="Epic ORB Token">
+    <!-- 1. WALLET -->
+    <div class="card">
+        <h2>1. Conectar Wallet</h2>
+        <button id="connectBtn">Conectar Phantom</button>
+        <p id="walletStatus" class="status">No conectado</p>
     </div>
-    <div class="input-group">
-      <label>Símbolo</label>
-      <input type="text" id="token-symbol" placeholder="Ej: EORB" value="EORB">
+
+    <!-- 2. CREAR TOKEN -->
+    <div class="card">
+        <h2>2. Crear Token en Pump.fun</h2>
+        <p><small>La imagen se sube a IPFS vía Pinata (obligatorio para Pump.fun).</small></p>
+        <input id="pinataJwt" type="password" placeholder="Pinata JWT (obtén uno gratis en pinata.cloud)" />
+        <input id="tokenName" placeholder="Nombre del Token" />
+        <input id="tokenSymbol" placeholder="Símbolo (ej. MTK)" />
+        <input id="tokenDescription" placeholder="Descripción (opcional)" />
+        <input id="tokenImage" type="file" accept="image/*" />
+        <button id="createTokenBtn" disabled>Crear Token + Compra Inicial (0.01 SOL)</button>
+        <p id="createStatus" class="status"></p>
     </div>
-    <div class="input-group">
-      <label>Logo del Token (PNG/JPG)</label>
-      <input type="file" id="logo-input" accept="image/png, image/jpeg">
+
+    <!-- 3. ESTADO DEL TOKEN -->
+    <div class="card">
+        <h2>3. Estado de la Bonding Curve</h2>
+        <input id="mintAddressInput" placeholder="Dirección del Token (Mint)" />
+        <button id="loadTokenBtn" disabled>Cargar Datos y Chart</button>
+        <div id="tokenMetrics">
+            <div class="metric">Market Cap <strong id="mcap">—</strong></div>
+            <div class="metric">Progreso Graduación <strong id="progress">—</strong></div>
+            <div class="metric">Precio (SOL) <strong id="price">—</strong></div>
+            <div class="metric">Graduado <strong id="graduated">—</strong></div>
+        </div>
+        <canvas id="chartCanvas" width="800" height="300"></canvas>
     </div>
-    <button id="create-launch-btn">✨ Crear Lanzamiento en Devnet</button>
-  </div>
 
-  <div id="trade-section" class="card hidden">
-    <h3>📊 Comprar / Vender</h3>
-    <div class="input-group">
-      <label>Dirección del Lanzamiento (Genesis Account)</label>
-      <input type="text" id="genesis-address" placeholder="Se llenará automáticamente al crear...">
+    <!-- 4. COMPRAR / VENDER -->
+    <div class="card">
+        <h2>4. Comprar / Vender en la Curva</h2>
+        <h3>Comprar</h3>
+        <input id="solAmount" type="number" step="0.01" placeholder="Cantidad de SOL a gastar" />
+        <button id="buyBtn" disabled>Comprar</button>
+        <hr />
+        <h3>Vender</h3>
+        <input id="tokenAmountToSell" type="number" step="any" placeholder="Cantidad de Tokens a vender" />
+        <button id="sellBtn" disabled>Vender</button>
+        <p id="tradeStatus" class="status"></p>
     </div>
-    <div class="input-group">
-      <label>Token Mint (Base Mint)</label>
-      <input type="text" id="base-mint" placeholder="Se llenará automáticamente...">
-    </div>
-    <div class="flex-row">
-      <div class="input-group">
-        <label>Cantidad (SOL / Tokens)</label>
-        <input type="number" id="trade-amount" placeholder="0.1" step="0.01" value="0.1">
-      </div>
-      <div class="input-group">
-        <label>Slippage (%)</label>
-        <input type="number" id="slippage" value="1" min="0.1" max="50" step="0.1">
-      </div>
-    </div>
-    <div class="flex-row">
-      <button id="buy-btn" class="btn-buy">🟢 Comprar</button>
-      <button id="sell-btn" class="btn-sell">🔴 Vender</button>
-    </div>
-  </div>
 
-  <div id="token-display" class="hidden"></div>
-  <div id="status" class="info">Esperando conexión...</div>
+    <!-- IMPORT MAP -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@solana/web3.js": "https://esm.sh/@solana/web3.js@1.98.0",
+                "@nirholas/pump-sdk": "https://esm.sh/@nirholas/pump-sdk@latest",
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+                "bn.js": "https://esm.sh/bn.js@5"
+            }
+        }
+    </script>
 
-  <script type="module">
-    // ==========================================
-    // ✅ PARCHE CRÍTICO PARA DEVNET (Blockhash)
-    // ==========================================
-    import { Connection } from 'https://esm.sh/@solana/web3.js@1.95.3';
-    
-    // Sobrescribimos la función obsoleta para que use la nueva
-    Connection.prototype.getRecentBlockhash = async function (commitment) {
-      try {
-        const { blockhash, lastValidBlockHeight } = await this.getLatestBlockhash(commitment);
-        const recentPrioritizationFees = await this.getRecentPrioritizationFees();
-        const averageFee = recentPrioritizationFees.length > 0 
-          ? recentPrioritizationFees.reduce((sum, fee) => sum + fee.prioritizationFee, 0) / recentPrioritizationFees.length 
-          : 5000;
-        return { blockhash, feeCalculator: { lamportsPerSignature: averageFee } };
-      } catch (e) {
-        throw new Error('failed to get recent blockhash: ' + e);
-      }
-    };
-    // ==========================================
+    <script type="module">
+        // ==========================================
+        // CONFIGURACIÓN - ¡RELLENA ESTOS VALORES!
+        // ==========================================
+        const SUPABASE_URL = 'TU_SUPABASE_URL_AQUI';
+        const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY_AQUI';
 
-    import { Buffer } from 'https://esm.sh/buffer@6.0.3';
-    window.Buffer = Buffer;
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
-    import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0';
-    import { publicKey, sol, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
-    import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@0.11.4';
+        // ==========================================
+        // IMPORTS
+        // ==========================================
+        import { Connection, PublicKey, Keypair, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+        import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount } from '@nirholas/pump-sdk';
+        import { createClient } from '@supabase/supabase-js';
+        import BN from 'bn.js';
 
-    const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
-    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
-    const RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
+        const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+        const onlineSdk = new OnlinePumpSdk(connection);
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let wallet = null;
+        let userPublicKey = null;
 
-    const statusDiv = document.getElementById('status');
-    const loginBtn = document.getElementById('login-btn');
-    const createSection = document.getElementById('create-section');
-    const tradeSection = document.getElementById('trade-section');
-    const tokenDisplay = document.getElementById('token-display');
-    const createBtn = document.getElementById('create-launch-btn');
-    const buyBtn = document.getElementById('buy-btn');
-    const sellBtn = document.getElementById('sell-btn');
-    const genesisInput = document.getElementById('genesis-address');
-    const baseMintInput = document.getElementById('base-mint');
-
-    let umi = null;
-
-    function showStatus(msg, type) {
-      statusDiv.textContent = msg;
-      statusDiv.className = type;
-    }
-
-    // 1. CONEXIÓN
-    loginBtn.addEventListener('click', async () => {
-      const provider = window.phantom?.solana || window.solana;
-      if (!provider || !provider.isPhantom) return showStatus('Instala Phantom Wallet.', 'error');
-      
-      try {
-        await provider.connect();
-        const { data, error } = await supabase.auth.signInWithWeb3({
-          chain: 'solana',
-          statement: 'I accept the Terms of Service of Epic ORB Launchpad.',
-          wallet: provider 
-        });
-        if (error) throw error;
-
-        loginBtn.classList.add('hidden');
-        createSection.classList.remove('hidden');
-        tradeSection.classList.remove('hidden');
-
-        umi = createUmi(RPC);
-        umi.use(walletAdapterIdentity(provider));
-        umi.use(mplToolbox());
-        showStatus('✅ Conectado. Crea un token o tradea abajo.', 'success');
-      } catch (err) {
-        console.error(err);
-        showStatus('Error: ' + err.message, 'error');
-      }
-    });
-
-    // 2. CREAR LANZAMIENTO
-    createBtn.addEventListener('click', async () => {
-      if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
-      const fileInput = document.getElementById('logo-input');
-      if (!fileInput.files.length) return showStatus('Selecciona un logo.', 'error');
-
-      const tokenName = document.getElementById('token-name').value;
-      const tokenSymbol = document.getElementById('token-symbol').value;
-
-      createBtn.disabled = true;
-      try {
-        showStatus('⏳ Procesando imagen...', 'info');
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        const fileBase64 = await new Promise((res, rej) => {
-          reader.onload = (e) => res(e.target.result.split(',')[1]);
-          reader.onerror = rej;
-          reader.readAsDataURL(file);
+        // ==========================================
+        // 1. CONECTAR WALLET
+        // ==========================================
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            if (!window.solana || !window.solana.isPhantom) {
+                alert('Instala Phantom y cambia a la red Devnet.');
+                return;
+            }
+            try {
+                const resp = await window.solana.connect();
+                userPublicKey = resp.publicKey;
+                wallet = window.solana;
+                document.getElementById('walletStatus').textContent = `Conectado: ${userPublicKey.toBase58()}`;
+                document.getElementById('createTokenBtn').disabled = false;
+                document.getElementById('buyBtn').disabled = false;
+                document.getElementById('sellBtn').disabled = false;
+                document.getElementById('loadTokenBtn').disabled = false;
+            } catch (err) {
+                document.getElementById('walletStatus').textContent = `Error: ${err.message}`;
+                document.getElementById('walletStatus').classList.add('error');
+            }
         });
 
-        showStatus('⏳ Subiendo logo a Irys...', 'info');
-        const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-to-irys', {
-          body: { fileBase64, fileName: file.name, fileType: file.type }
-        });
-        if (uploadError) throw new Error(uploadError.message);
-        if (uploadData.error) throw new Error(uploadData.error);
-        
-        const imageUrl = uploadData.url;
-        showStatus('✅ Logo subido. Creando lanzamiento...', 'info');
+        // ==========================================
+        // 2. SUBIR IMAGEN Y METADATOS A IPFS (PINATA)
+        // ==========================================
+        async function uploadToPinata(jwt, file, name, symbol, description) {
+            const imgForm = new FormData();
+            imgForm.append('file', file);
+            const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${jwt}` },
+                body: imgForm,
+            });
+            if (!imgRes.ok) throw new Error(`Pinata imagen: ${await imgRes.text()}`);
+            const imgData = await imgRes.json();
+            const imageUri = `https://gateway.pinata.cloud/ipfs/${imgData.IpfsHash}`;
 
-        const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        umi.use(genesis());
-
-        const launchInput = {
-          wallet: umi.identity.publicKey,
-          network: 'solana-devnet',
-          token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
-          launchType: 'bondingCurve',
-          launch: { firstBuyAmount: 0.1 },
-        };
-
-        // ✅ INYECCIÓN DE BLOCKHASH FRESCO (Evita el error sin romper nada)
-        const freshTxSender = async (txs) => {
-          showStatus('👉 Aprueba en Phantom', 'info');
-          const latestBlockhash = await umi.rpc.getLatestBlockhash();
-          
-          const patchedTxs = txs.map(tx => {
-            if (tx.setBlockhash) return tx.setBlockhash(latestBlockhash);
-            if (tx.message) { tx.message.recentBlockhash = latestBlockhash.blockhash; return tx; }
-            return tx;
-          });
-
-          const signedTxs = await umi.identity.signAllTransactions(patchedTxs);
-          const signatures = await Promise.all(
-            signedTxs.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' }))
-          );
-          
-          const lastIdx = signedTxs.length - 1;
-          await umi.rpc.confirmTransaction({
-            signature: signatures[lastIdx],
-            blockhash: latestBlockhash.blockhash,
-            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-          }, { commitment: 'confirmed' });
-
-          return signatures;
-        };
-
-        const result = await createAndRegisterLaunch(umi, { txSender: freshTxSender }, launchInput);
-        
-        const genesisAddress = result.genesisAccount.toString();
-        const baseMint = result.mintAddress.toString();
-        
-        if (!genesisAddress) throw new Error("No se pudo obtener la dirección de Genesis.");
-
-        genesisInput.value = genesisAddress;
-        baseMintInput.value = baseMint;
-        showStatus(`🚀 ¡Lanzamiento creado!`, 'success');
-
-        await supabase.from('launches').insert({
-          authority: MI_DIRECCION_ORB,
-          token_name: tokenName,
-          token_symbol: tokenSymbol,
-          token_image_url: imageUrl,
-          genesis_address: genesisAddress,
-          base_mint: baseMint
-        });
-
-        await renderTokenCard(genesisAddress, tokenName, tokenSymbol, imageUrl);
-
-      } catch (err) {
-        console.error(err);
-        showStatus('Error al crear: ' + (err.message || 'Revisa la consola.'), 'error');
-      } finally {
-        createBtn.disabled = false;
-      }
-    });
-
-    // 3. RENDERIZAR TARJETA
-    async function renderTokenCard(genesisAddress, name, symbol, image) {
-      try {
-        const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: publicKey(genesisAddress), bucketIndex: 0 });
-        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
-        
-        let price = 0;
-        let marketCap = 0;
-
-        if (bucket) {
-          const sol = (Number(bucket.virtualSol) + Number(bucket.realSol)) / 1e9;
-          const tokens = (Number(bucket.virtualTokens) + Number(bucket.realTokens)) / 1e9;
-          if (tokens > 0) {
-            price = sol / tokens;
-            marketCap = price * 1_000_000_000;
-          }
+            const metadata = { name, symbol, description: description || '', image: imageUri };
+            const metaForm = new FormData();
+            metaForm.append('file', new Blob([JSON.stringify(metadata)], { type: 'application/json' }), 'metadata.json');
+            const metaRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${jwt}` },
+                body: metaForm,
+            });
+            if (!metaRes.ok) throw new Error(`Pinata metadata: ${await metaRes.text()}`);
+            const metaData = await metaRes.json();
+            return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        tokenDisplay.innerHTML = `
-          <div class="token-card">
-            <img src="${image}" alt="${symbol}" onerror="this.src='https://via.placeholder.com/80'">
-            <div class="token-info">
-              <h2>${name} <span class="symbol">(${symbol})</span></h2>
-              <div style="font-size: 12px; color: #888; margin-bottom: 10px;">Genesis: ${genesisAddress.slice(0, 8)}...${genesisAddress.slice(-8)}</div>
-              <div class="token-stats">
-                <div class="stat">
-                  <span class="label">Precio</span>
-                  <span class="value price">${price.toFixed(8)} SOL</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Market Cap</span>
-                  <span class="value">$${marketCap.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Estado</span>
-                  <span class="value" style="color: #14F195;">Activo</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        tokenDisplay.classList.remove('hidden');
+        // ==========================================
+        // 3. CREAR TOKEN + COMPRA INICIAL (ATÓMICO)
+        // ==========================================
+        document.getElementById('createTokenBtn').addEventListener('click', async () => {
+            const statusEl = document.getElementById('createStatus');
+            statusEl.textContent = 'Subiendo metadatos a IPFS...';
+            try {
+                if (!userPublicKey) throw new Error('Conecta la wallet primero.');
+                const jwt = document.getElementById('pinataJwt').value.trim();
+                const name = document.getElementById('tokenName').value.trim();
+                const symbol = document.getElementById('tokenSymbol').value.trim();
+                const description = document.getElementById('tokenDescription').value.trim();
+                const imageFile = document.getElementById('tokenImage').files[0];
 
-      } catch (err) {
-        console.error("Error al renderizar tarjeta:", err);
-      }
-    }
+                if (!jwt) throw new Error('Necesitas un JWT de Pinata. Créalo gratis en pinata.cloud.');
+                if (!name || !symbol) throw new Error('Nombre y símbolo son obligatorios.');
+                if (!imageFile) throw new Error('Selecciona una imagen.');
 
-    // 4. COMPRAR
-    buyBtn.addEventListener('click', async () => {
-      if (!umi || !genesisInput.value) return showStatus('Selecciona o crea un token primero.', 'error');
-      const amount = parseFloat(document.getElementById('trade-amount').value);
-      const slip = parseFloat(document.getElementById('slippage').value) * 100;
-      
-      try {
-        showStatus('⏳ Comprando...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        
-        const genKey = publicKey(genesisInput.value), base = publicKey(baseMintInput.value), quote = publicKey('So11111111111111111111111111111111111111112');
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genKey, bucketIndex: 0 });
-        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
-        
-        const dir = SwapDirection.Buy;
-        const amountIn = BigInt(Math.floor(amount * 1e9));
-        const quoteRes = getSwapResult(bucket, amountIn, dir);
-        const minOut = applySlippage(quoteRes.amountOut, slip);
+                const metadataUri = await uploadToPinata(jwt, imageFile, name, symbol, description);
+                statusEl.textContent = `Metadatos subidos. Creando token y comprando...`;
 
-        const [uBase] = findAssociatedTokenPda(umi, { mint: base, owner: umi.identity.publicKey });
-        const [uQuote] = findAssociatedTokenPda(umi, { mint: quote, owner: umi.identity.publicKey });
+                const mintKeypair = Keypair.generate();
+                const global = await onlineSdk.fetchGlobal();
+                const feeConfig = await onlineSdk.fetchFeeConfig();
 
-        await transactionBuilder()
-          .add(createTokenIfMissing(umi, { mint: quote, token: uQuote, tokenProgram: publicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }))
-          .add(transferSol(umi, { destination: uQuote, amount: sol(amount) }))
-          .add(syncNative(umi, { account: uQuote }))
-          .sendAndConfirm(umi);
+                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL); // Compra inicial de 0.01 SOL
+                const tokensOut = getBuyTokenAmountFromSolAmount({
+                    global,
+                    feeConfig,
+                    mintSupply: null,
+                    bondingCurve: null,
+                    amount: solToSpend,
+                });
 
-        await swapBondingCurveV2(umi, { genesisAccount: genKey, bucket: bucketPda, baseMint: base, quoteMint: quote, baseTokenAccount: uBase, quoteTokenAccount: uQuote, amount: quoteRes.amountIn, minAmountOutScaled: minOut, swapDirection: dir }).sendAndConfirm(umi);
-        
-        showStatus('✅ Compra exitosa', 'success');
-        await supabase.from('bond_swaps').insert({ genesis_address: genKey.toString(), block_time: Math.floor(Date.now()/1000), price: (amount / (Number(quoteRes.amountOut)/1e9)) });
-        
-        try { await closeToken(umi, { account: uQuote, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch(e){}
+                // El SDK oficial usa createV2AndBuyInstructions para creación atómica.
+                const instructions = await PUMP_SDK.createV2AndBuyInstructions({
+                    global,
+                    feeConfig,
+                    mint: mintKeypair.publicKey,
+                    name,
+                    symbol,
+                    uri: metadataUri,
+                    creator: userPublicKey,
+                    user: userPublicKey,
+                    amount: tokensOut,
+                    solAmount: solToSpend,
+                    slippage: 0.01, // 1% de slippage
+                });
 
-      } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-    });
+                const tx = new Transaction().add(...instructions);
+                tx.feePayer = userPublicKey;
+                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                tx.partialSign(mintKeypair);
 
-    // 5. VENDER
-    sellBtn.addEventListener('click', async () => {
-      if (!umi || !genesisInput.value) return showStatus('Selecciona o crea un token primero.', 'error');
-      const amount = parseFloat(document.getElementById('trade-amount').value);
-      const slip = parseFloat(document.getElementById('slippage').value) * 100;
-      
-      try {
-        showStatus('⏳ Vendiendo...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        
-        const genKey = publicKey(genesisInput.value), base = publicKey(baseMintInput.value), quote = publicKey('So11111111111111111111111111111111111111112');
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genKey, bucketIndex: 0 });
-        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
-        
-        const dir = SwapDirection.Sell;
-        const amountIn = BigInt(Math.floor(amount * 1e9));
-        const quoteRes = getSwapResult(bucket, amountIn, dir);
-        const minOut = applySlippage(quoteRes.amountOut, slip);
+                const signed = await wallet.signTransaction(tx);
+                const txId = await connection.sendRawTransaction(signed.serialize());
+                await connection.confirmTransaction(txId, 'confirmed');
 
-        const [uBase] = findAssociatedTokenPda(umi, { mint: base, owner: umi.identity.publicKey });
-        const [uQuote] = findAssociatedTokenPda(umi, { mint: quote, owner: umi.identity.publicKey });
+                const mintAddress = mintKeypair.publicKey.toBase58();
+                statusEl.textContent = `✅ Token "${name}" creado.\nMint: ${mintAddress}\nTx: ${txId}`;
+                document.getElementById('mintAddressInput').value = mintAddress;
 
-        await swapBondingCurveV2(umi, { genesisAccount: genKey, bucket: bucketPda, baseMint: base, quoteMint: quote, baseTokenAccount: uBase, quoteTokenAccount: uQuote, amount: quoteRes.amountIn, minAmountOutScaled: minOut, swapDirection: dir }).sendAndConfirm(umi);
-        
-        showStatus('✅ Venta exitosa', 'success');
-        await supabase.from('bond_swaps').insert({ genesis_address: genKey.toString(), block_time: Math.floor(Date.now()/1000), price: ((Number(quoteRes.amountOut)/1e9) / amount) });
-        
-        try { await closeToken(umi, { account: uQuote, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch(e){}
+                // Registrar en Supabase
+                await supabase.from('launchpad_tokens').insert([{
+                    mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58(),
+                }]);
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = `❌ ${err.message}`;
+                statusEl.classList.add('error');
+            }
+        });
 
-      } catch (e) { showStatus('Error: ' + e.message, 'error'); }
-    });
-  </script>
+        // ==========================================
+        // 4. CARGAR DATOS DEL TOKEN (Market Cap, Progreso, Chart)
+        // ==========================================
+        let currentMint = null;
+
+        document.getElementById('loadTokenBtn').addEventListener('click', async () => {
+            const mintStr = document.getElementById('mintAddressInput').value.trim();
+            if (!mintStr) return alert('Introduce un mint.');
+            try {
+                currentMint = new PublicKey(mintStr);
+                const bondingCurve = await onlineSdk.fetchBondingCurve(currentMint);
+                const global = await onlineSdk.fetchGlobal();
+
+                // La fórmula del market cap es: virtualSolReserves * mintSupply / virtualTokenReserves
+                const mcapLamports = bondingCurve.virtualSolReserves.mul(bondingCurve.tokenTotalSupply).div(bondingCurve.virtualTokenReserves);
+                const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
+                document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
+
+                // Progreso de graduación (basado en la fórmula de Pump.fun)
+                const progressPct = (mcapSol / 69000) * 100; // El objetivo de graduación es ~69k SOL en Devnet.
+                document.getElementById('progress').textContent = `${Math.min(progressPct, 100).toFixed(2)}%`;
+                document.getElementById('price').textContent = `${(mcapSol / (bondingCurve.tokenTotalSupply.toNumber() / 1e6)).toExponential(4)} SOL`;
+                document.getElementById('graduated').textContent = bondingCurve.complete ? 'Sí' : 'No';
+
+                await drawChart(currentMint, mcapSol);
+            } catch (err) {
+                console.error(err);
+                alert(`Error cargando token: ${err.message}`);
+            }
+        });
+
+        // ==========================================
+        // 5. CHART (Intento con API pública, fallback a punto actual)
+        // ==========================================
+        async function drawChart(mint, currentMcapSol) {
+            const canvas = document.getElementById('chartCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let history = [];
+            try {
+                // Endpoint no oficial de la comunidad. Puede dejar de funcionar.
+                const res = await fetch(`https://frontend-api-v3.pump.fun/trades/all/${mint.toBase58()}?limit=100`);
+                if (res.ok) {
+                    const trades = await res.json();
+                    history = trades.map(t => ({ t: new Date(t.timestamp).getTime(), mcap: t.marketCap || 0 })).filter(p => p.mcap > 0);
+                }
+            } catch (e) {
+                console.warn('No se pudo obtener historial, usando punto actual.', e);
+            }
+
+            if (history.length === 0) {
+                history = [{ t: Date.now(), mcap: currentMcapSol }];
+            }
+
+            const minT = Math.min(...history.map(p => p.t));
+            const maxT = Math.max(...history.map(p => p.t));
+            const minM = Math.min(...history.map(p => p.mcap));
+            const maxM = Math.max(...history.map(p => p.mcap));
+            const rangeT = maxT - minT || 1;
+            const rangeM = maxM - minM || 1;
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#14F195';
+            ctx.lineWidth = 2;
+            history.forEach((p, i) => {
+                const x = ((p.t - minT) / rangeT) * (canvas.width - 40) + 20;
+                const y = canvas.height - 20 - ((p.mcap - minM) / rangeM) * (canvas.height - 40);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            ctx.fillStyle = '#888';
+            ctx.font = '12px monospace';
+            ctx.fillText(`${minM.toFixed(1)} SOL`, 5, canvas.height - 5);
+            ctx.fillText(`${maxM.toFixed(1)} SOL`, 5, 15);
+        }
+
+        // ==========================================
+        // 6. COMPRAR
+        // ==========================================
+        document.getElementById('buyBtn').addEventListener('click', async () => {
+            const statusEl = document.getElementById('tradeStatus');
+            statusEl.textContent = 'Preparando compra...';
+            try {
+                if (!userPublicKey) throw new Error('Conecta la wallet.');
+                const mint = new PublicKey(document.getElementById('mintAddressInput').value.trim());
+                const solInput = parseFloat(document.getElementById('solAmount').value);
+                if (!solInput || solInput <= 0) throw new Error('Cantidad de SOL inválida.');
+
+                const solAmount = new BN(Math.floor(solInput * LAMPORTS_PER_SOL));
+                const global = await onlineSdk.fetchGlobal();
+                const feeConfig = await onlineSdk.fetchFeeConfig();
+                const { bondingCurveAccountInfo, bondingCurve, associatedUserAccountInfo } = await onlineSdk.fetchBuyState(mint, userPublicKey);
+
+                const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: bondingCurve.tokenTotalSupply, bondingCurve, amount: solAmount });
+
+                const instructions = await PUMP_SDK.buyInstructions({
+                    global, feeConfig, bondingCurveAccountInfo, bondingCurve, associatedUserAccountInfo, mint, user: userPublicKey, solAmount, amount, slippage: 1,
+                });
+
+                const tx = new Transaction().add(...instructions);
+                tx.feePayer = userPublicKey;
+                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                const signed = await wallet.signTransaction(tx);
+                const txId = await connection.sendRawTransaction(signed.serialize());
+                await connection.confirmTransaction(txId, 'confirmed');
+                statusEl.textContent = `✅ Compra exitosa. Tx: ${txId}`;
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = `❌ ${err.message}`;
+                statusEl.classList.add('error');
+            }
+        });
+
+        // ==========================================
+        // 7. VENDER
+        // ==========================================
+        document.getElementById('sellBtn').addEventListener('click', async () => {
+            const statusEl = document.getElementById('tradeStatus');
+            statusEl.textContent = 'Preparando venta...';
+            try {
+                if (!userPublicKey) throw new Error('Conecta la wallet.');
+                const mint = new PublicKey(document.getElementById('mintAddressInput').value.trim());
+                const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
+                if (!tokenInput || tokenInput <= 0) throw new Error('Cantidad de tokens inválida.');
+
+                const amount = new BN(Math.floor(tokenInput * 1_000_000)); // Asumiendo 6 decimales
+
+                const global = await onlineSdk.fetchGlobal();
+                const feeConfig = await onlineSdk.fetchFeeConfig();
+                const { bondingCurveAccountInfo, bondingCurve } = await onlineSdk.fetchSellState(mint, userPublicKey);
+
+                const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: bondingCurve.tokenTotalSupply, bondingCurve, amount });
+
+                const instructions = await PUMP_SDK.sellInstructions({
+                    global, feeConfig, bondingCurveAccountInfo, bondingCurve, mint, user: userPublicKey, amount, solAmount, slippage: 1,
+                });
+
+                const tx = new Transaction().add(...instructions);
+                tx.feePayer = userPublicKey;
+                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                const signed = await wallet.signTransaction(tx);
+                const txId = await connection.sendRawTransaction(signed.serialize());
+                await connection.confirmTransaction(txId, 'confirmed');
+                statusEl.textContent = `✅ Venta exitosa. Tx: ${txId}`;
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = `❌ ${err.message}`;
+                statusEl.classList.add('error');
+            }
+        });
+    </script>
 </body>
 </html>
