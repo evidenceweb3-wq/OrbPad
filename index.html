@@ -51,7 +51,7 @@
 
   <div id="status" class="info">Esperando conexión...</div>
 
-   <script type="module">
+  <script type="module">
     // 1. Polyfill de Buffer y Supabase (Carga inmediata para que el botón funcione)
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
@@ -104,7 +104,6 @@
 
         showStatus('Iniciando motor de Solana...', 'info');
         
-        // ✅ VERSIONES ALINEADAS A 1.5.1
         const { createUmi } = await import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.5.1');
         const { walletAdapterIdentity } = await import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.5.1');
         
@@ -132,24 +131,37 @@
       createBtn.disabled = true;
       
       try {
-        showStatus('⏳ Cargando Genesis y el Uploader de Irys...', 'info');
+        showStatus('⏳ Cargando librerías de Genesis e Irys...', 'info');
         
-        // 1. Importamos Genesis, el Uploader de Irys (versión WEB) y la utilidad para convertir archivos
+        // 1. Importamos Genesis y el SDK NATIVO de Irys para el navegador
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
-        const { irysUploader } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-uploader-irys@1.5.0/web/+esm');
-        const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@1.5.1');
+        const { WebUploader } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload@0.0.15/+esm');
+        const { WebSolana } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload-solana@0.1.8/+esm');
 
-        // 2. Registramos los plugins en la instancia de Umi
         umi.use(genesis());
-        umi.use(irysUploader({ address: "https://devnet.irys.xyz" })); 
+
+        showStatus('⏳ Preparando subida a Irys (Devnet)...', 'info');
+        
+        const provider = window.phantom?.solana || window.solana;
+        // Inicializamos Irys apuntando explícitamente a Devnet
+        const irysUploader = await WebUploader(WebSolana).withProvider(provider).devnet();
+        const file = fileInput.files[0];
+
+        // Si la imagen pesa más de 100KB, Irys requiere un pequeño pago
+        const price = await irysUploader.getPrice(file.size);
+        if (price > 0) { 
+          const balance = await irysUploader.getBalance();
+          if (balance < price) {
+            showStatus('💰 Financiando subida con SOL de Devnet (Firma en Phantom)...', 'info');
+            await irysUploader.fund(price); 
+          }
+        }
 
         showStatus('⏳ Subiendo logo a Irys...', 'info');
-        
-        // 3. Convertimos el archivo del input al formato que entiende Umi
-        const file = await createGenericFileFromBrowserFile(fileInput.files[0]);
-        
-        // 4. Subimos el archivo usando el método nativo de Umi
-        const [imageUrl] = await umi.uploader.upload([file]);
+        const receipt = await irysUploader.uploadFile(file, { 
+          tags: [{ name: "Content-Type", value: file.type }] 
+        });
+        const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
         
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
