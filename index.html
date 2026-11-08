@@ -18,7 +18,7 @@
     .success { background: #1e3a2b; color: #14F195; border: 1px solid #14F195; }
     .error { background: #3a1e1e; color: #ff6b6b; border: 1px solid #ff6b6b; }
     .info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; }
-    #launch-form { display: none; } /* Oculto hasta que se inicie sesión */
+    #launch-form { display: none; }
   </style>
 </head>
 <body>
@@ -51,18 +51,11 @@
 
   <div id="status" class="info">Esperando conexión...</div>
 
-   <script type="module">
-    // 1. Polyfill para el Buffer (Vital para Solana)
+  <script type="module">
+    // 1. Polyfill de Buffer y Supabase (Carga inmediata para que el botón funcione)
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
-
-    // 2. Importar librerías (usando versiones fijas para evitar fallos)
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.9.1';
-    import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@0.9.1';
-    import { genesis, createAndRegisterLaunch } from 'https://esm.sh/@metaplex-foundation/genesis@0.0.1';
-    import { WebUploader } from 'https://esm.sh/@irys/web-upload@0.0.15';
-    import { WebSolana } from 'https://esm.sh/@irys/web-upload-solana@0.0.15';
 
     // ⚠️ CONFIGURA TUS DATOS AQUÍ
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
@@ -85,10 +78,9 @@
 
     // --- PASO 1: AUTENTICACIÓN ---
     loginBtn.addEventListener('click', async () => {
-      // Verificación robusta de Phantom
       const provider = window.phantom?.solana || window.solana;
       if (!provider || !provider.isPhantom) {
-        return showStatus('Instala Phantom Wallet o actívala en tu navegador.', 'error');
+        return showStatus('Phantom no está instalado o no se detectó.', 'error');
       }
       
       try {
@@ -108,10 +100,14 @@
         loginBtn.style.display = 'none';
         launchForm.style.display = 'block';
 
-        // Inicializar Umi (Metaplex)
+        // CARGAMOS METAPLEX SOLO CUANDO EL USUARIO YA ESTÁ LOGUEADO
+        showStatus('Iniciando motor de Solana...', 'info');
+        const { createUmi } = await import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.9.1');
+        const { walletAdapterIdentity } = await import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@0.9.1');
+        
         umi = createUmi('https://api.devnet.solana.com');
         umi.use(walletAdapterIdentity(provider));
-        umi.use(genesis());
+        showStatus('✅ Todo listo. Configura tu token abajo.', 'success');
         
       } catch (err) {
         console.error(err);
@@ -133,8 +129,18 @@
       createBtn.disabled = true;
       
       try {
+        showStatus('⏳ Cargando Irys y Genesis...', 'info');
+        
+        // CARGA DINÁMICA DE IRYS Y GENESIS
+        const { WebUploader } = await import('https://esm.sh/@irys/web-upload@0.0.15');
+        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.0.15');
+        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.0.1');
+        
+        umi.use(genesis());
+
         showStatus('⏳ Subiendo logo a Irys...', 'info');
-        const irysUploader = await WebUploader(WebSolana).withProvider(window.solana);
+        const provider = window.phantom?.solana || window.solana;
+        const irysUploader = await WebUploader(WebSolana).withProvider(provider);
         const file = fileInput.files[0];
         const receipt = await irysUploader.uploadFile(file, { tags: [{ name: "Content-Type", value: file.type }] });
         const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
