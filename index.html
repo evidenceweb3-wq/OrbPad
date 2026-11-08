@@ -88,9 +88,12 @@
         await provider.connect();
         
         showStatus('Firmando mensaje seguro en Supabase...', 'info');
+        
+        // ✅ FIX APLICADO: statement en inglés sin tildes y wallet explícita
         const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
-          statement: 'Acepto los Términos de mi Launchpad ORB.',
+          statement: 'I accept the Terms of Service of Epic ORB Launchpad.',
+          wallet: provider 
         });
         
         if (error) throw error;
