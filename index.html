@@ -169,6 +169,22 @@
   </div>
 
   <script type="module">
+    // ==========================================
+    // ✅ PARCHE CRÍTICO PARA DEVNET (Blockhash)
+    // ==========================================
+    import { Connection } from 'https://esm.sh/@solana/web3.js@1.95.3';
+    
+    // Sobrescribimos la función obsoleta para que use la nueva
+    Connection.prototype.getRecentBlockhash = async function (commitment) {
+      try {
+        const { blockhash, lastValidBlockHeight } = await this.getLatestBlockhash(commitment);
+        return { blockhash, feeCalculator: { lamportsPerSignature: 5000 } };
+      } catch (e) {
+        throw new Error('failed to get recent blockhash: ' + e);
+      }
+    };
+    // ==========================================
+
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
@@ -306,29 +322,24 @@
           showToast('👉 Aprueba en Phantom', 'info');
           
           try {
-            // 1. Obtener un blockhash FRESCO
             const latestBlockhash = await umi.rpc.getLatestBlockhash();
             
-            // 2. Inyectar el blockhash fresco en todas las transacciones
             const patchedTxs = txs.map(tx => {
               if (tx.setBlockhash) {
-                return tx.setBlockhash(latestBlockhash); // Si es TransactionBuilder
+                return tx.setBlockhash(latestBlockhash);
               } else if (tx.message) {
-                tx.message.recentBlockhash = latestBlockhash.blockhash; // Si es Transaction
+                tx.message.recentBlockhash = latestBlockhash.blockhash;
                 return tx;
               }
               return tx;
             });
 
-            // 3. Firmar todas
             const signedTxs = await umi.identity.signAllTransactions(patchedTxs);
             
-            // 4. Enviar
             const signatures = await Promise.all(
               signedTxs.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' }))
             );
             
-            // 5. Confirmar la última
             const lastIdx = signedTxs.length - 1;
             await umi.rpc.confirmTransaction({
               signature: signatures[lastIdx],
