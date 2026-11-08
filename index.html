@@ -119,9 +119,8 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
     
-    // Si Helius te da problemas de lentitud, esta es una alternativa más rápida y gratuita
-    const HELIUS_RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
-    const PUBLIC_RPC = 'https://api.devnet.solana.com';
+    // ✅ RPC PÚBLICO RESTAURADO (Más rápido para crear tokens en Devnet)
+    const FRONTEND_RPC = 'https://api.devnet.solana.com';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -172,8 +171,7 @@
         createSection.classList.remove('hidden');
         tradeSection.classList.remove('hidden');
 
-        // Usamos Helius para las lecturas y el envío
-        umi = createUmi(HELIUS_RPC);
+        umi = createUmi(FRONTEND_RPC);
         umi.use(walletAdapterIdentity(provider));
         umi.use(mplToolbox());
         
@@ -274,25 +272,25 @@
           token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
           launchType: 'bondingCurve',
           launch: {
-            firstBuyAmount: 0.1,
+            firstBuyAmount: 0.1, // Liquidez inicial de 0.1 SOL
           },
         };
 
-        // ✅ SISTEMA DE REINTENTOS (Blockhash y Límites)
+        // Reintentos en caso de Blockhash expirado
         let result;
         let maxRetries = 3;
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
             result = await createAndRegisterLaunch(umi, {}, launchInput);
-            break; // Si funciona, sale del bucle
+            break;
           } catch (err) {
             const isRetryable = err.message?.includes('Blockhash not found') || err.message?.includes('429') || err.message?.includes('block height exceeded');
             if (isRetryable && attempt < maxRetries) {
-              const delay = attempt * 3000; // 3s, 6s...
+              const delay = attempt * 3000;
               showStatus(`⏳ Red lenta. Reintentando en ${delay / 1000}s... (Intento ${attempt}/${maxRetries})`, 'info');
               await new Promise(resolve => setTimeout(resolve, delay));
             } else {
-              throw err; // Si no es reintentable, lanza el error
+              throw err;
             }
           }
         }
@@ -442,7 +440,7 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR ---
+    // --- 6. COMPRAR (CON SWAPDIRECTION CORRECTO) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -522,7 +520,7 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER ---
+    // --- 7. VENDER (CON SWAPDIRECTION CORRECTO) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
