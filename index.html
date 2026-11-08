@@ -276,24 +276,19 @@
           },
         };
 
-        // ✅ EL TRUCO: Enviar todas las transacciones sin esperar simulación
-        const fastTxSender = async (txs) => {
-          // Firmar todas las transacciones
-          const signedTxs = await Promise.all(txs.map(tx => umi.identity.signTransaction(tx)));
-          
-          // Enviar todas a la red en paralelo, saltando la simulación
-          const signatures = await Promise.all(signedTxs.map(tx => 
-            umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' })
-          ));
-          
-          // Confirmar solo la última (garantiza que las anteriores se procesaron)
-          const lastIdx = signedTxs.length - 1;
-          await umi.rpc.confirmTransaction({
-            signature: signatures[lastIdx],
-            blockhash: signedTxs[lastIdx].message.recentBlockhash,
-            lastValidBlockHeight: signedTxs[lastIdx].message.lastValidBlockHeight,
-          }, { commitment: 'confirmed' });
-
+        // ✅ EL TRUCO: Enviar todas las transacciones en ráfaga (skipPreflight)
+        // Esto evita que el blockhash expire mientras Phantom te pide aprobación.
+        const fastTxSender = async (transactions) => {
+          const signatures = [];
+          for (const tx of transactions) {
+            // Firmar y enviar inmediatamente sin esperar confirmación de red
+            const signedTx = await umi.identity.signTransaction(tx);
+            const sig = await umi.rpc.sendTransaction(signedTx, { 
+              skipPreflight: true, 
+              preflightCommitment: 'processed' 
+            });
+            signatures.push(sig);
+          }
           return signatures;
         };
 
