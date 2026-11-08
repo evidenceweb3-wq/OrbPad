@@ -341,7 +341,7 @@
       }
     }
 
-    // --- 5. GRÁFICO DE VELAS CON DATOS REALES ---
+    // --- 5. GRÁFICO DE VELAS ---
     function initChart() {
       const container = document.getElementById('chart-container');
       if (!container || candleSeries) return;
@@ -398,7 +398,7 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR (CON VALIDACIÓN, wSOL MANUAL Y GUARDADO DE VELA) ---
+    // --- 6. COMPRAR (PARÁMETROS OFICIALES DEL SDK) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
@@ -414,8 +414,9 @@
         const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
-        const baseMint = publicKey(currentBaseMint); 
-        
+        const baseMint = publicKey(currentBaseMint);
+        const quoteMint = publicKey('So11111111111111111111111111111111111111112');
+
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucketAccount = await umi.rpc.getAccount(bucketPda);
         if (!bucketAccount.exists) throw new Error("El bucket no existe.");
@@ -426,24 +427,24 @@
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Envolviendo SOL...', 'info');
-        const WSOL = publicKey('So11111111111111111111111111111111111111112');
         const SPL_TOKEN = publicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-        const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: WSOL, owner: umi.identity.publicKey });
+        const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: quoteMint, owner: umi.identity.publicKey });
         const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: baseMint, owner: umi.identity.publicKey });
 
         await transactionBuilder()
-          .add(createTokenIfMissing(umi, { mint: WSOL, token: userQuoteTokenAccount, tokenProgram: SPL_TOKEN }))
+          .add(createTokenIfMissing(umi, { mint: quoteMint, token: userQuoteTokenAccount, tokenProgram: SPL_TOKEN }))
           .add(transferSol(umi, { destination: userQuoteTokenAccount, amount: sol(amountSol) }))
           .add(syncNative(umi, { account: userQuoteTokenAccount }))
           .sendAndConfirm(umi);
 
         showStatus('⏳ Ejecutando compra...', 'info');
 
+        // ✅ Parámetros exactos del SDK oficial
         await swapBondingCurveV2(umi, {
           genesisAccount: genesisPubkey,
           bucket: bucketPda,
           baseMint: baseMint,
-          quoteMint: WSOL,
+          quoteMint: quoteMint,
           baseTokenAccount: userBaseTokenAccount,
           quoteTokenAccount: userQuoteTokenAccount,
           amount: quote.amountIn,
@@ -453,7 +454,7 @@
 
         showStatus(`✅ Compra exitosa. Actualizando gráfico...`, 'success');
 
-        // ✅ GUARDAR EN SUPABASE PARA EL GRÁFICO
+        // Guardar swap en Supabase
         const price = amountSol / (Number(quote.amountOut) / 1e9);
         await supabase.from('bond_swaps').insert({
           genesis_address: currentGenesis,
@@ -464,8 +465,7 @@
           swap_direction: 'buy'
         });
 
-        // Recargar la tarjeta y el gráfico
-        await renderTokenCard(currentGenesis, "Token", "TKN", ""); 
+        await renderTokenCard(currentGenesis, "Token", "TKN", "");
         updateChart(currentGenesis);
 
         try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
@@ -476,7 +476,7 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER (CON VALIDACIÓN, wSOL MANUAL Y GUARDADO DE VELA) ---
+    // --- 7. VENDER (PARÁMETROS OFICIALES DEL SDK) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
@@ -493,7 +493,8 @@
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
-        
+        const quoteMint = publicKey('So11111111111111111111111111111111111111112');
+
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucketAccount = await umi.rpc.getAccount(bucketPda);
         if (!bucketAccount.exists) throw new Error("El bucket no existe.");
@@ -504,15 +505,15 @@
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Ejecutando venta...', 'info');
-        const WSOL = publicKey('So11111111111111111111111111111111111111112');
-        const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: WSOL, owner: umi.identity.publicKey });
+        const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: quoteMint, owner: umi.identity.publicKey });
         const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: baseMint, owner: umi.identity.publicKey });
 
+        // ✅ Parámetros exactos del SDK oficial
         await swapBondingCurveV2(umi, {
           genesisAccount: genesisPubkey,
           bucket: bucketPda,
           baseMint: baseMint,
-          quoteMint: WSOL,
+          quoteMint: quoteMint,
           baseTokenAccount: userBaseTokenAccount,
           quoteTokenAccount: userQuoteTokenAccount,
           amount: quote.amountIn,
@@ -522,7 +523,7 @@
 
         showStatus(`✅ Venta exitosa. Actualizando gráfico...`, 'success');
 
-        // ✅ GUARDAR EN SUPABASE PARA EL GRÁFICO
+        // Guardar swap en Supabase
         const price = (Number(quote.amountOut) / 1e9) / amountTokens;
         await supabase.from('bond_swaps').insert({
           genesis_address: currentGenesis,
@@ -533,8 +534,7 @@
           swap_direction: 'sell'
         });
 
-        // Recargar la tarjeta y el gráfico
-        await renderTokenCard(currentGenesis, "Token", "TKN", ""); 
+        await renderTokenCard(currentGenesis, "Token", "TKN", "");
         updateChart(currentGenesis);
 
         try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
