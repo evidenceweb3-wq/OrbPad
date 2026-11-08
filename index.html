@@ -48,13 +48,11 @@
 
   <button id="login-btn">🔐 Conectar Wallet e Iniciar Sesión</button>
 
-  <!-- SECCIÓN: LANZAMIENTOS GUARDADOS -->
   <div id="saved-section" class="card hidden">
     <h3>📚 Mis Lanzamientos</h3>
     <div id="launches-list"></div>
   </div>
 
-  <!-- SECCIÓN: CREAR TOKEN -->
   <div id="create-section" class="card hidden">
     <h3>✨ Crear Token (Bonding Curve)</h3>
     <div class="input-group">
@@ -72,7 +70,6 @@
     <button id="create-launch-btn">✨ Crear Lanzamiento en Devnet</button>
   </div>
 
-  <!-- SECCIÓN: TRADE -->
   <div id="trade-section" class="card hidden">
     <h3>📊 Comprar / Vender</h3>
     <div class="input-group">
@@ -81,7 +78,7 @@
     </div>
     <div class="input-group">
       <label>Token Mint (Base Mint)</label>
-      <input type="text" id="base-mint" placeholder="Se llenará automáticamente al crear o seleccionar..." readonly>
+      <input type="text" id="base-mint" placeholder="Se llenará automáticamente..." readonly>
     </div>
     <div class="flex-row">
       <div class="input-group">
@@ -99,13 +96,12 @@
     </div>
   </div>
 
-  <!-- TARJETA DEL TOKEN -->
   <div id="token-display" class="hidden"></div>
 
-  <!-- GRÁFICO DE VELAS -->
   <div id="chart-section" class="card hidden">
     <h3>📈 Gráfico de Velas</h3>
     <div id="chart-container"></div>
+    <p id="chart-message" style="text-align:center; color:#888; margin-top:10px;"></p>
   </div>
 
   <div id="status" class="info">Esperando conexión...</div>
@@ -138,6 +134,7 @@
     const genesisInput = document.getElementById('genesis-address');
     const baseMintInput = document.getElementById('base-mint');
     const launchesList = document.getElementById('launches-list');
+    const chartMessage = document.getElementById('chart-message');
 
     let umi = null;
     let currentGenesis = null;
@@ -180,13 +177,10 @@
       }
     });
 
-    // --- 2. CARGAR LANZAMIENTOS GUARDADOS ---
+    // --- 2. CARGAR LANZAMIENTOS ---
     async function loadSavedLaunches() {
       const { data, error } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error('Error al cargar lanzamientos:', error);
-        return;
-      }
+      if (error) { console.error('Error al cargar lanzamientos:', error); return; }
       launchesList.innerHTML = '';
       data.forEach(launch => {
         const item = document.createElement('div');
@@ -198,23 +192,27 @@
           </div>
           <button class="btn-select" style="width:auto; padding:8px 12px; font-size:14px;">Seleccionar</button>
         `;
-        item.querySelector('.btn-select').addEventListener('click', () => {
-          selectLaunch(launch);
-        });
+        item.querySelector('.btn-select').addEventListener('click', () => selectLaunch(launch));
         launchesList.appendChild(item);
       });
     }
 
-    function selectLaunch(launch) {
+    async function selectLaunch(launch) {
       currentGenesis = launch.genesis_address;
       currentBaseMint = launch.base_mint;
       genesisInput.value = currentGenesis;
-      baseMintInput.value = currentBaseMint;
+      baseMintInput.value = currentBaseMint || '';
 
-      document.querySelectorAll('.launch-item').forEach(el => el.classList.remove('selected'));
-      // Resaltar el seleccionado (opcional)
+      // Si falta baseMint, intentar obtenerlo de la API de Metaplex
+      if (!currentBaseMint) {
+        try {
+          const res = await fetch(`https://api.metaplex.com/v1/launches/${currentGenesis}?network=solana-devnet`);
+          const json = await res.json();
+          currentBaseMint = json.data?.mintAddress;
+          baseMintInput.value = currentBaseMint || '';
+        } catch (e) { console.warn('No se pudo obtener baseMint de la API:', e); }
+      }
 
-      // Mostrar tarjeta y gráfico
       renderTokenCard(currentGenesis, launch.token_name, launch.token_symbol, launch.token_image_url);
       updateChart(currentGenesis);
     }
@@ -243,19 +241,15 @@
         const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-to-irys', {
           body: { fileBase64, fileName: file.name, fileType: file.type }
         });
-        
         if (uploadError) {
-          let realErrorMessage = uploadError.message;
-          try {
-            const errorBody = await uploadError.context.json();
-            if (errorBody && errorBody.error) realErrorMessage = errorBody.error;
-          } catch (e) {}
-          throw new Error(realErrorMessage);
+          let msg = uploadError.message;
+          try { const body = await uploadError.context.json(); if (body?.error) msg = body.error; } catch (e) {}
+          throw new Error(msg);
         }
-        if (uploadData && uploadData.error) throw new Error(uploadData.error);
+        if (uploadData?.error) throw new Error(uploadData.error);
         
         const imageUrl = uploadData.url;
-        showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
+        showStatus('✅ Logo subido. Creando lanzamiento...', 'info');
 
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
@@ -271,8 +265,7 @@
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
         
         const genesisAddress = result.genesisAccount.toString();
-        const baseMint = result.mintAddress.toString(); // ✅ Guardamos el mint
-        
+        const baseMint = result.mintAddress.toString();
         if (!genesisAddress || !baseMint) throw new Error("No se pudieron obtener las direcciones.");
 
         genesisInput.value = genesisAddress;
@@ -292,7 +285,7 @@
         });
 
         await renderTokenCard(genesisAddress, tokenName, tokenSymbol, imageUrl);
-        await loadSavedLaunches(); // Recargar lista
+        await loadSavedLaunches();
         updateChart(genesisAddress);
 
       } catch (err) {
@@ -303,24 +296,21 @@
       }
     });
 
-    // --- 4. TARJETA DEL TOKEN (PRECIO Y MCAP) ---
+    // --- 4. TARJETA CON PRECIO Y MCAP REALES ---
     async function renderTokenCard(genesisAddress, name, symbol, image) {
       try {
-        const { findBondingCurveBucketV2Pda, getSwapResult, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        
+        const { findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: publicKey(genesisAddress), bucketIndex: 0 });
         const bucketAccount = await umi.rpc.getAccount(bucketPda);
         
-        let price = 0;
-        let marketCap = 0;
+        let price = 0, marketCap = 0;
 
         if (bucketAccount.exists) {
-          const bucket = bucketAccount.data;
-          const quote = getSwapResult(bucket, 1_000_000n, SwapDirection.Buy);
-          if (quote.amountOut > 0n) {
-            price = 0.001 / (Number(quote.amountOut) / 1e9);
-          }
-          const totalSupply = 1_000_000_000; 
+          const data = bucketAccount.data;
+          const totalSol = Number(data.virtualSol + data.realSol) / 1e9;
+          const totalTokens = Number(data.virtualTokens + data.realTokens) / 1e9;
+          price = totalSol / totalTokens;
+          const totalSupply = 1_000_000_000; // Asumiendo 1B de suministro; ajusta si es diferente
           marketCap = price * totalSupply;
         }
 
@@ -331,18 +321,9 @@
               <h2>${name} <span class="symbol">(${symbol})</span></h2>
               <div style="font-size: 12px; color: #888; margin-bottom: 10px;">Genesis: ${genesisAddress.slice(0, 8)}...${genesisAddress.slice(-8)}</div>
               <div class="token-stats">
-                <div class="stat">
-                  <span class="label">Precio</span>
-                  <span class="value price">${price > 0 ? price.toFixed(6) : '0.000000'} SOL</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Market Cap</span>
-                  <span class="value">${marketCap > 0 ? '$' + marketCap.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '$0'}</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Estado</span>
-                  <span class="value" style="color: #14F195;">Activo</span>
-                </div>
+                <div class="stat"><span class="label">Precio</span><span class="value price">${price > 0 ? price.toFixed(8) : '0.00000000'} SOL</span></div>
+                <div class="stat"><span class="label">Market Cap</span><span class="value">${marketCap > 0 ? '$' + marketCap.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '$0'}</span></div>
+                <div class="stat"><span class="label">Estado</span><span class="value" style="color: #14F195;">Activo</span></div>
               </div>
             </div>
           </div>
@@ -354,32 +335,25 @@
         tokenDisplay.innerHTML = `
           <div class="token-card">
             <img src="${image}" alt="${symbol}" onerror="this.src='https://via.placeholder.com/80'">
-            <div class="token-info">
-              <h2>${name} <span class="symbol">(${symbol})</span></h2>
-              <p style="color: #aaa;">Genesis: ${genesisAddress}</p>
-            </div>
+            <div class="token-info"><h2>${name} <span class="symbol">(${symbol})</span></h2><p style="color: #aaa;">Genesis: ${genesisAddress}</p></div>
           </div>
         `;
         tokenDisplay.classList.remove('hidden');
       }
     }
 
-    // --- 5. GRÁFICO DE VELAS ---
+    // --- 5. GRÁFICO DE VELAS CON DATOS REALES ---
     function initChart() {
       const container = document.getElementById('chart-container');
       if (!container || candleSeries) return;
       const chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: 400,
+        width: container.clientWidth, height: 400,
         layout: { background: { color: '#1e1e1e' }, textColor: '#DDD' },
         grid: { vertLines: { color: '#333' }, horzLines: { color: '#333' } },
       });
       candleSeries = chart.addCandlestickSeries({
-        upColor: '#14F195',
-        downColor: '#ff6b6b',
-        borderVisible: false,
-        wickUpColor: '#14F195',
-        wickDownColor: '#ff6b6b',
+        upColor: '#14F195', downColor: '#ff6b6b',
+        borderVisible: false, wickUpColor: '#14F195', wickDownColor: '#ff6b6b',
       });
     }
 
@@ -388,59 +362,73 @@
       if (!candleSeries) return;
       
       const data = await fetchHistoricalData(genesisAddress);
-      candleSeries.setData(data);
+      if (data.length === 0) {
+        chartMessage.textContent = 'Aún no hay operaciones registradas para este token.';
+        candleSeries.setData([]);
+      } else {
+        chartMessage.textContent = '';
+        candleSeries.setData(data);
+      }
       chartSection.classList.remove('hidden');
     }
 
-    // ⚠️ ESTA FUNCIÓN ES UN EJEMPLO. Para datos reales, indexa los eventos
-    // BondingCurveSwapEvent o consulta una API. Por ahora generamos datos sintéticos.
     async function fetchHistoricalData(genesisAddress) {
-      // Simulamos datos para que el gráfico se renderice
-      const now = Math.floor(Date.now() / 1000);
-      const data = [];
-      let price = 0.0001;
-      for (let i = 20; i >= 0; i--) {
-        const time = now - (i * 3600);
-        const open = price * (0.95 + Math.random() * 0.1);
-        const close = price * (0.95 + Math.random() * 0.1);
-        const high = Math.max(open, close) * (1 + Math.random() * 0.05);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.05);
-        data.push({ time, open, high, low, close });
-        price = close;
+      // Consultar la tabla bond_swaps en Supabase
+      const { data, error } = await supabase
+        .from('bond_swaps')
+        .select('block_time, price')
+        .eq('genesis_address', genesisAddress)
+        .order('block_time', { ascending: true });
+
+      if (error || !data) {
+        console.error('Error al obtener swaps:', error);
+        return [];
       }
-      return data;
+
+      // Agrupar en velas de 1 hora (3600 segundos)
+      const candles = new Map();
+      for (const swap of data) {
+        const bucket = Math.floor(swap.block_time / 3600) * 3600;
+        if (!candles.has(bucket)) {
+          candles.set(bucket, { time: bucket, open: swap.price, high: swap.price, low: swap.price, close: swap.price });
+        } else {
+          const c = candles.get(bucket);
+          c.high = Math.max(c.high, swap.price);
+          c.low = Math.min(c.low, swap.price);
+          c.close = swap.price;
+        }
+      }
+      return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR ---
+    // --- 6. COMPRAR (CON VALIDACIÓN Y wSOL MANUAL) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
-      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
+      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
       
       const amountSol = parseFloat(document.getElementById('trade-amount').value);
       const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
       if (isNaN(amountSol) || amountSol <= 0) return showStatus('Cantidad inválida.', 'error');
 
-      buyBtn.disabled = true;
-      sellBtn.disabled = true;
+      buyBtn.disabled = true; sellBtn.disabled = true;
 
       try {
         showStatus('⏳ Preparando compra...', 'info');
-        
         const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
-        const baseMint = publicKey(currentBaseMint); // ✅ Usamos el mint guardado
+        const baseMint = publicKey(currentBaseMint); // ✅ PublicKey válido
         
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        const bucket = await umi.rpc.getAccount(bucketPda);
-        if (!isSwappable(bucket)) throw new Error("La curva no está activa.");
+        const bucketAccount = await umi.rpc.getAccount(bucketPda);
+        if (!bucketAccount.exists) throw new Error("El bucket no existe.");
+        if (!isSwappable(bucketAccount.data)) throw new Error("La curva no está activa.");
 
         const amountIn = BigInt(Math.floor(amountSol * 1_000_000_000));
-        const quote = getSwapResult(bucket, amountIn, SwapDirection.Buy);
+        const quote = getSwapResult(bucketAccount.data, amountIn, SwapDirection.Buy);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Envolviendo SOL...', 'info');
-        
         const WSOL = publicKey('So11111111111111111111111111111111111111112');
         const SPL_TOKEN = publicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
         const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: WSOL, owner: umi.identity.publicKey });
@@ -468,49 +456,42 @@
 
         showStatus(`✅ Compra exitosa.`, 'success');
 
-        try {
-          await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi);
-        } catch (e) {}
+        try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
 
       } catch (err) {
         console.error(err);
         showStatus('Error al comprar: ' + (err.message || 'Revisa la consola.'), 'error');
-      } finally {
-        buyBtn.disabled = false;
-        sellBtn.disabled = false;
-      }
+      } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER ---
+    // --- 7. VENDER (CON VALIDACIÓN Y wSOL MANUAL) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
-      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
+      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
       
       const amountTokens = parseFloat(document.getElementById('trade-amount').value);
       const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
       if (isNaN(amountTokens) || amountTokens <= 0) return showStatus('Cantidad inválida.', 'error');
 
-      buyBtn.disabled = true;
-      sellBtn.disabled = true;
+      buyBtn.disabled = true; sellBtn.disabled = true;
 
       try {
         showStatus('⏳ Preparando venta...', 'info');
-        
         const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        const bucket = await umi.rpc.getAccount(bucketPda);
-        if (!isSwappable(bucket)) throw new Error("La curva no está activa.");
+        const bucketAccount = await umi.rpc.getAccount(bucketPda);
+        if (!bucketAccount.exists) throw new Error("El bucket no existe.");
+        if (!isSwappable(bucketAccount.data)) throw new Error("La curva no está activa.");
 
         const amountIn = BigInt(Math.floor(amountTokens * 1_000_000_000));
-        const quote = getSwapResult(bucket, amountIn, SwapDirection.Sell);
+        const quote = getSwapResult(bucketAccount.data, amountIn, SwapDirection.Sell);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Ejecutando venta...', 'info');
-
         const WSOL = publicKey('So11111111111111111111111111111111111111112');
         const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: WSOL, owner: umi.identity.publicKey });
         const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: baseMint, owner: umi.identity.publicKey });
@@ -528,18 +509,12 @@
         }).sendAndConfirm(umi);
 
         showStatus(`✅ Venta exitosa.`, 'success');
-
-        try {
-          await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi);
-        } catch (e) {}
+        try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
 
       } catch (err) {
         console.error(err);
         showStatus('Error al vender: ' + (err.message || 'Revisa la consola.'), 'error');
-      } finally {
-        buyBtn.disabled = false;
-        sellBtn.disabled = false;
-      }
+      } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
   </script>
 </body>
