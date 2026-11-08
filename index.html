@@ -7,113 +7,109 @@
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     :root {
-      --bg-dark: #0f0f0f;
-      --panel-bg: #1a1a1a;
-      --border: #2a2a2a;
-      --solana-purple: #9945FF;
-      --solana-green: #14F195;
-      --danger: #ff4d4d;
-      --text-muted: #888;
+      --bg-dark: #0d0d0f;
+      --panel-bg: #16161a;
+      --border: #2a2a32;
+      --purple: #9945FF;
+      --green: #14F195;
+      --red: #ff4d4d;
+      --text-muted: #8b8b9a;
     }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
     
     body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      background-color: var(--bg-dark); 
-      color: #fff; 
-      margin: 0; 
-      height: 100vh; 
-      display: flex; 
-      flex-direction: column; 
-      overflow: hidden; /* Evita el scroll */
+      background-color: var(--bg-dark); color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
     }
 
-    /* Navbar Superior */
+    /* Navbar */
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 30px;
-      background: var(--panel-bg);
-      border-bottom: 1px solid var(--border);
+      height: 60px; display: flex; justify-content: space-between; align-items: center;
+      padding: 0 24px; background: var(--panel-bg); border-bottom: 1px solid var(--border);
     }
-    header h1 { margin: 0; font-size: 1.5rem; color: var(--solana-green); display: flex; align-items: center; gap: 10px; }
+    header h1 { font-size: 1.2rem; color: var(--green); display: flex; align-items: center; gap: 8px; }
     #login-btn { 
-      background: var(--solana-purple); color: white; padding: 10px 20px; border: none; border-radius: 8px; 
-      font-weight: bold; cursor: pointer; transition: 0.3s;
+      background: var(--purple); color: white; padding: 8px 16px; border: none; border-radius: 6px; 
+      font-weight: 600; cursor: pointer; transition: 0.2s;
     }
-    #login-btn:hover { opacity: 0.8; transform: translateY(-2px); }
+    #login-btn:hover { opacity: 0.8; }
 
-    /* Layout Principal (Grid) */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 20px;
-      padding: 20px;
-      flex-grow: 1;
-      height: calc(100vh - 70px);
-      box-sizing: border-box;
+    /* Layout */
+    .app-layout {
+      display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 60px);
     }
 
-    /* Paneles */
-    .panel {
-      background: var(--panel-bg);
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      overflow-y: auto;
+    /* Panel Izquierdo */
+    .sidebar {
+      background: var(--panel-bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow-y: auto;
     }
-    .panel h2 { margin: 0 0 10px 0; font-size: 1.2rem; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
-
-    /* Formularios */
-    .input-group { display: flex; flex-direction: column; gap: 5px; }
-    .input-group label { font-size: 0.85rem; color: var(--text-muted); }
-    .input-group input { 
-      background: #252525; border: 1px solid var(--border); color: white; 
-      padding: 10px; border-radius: 8px; font-size: 1rem; outline: none; transition: 0.2s;
-    }
-    .input-group input:focus { border-color: var(--solana-purple); }
-
-    .btn-primary { background: var(--solana-green); color: #000; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; margin-top: 10px;}
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
-
-    /* Sección de Trade */
-    .trade-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
-    .btn-buy { background: var(--solana-green); color: #000; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    .btn-sell { background: var(--danger); color: #fff; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-    /* Lista de Lanzamientos */
-    .launch-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 200px; }
-    .launch-item { 
-      background: #252525; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;
-    }
-    .launch-item:hover { border-color: var(--solana-purple); transform: translateX(5px); }
-    .launch-item.active { border-color: var(--solana-green); background: rgba(20, 241, 149, 0.05); }
-
-    /* Zona del Gráfico y Stats */
-    .chart-area { display: flex; flex-direction: column; height: 100%; gap: 15px; }
-    .token-header { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 15px; border-radius: 10px; border: 1px solid var(--border);}
-    .token-stats { display: flex; gap: 30px; }
-    .stat-box { display: flex; flex-direction: column; }
-    .stat-box span:first-child { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    .stat-box span:last-child { font-size: 1.2rem; font-weight: bold; color: var(--solana-green); }
+    .card { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .card h3 { font-size: 0.9rem; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
     
-    #chart-container { flex-grow: 1; background: #1a1a1a; border-radius: 10px; border: 1px solid var(--border); min-height: 300px; }
+    .input-group { margin-bottom: 12px; }
+    .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+    .input-group input { 
+      width: 100%; background: var(--panel-bg); border: 1px solid var(--border); color: white; 
+      padding: 10px; border-radius: 6px; font-size: 0.9rem; outline: none;
+    }
+    .input-group input:focus { border-color: var(--purple); }
+    
+    .btn-primary { 
+      width: 100%; background: var(--green); color: #000; padding: 12px; border: none; 
+      border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 8px;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* Lista de Tokens */
+    .token-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .token-item {
+      display: flex; align-items: center; justify-content: space-between; padding: 10px;
+      background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .token-item:hover { border-color: var(--purple); }
+    .token-item.active { border-color: var(--green); background: rgba(20, 241, 149, 0.05); }
+    .token-info { display: flex; align-items: center; gap: 10px; }
+    .token-info img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    .token-info h4 { font-size: 0.9rem; margin: 0; }
+    .token-info p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+
+    /* Panel Derecho (Trading) */
+    .main-content { display: flex; flex-direction: column; padding: 20px; gap: 20px; }
+    
+    .token-header { display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+    .token-title { display: flex; align-items: center; gap: 16px; }
+    .token-title img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--green); }
+    .token-title h2 { font-size: 1.5rem; margin: 0; }
+    .token-title span { font-size: 0.9rem; color: var(--text-muted); }
+    
+    .stats { display: flex; gap: 32px; }
+    .stat-item { display: flex; flex-direction: column; }
+    .stat-item span:first-child { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .stat-item span:last-child { font-size: 1.2rem; font-weight: bold; color: var(--green); }
+
+    .chart-container { flex: 1; background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+    
+    /* Panel de Trade */
+    .trade-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: var(--panel-bg); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+    .trade-inputs { display: flex; gap: 12px; grid-column: span 2; }
+    .trade-inputs .input-group { flex: 1; margin: 0; }
+    
+    .trade-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; grid-column: span 2; }
+    .btn-buy { background: var(--green); color: #000; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-sell { background: var(--red); color: #fff; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
     /* Status Toast */
-    #status {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 0.9rem;
-      display: none; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
     }
-    #status.info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; display: block;}
-    #status.success { background: #1e3a2b; color: var(--solana-green); border: 1px solid var(--solana-green); display: block;}
-    #status.error { background: #3a1e1e; color: var(--danger); border: 1px solid var(--danger); display: block;}
+    #toast.show { opacity: 1; }
+    #toast.info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; }
+    #toast.success { background: #1e3a2b; color: var(--green); border: 1px solid var(--green); }
+    #toast.error { background: #3a1e1e; color: var(--red); border: 1px solid var(--red); }
 
-    /* Ocultar secciones */
     .hidden { display: none !important; }
   </style>
 </head>
@@ -124,16 +120,14 @@
     <button id="login-btn">🔐 Conectar Wallet</button>
   </header>
 
-  <div id="app-content" class="main-grid hidden">
+  <div id="app-layout" class="app-layout hidden">
     
-    <!-- Panel Izquierdo: Crear y Lista -->
-    <div style="display: flex; flex-direction: column; gap: 20px; height: 100%;">
-      
-      <!-- Crear Token -->
-      <div class="panel">
-        <h2>✨ Crear Token</h2>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="card">
+        <h3>✨ Crear Lanzamiento</h3>
         <div class="input-group">
-          <label>Nombre</label>
+          <label>Nombre del Token</label>
           <input type="text" id="token-name" placeholder="Ej: Epic ORB" value="Epic ORB">
         </div>
         <div class="input-group">
@@ -142,67 +136,63 @@
         </div>
         <div class="input-group">
           <label>Logo (PNG/JPG)</label>
-          <input type="file" id="logo-input" accept="image/png, image/jpeg" style="font-size: 0.8rem;">
+          <input type="file" id="logo-input" accept="image/png, image/jpeg">
         </div>
-        <button id="create-launch-btn" class="btn-primary">Crear Lanzamiento (0.1 SOL)</button>
+        <button id="create-btn" class="btn-primary">Lanzar Token (0.1 SOL Inicial)</button>
       </div>
 
-      <!-- Mis Lanzamientos -->
-      <div class="panel" style="flex-grow: 1; overflow: hidden;">
-        <h2>📚 Mis Lanzamientos</h2>
-        <div id="launches-list" class="launch-list">
-          <!-- Se llena con JS -->
+      <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+        <h3>📚 Mis Tokens</h3>
+        <div id="token-list" class="token-list">
+          <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">Conecta tu wallet para ver tokens.</p>
         </div>
       </div>
     </div>
 
-    <!-- Panel Derecho: Trade y Gráfico -->
-    <div class="panel chart-area">
-      
-      <!-- Header del Token -->
+    <!-- Main Content -->
+    <div class="main-content">
       <div class="token-header">
-        <div style="display: flex; align-items: center; gap: 15px;">
-          <img id="active-token-img" src="https://via.placeholder.com/40" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--solana-green);">
+        <div class="token-title">
+          <img id="active-img" src="https://via.placeholder.com/48" alt="Token">
           <div>
-            <h3 id="active-token-name" style="margin: 0; font-size: 1.2rem;">Selecciona un token</h3>
-            <small id="active-token-symbol" style="color: var(--text-muted);">Ninguno</small>
+            <h2 id="active-name">Selecciona un Token</h2>
+            <span id="active-symbol">---</span>
           </div>
         </div>
-        <div class="token-stats">
-          <div class="stat-box">
+        <div class="stats">
+          <div class="stat-item">
             <span>Precio</span>
-            <span id="active-token-price">0.0000 SOL</span>
+            <span id="active-price">0.0000 SOL</span>
           </div>
-          <div class="stat-box">
+          <div class="stat-item">
             <span>Market Cap</span>
-            <span id="active-token-mcap">$0</span>
+            <span id="active-mcap">$0</span>
           </div>
         </div>
       </div>
 
-      <!-- Gráfico -->
-      <div id="chart-container"></div>
+      <div id="chart" class="chart-container"></div>
 
-      <!-- Controles de Trade -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #252525; padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
-        <div class="input-group">
-          <label>Cantidad (SOL o Tokens)</label>
-          <input type="number" id="trade-amount" placeholder="0.1" step="0.01" value="0.1">
+      <div class="trade-panel">
+        <div class="trade-inputs">
+          <div class="input-group">
+            <label>Cantidad (SOL / Tokens)</label>
+            <input type="number" id="trade-amount" placeholder="0.1" step="0.01" value="0.1">
+          </div>
+          <div class="input-group">
+            <label>Slippage (%)</label>
+            <input type="number" id="slippage" value="1" min="0.1" max="50" step="0.1">
+          </div>
         </div>
-        <div class="input-group">
-          <label>Slippage (%)</label>
-          <input type="number" id="slippage" value="1" min="0.1" max="50" step="0.1">
-        </div>
-        <div class="trade-buttons" style="grid-column: span 2;">
+        <div class="trade-actions">
           <button id="buy-btn" class="btn-buy">🟢 Comprar</button>
           <button id="sell-btn" class="btn-sell">🔴 Vender</button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <div id="status" class="info"></div>
+  <div id="toast"></div>
 
   <script type="module">
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
@@ -213,365 +203,221 @@
     import { publicKey, sol, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
     import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@0.11.4';
 
-    // CONFIGURACIÓN
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
-    const FRONTEND_RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro/1581092744fa8ee03fd0cb1d157f3b907e9840e4/';
+    const RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro/1581092744fa8ee03fd0cb1d157f3b907e9840e4/';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let umi = null, currentGenesis = null, currentBaseMint = null, candleSeries = null;
 
-    let umi = null;
-    let currentGenesis = null;
-    let currentBaseMint = null;
-    let candleSeries = null;
-
-    // UI Elements
-    const loginBtn = document.getElementById('login-btn');
-    const appContent = document.getElementById('app-content');
-    const statusDiv = document.getElementById('status');
-    const launchesList = document.getElementById('launches-list');
-    
-    // Estado activo
-    const activeImg = document.getElementById('active-token-img');
-    const activeName = document.getElementById('active-token-name');
-    const activeSymbol = document.getElementById('active-token-symbol');
-    const activePrice = document.getElementById('active-token-price');
-    const activeMcap = document.getElementById('active-token-mcap');
-
-    function showStatus(msg, type) {
-      statusDiv.textContent = msg;
-      statusDiv.className = type;
-      setTimeout(() => { statusDiv.className = ''; statusDiv.style.display = 'none'; }, 5000);
+    // UI Helpers
+    const toast = document.getElementById('toast');
+    function showToast(msg, type) {
+      toast.textContent = msg; toast.className = `show ${type}`;
+      setTimeout(() => toast.className = '', 4000);
     }
 
-    // 1. CONEXIÓN
-    loginBtn.addEventListener('click', async () => {
+    // 1. LOGIN
+    document.getElementById('login-btn').addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
-      if (!provider || !provider.isPhantom) return showStatus('Instala Phantom Wallet.', 'error');
+      if (!provider?.isPhantom) return showToast('Instala Phantom.', 'error');
       
       try {
         await provider.connect();
-        const { data, error } = await supabase.auth.signInWithWeb3({
-          chain: 'solana', statement: 'I accept the Terms.', wallet: provider 
+        const { error } = await supabase.auth.signInWithWeb3({
+          chain: 'solana', statement: 'Acepto los Términos.', wallet: provider 
         });
         if (error) throw error;
 
-        loginBtn.classList.add('hidden');
-        appContent.classList.remove('hidden');
+        document.getElementById('login-btn').classList.add('hidden');
+        document.getElementById('app-layout').classList.remove('hidden');
 
-        umi = createUmi(FRONTEND_RPC);
+        umi = createUmi(RPC);
         umi.use(walletAdapterIdentity(provider));
         umi.use(mplToolbox());
         
         const { genesis } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
         
-        await loadSavedLaunches();
-        showStatus('✅ Conectado.', 'success');
-      } catch (err) {
-        console.error(err);
-        showStatus('Error: ' + err.message, 'error');
-      }
+        loadTokens();
+        showToast('✅ Conectado', 'success');
+      } catch (err) { showToast(err.message, 'error'); }
     });
 
-    // 2. CARGAR LANZAMIENTOS
-    async function loadSavedLaunches() {
-      const { data, error } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
-      if (error) return console.error(error);
+    // 2. LOAD TOKENS
+    async function loadTokens() {
+      const { data } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
+      const list = document.getElementById('token-list');
+      list.innerHTML = data.length ? '' : '<p style="color:#888;text-align:center;">No hay tokens.</p>';
       
-      launchesList.innerHTML = '';
-      if(data.length === 0) {
-        launchesList.innerHTML = '<p style="color:#888; font-size:0.9rem;">No hay tokens creados aún.</p>';
-        return;
-      }
-
-      data.forEach(launch => {
+      data.forEach(t => {
         const div = document.createElement('div');
-        div.className = 'launch-item';
+        div.className = 'token-item';
         div.innerHTML = `
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img src="${launch.token_image_url}" style="width:30px;height:30px;border-radius:50%;">
-            <div>
-              <strong style="display:block; font-size:0.9rem;">${launch.token_name}</strong>
-              <small style="color:#888;">${launch.token_symbol}</small>
-            </div>
+          <div class="token-info">
+            <img src="${t.token_image_url}">
+            <div><h4>${t.token_name}</h4><p>${t.token_symbol}</p></div>
           </div>
-          <span style="color:var(--solana-green); font-size: 0.8rem;">Seleccionar</span>
+          <span style="color:var(--green); font-size:0.8rem;">Ver</span>
         `;
-        div.addEventListener('click', () => selectLaunch(launch, div));
-        launchesList.appendChild(div);
+        div.onclick = () => selectToken(t, div);
+        list.appendChild(div);
       });
     }
 
-    // 3. SELECCIONAR TOKEN
-    async function selectLaunch(launch, element) {
-      document.querySelectorAll('.launch-item').forEach(el => el.classList.remove('active'));
-      if(element) element.classList.add('active');
+    // 3. SELECT TOKEN
+    async function selectToken(token, el) {
+      document.querySelectorAll('.token-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
 
-      currentGenesis = launch.genesis_address;
-      currentBaseMint = launch.base_mint;
+      currentGenesis = token.genesis_address;
+      currentBaseMint = token.base_mint;
 
-      activeName.textContent = launch.token_name;
-      activeSymbol.textContent = launch.token_symbol;
-      activeImg.src = launch.token_image_url;
+      document.getElementById('active-img').src = token.token_image_url;
+      document.getElementById('active-name').textContent = token.token_name;
+      document.getElementById('active-symbol').textContent = token.token_symbol;
 
-      await updateTokenStats(currentGenesis, launch.token_name, launch.token_symbol, launch.token_image_url);
+      updateStats(currentGenesis);
       updateChart(currentGenesis);
     }
 
-    // 4. CREAR TOKEN (Con Auto-Retry)
-    document.getElementById('create-launch-btn').addEventListener('click', async () => {
-      if (!umi) return showStatus('Conecta wallet primero.', 'error');
-      const fileInput = document.getElementById('logo-input');
-      if (!fileInput.files.length) return showStatus('Selecciona un logo.', 'error');
+    // 4. CREATE TOKEN (Batch Tx)
+    document.getElementById('create-btn').addEventListener('click', async () => {
+      if (!umi) return showToast('Conecta wallet.', 'error');
+      const file = document.getElementById('logo-input').files[0];
+      if (!file) return showToast('Sube un logo.', 'error');
 
-      const btn = document.getElementById('create-launch-btn');
-      btn.disabled = true;
-      btn.textContent = 'Creando...';
+      const btn = document.getElementById('create-btn');
+      btn.disabled = true; btn.textContent = 'Creando...';
 
       try {
-        const file = fileInput.files[0];
+        showToast('Subiendo imagen...', 'info');
         const reader = new FileReader();
-        const fileBase64 = await new Promise((res, rej) => {
-          reader.onload = (e) => res(e.target.result.split(',')[1]);
-          reader.onerror = rej;
-          reader.readAsDataURL(file);
-        });
+        const b64 = await new Promise(r => { reader.onload = e => r(e.target.result.split(',')[1]); reader.readAsDataURL(file); });
+        const { data: up, error: upErr } = await supabase.functions.invoke('upload-to-irys', { body: { fileBase64: b64, fileName: file.name, fileType: file.type } });
+        if (upErr) throw upErr;
 
-        showStatus('Subiendo logo...', 'info');
-        const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-to-irys', {
-          body: { fileBase64, fileName: file.name, fileType: file.type }
-        });
-        if (uploadError) throw new Error(uploadError.message);
-        if (uploadData?.error) throw new Error(uploadData.error);
-        
-        const imageUrl = uploadData.url;
-        const tokenName = document.getElementById('token-name').value;
-        const tokenSymbol = document.getElementById('token-symbol').value;
-
-        showStatus('Preparando transacciones...', 'info');
-
+        showToast('Preparando lanzamiento...', 'info');
         const { createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-
+        
         const launchInput = {
           wallet: umi.identity.publicKey,
           network: 'solana-devnet',
-          token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
+          token: { name: document.getElementById('token-name').value, symbol: document.getElementById('token-symbol').value, image: up.url },
           launchType: 'bondingCurve',
           launch: { firstBuyAmount: 0.1 },
         };
 
-        const batchTxSender = async (transactions) => {
-          showStatus('👉 Aprueba en Phantom', 'info');
-          const signedTxs = await umi.identity.signAllTransactions(transactions);
-          const signatures = await Promise.all(signedTxs.map(tx => 
-            umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' })
-          ));
-          const lastIdx = signedTxs.length - 1;
-          await umi.rpc.confirmTransaction({
-            signature: signatures[lastIdx],
-            blockhash: signedTxs[lastIdx].message.recentBlockhash,
-            lastValidBlockHeight: signedTxs[lastIdx].message.lastValidBlockHeight,
-          }, { commitment: 'confirmed' });
-          return signatures;
+        const batchTxSender = async (txs) => {
+          showToast('👉 Aprueba en Phantom', 'info');
+          const signed = await umi.identity.signAllTransactions(txs);
+          const sigs = await Promise.all(signed.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true })));
+          await umi.rpc.confirmTransaction({ signature: sigs[sigs.length-1], blockhash: signed[signed.length-1].message.recentBlockhash, lastValidBlockHeight: signed[signed.length-1].message.lastValidBlockHeight }, { commitment: 'confirmed' });
+          return sigs;
         };
 
-        let result;
-        let maxRetries = 3;
+        const res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
         
-        // AUTO-RETRY INVISIBLE
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            result = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
-            break; 
-          } catch (err) {
-            if (err.message?.includes('Blockhash') && attempt < maxRetries) {
-              showStatus(`Red lenta, reintentando (${attempt}/${maxRetries})...`, 'info');
-              await new Promise(r => setTimeout(r, 2000));
-            } else {
-              throw err;
-            }
-          }
-        }
-        
-        const genesisAddress = result.genesisAccount.toString();
-        const baseMint = result.mintAddress.toString();
-
         await supabase.from('launches').insert({
-          authority: MI_DIRECCION_ORB, token_name: tokenName, token_symbol: tokenSymbol,
-          token_image_url: imageUrl, genesis_address: genesisAddress, base_mint: baseMint,
+          authority: MI_DIRECCION_ORB, token_name: launchInput.token.name, token_symbol: launchInput.token.symbol,
+          token_image_url: up.url, genesis_address: res.genesisAccount.toString(), base_mint: res.mintAddress.toString()
         });
 
-        showStatus('🚀 ¡Token creado!', 'success');
-        await loadSavedLaunches();
-        
-        // Auto-seleccionar el token recién creado
-        setTimeout(() => {
-          const firstItem = document.querySelector('.launch-item');
-          if(firstItem) firstItem.click();
-        }, 1000);
-
+        showToast('🚀 ¡Token creado!', 'success');
+        loadTokens();
+        btn.disabled = false; btn.textContent = 'Lanzar Token (0.1 SOL Inicial)';
       } catch (err) {
         console.error(err);
-        showStatus('Error: ' + (err.message || 'Revisa la consola.'), 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Crear Lanzamiento (0.1 SOL)';
+        showToast(err.message || 'Error al crear', 'error');
+        btn.disabled = false; btn.textContent = 'Lanzar Token (0.1 SOL Inicial)';
       }
     });
 
-    // 5. ACTUALIZAR STATS
-    async function updateTokenStats(genesisAddress, name, symbol, image) {
+    // 5. UPDATE STATS
+    async function updateStats(genesis) {
       try {
         const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: publicKey(genesisAddress), bucketIndex: 0 });
+        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: publicKey(genesis), bucketIndex: 0 });
         const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
-        
         if (bucket) {
-          const totalSol = (Number(bucket.virtualSol) + Number(bucket.realSol)) / 1e9;
-          const totalTokens = (Number(bucket.virtualTokens) + Number(bucket.realTokens)) / 1e9;
-          if (totalTokens > 0) {
-            const price = totalSol / totalTokens;
-            const marketCap = price * 1_000_000_000;
-            activePrice.textContent = price.toFixed(8) + ' SOL';
-            activeMcap.textContent = '$' + marketCap.toLocaleString('en-US', { maximumFractionDigits: 0 });
+          const sol = (Number(bucket.virtualSol) + Number(bucket.realSol)) / 1e9;
+          const tokens = (Number(bucket.virtualTokens) + Number(bucket.realTokens)) / 1e9;
+          if (tokens > 0) {
+            const price = sol / tokens;
+            document.getElementById('active-price').textContent = price.toFixed(8) + ' SOL';
+            document.getElementById('active-mcap').textContent = '$' + (price * 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 0 });
           }
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { console.warn('Stats err', e); }
     }
 
-    // 6. GRÁFICO
+    // 6. CHART
     function initChart() {
-      const container = document.getElementById('chart-container');
-      if (!container || candleSeries) return;
-      const chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth, height: container.clientHeight,
-        layout: { background: { color: 'transparent' }, textColor: '#DDD' },
-        grid: { vertLines: { color: '#333' }, horzLines: { color: '#333' } },
+      if (candleSeries) return;
+      const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        layout: { background: { color: 'transparent' }, textColor: '#ccc' },
+        grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
       });
-      candleSeries = chart.addCandlestickSeries({
-        upColor: '#14F195', downColor: '#ff4d4d', borderVisible: false,
-        wickUpColor: '#14F195', wickDownColor: '#ff4d4d',
-      });
+      candleSeries = chart.addCandlestickSeries({ upColor: '#14F195', downColor: '#ff4d4d', borderVisible: false, wickUpColor: '#14F195', wickDownColor: '#ff4d4d' });
     }
 
-    async function updateChart(genesisAddress) {
+    async function updateChart(genesis) {
       if (!candleSeries) initChart();
-      if (!candleSeries) return;
-      
-      const { data, error } = await supabase.from('bond_swaps').select('block_time, price').eq('genesis_address', genesisAddress).order('block_time', { ascending: true });
-      if (error || !data) return;
-
+      const { data } = await supabase.from('bond_swaps').select('block_time, price').eq('genesis_address', genesis).order('block_time', { ascending: true });
       const candles = new Map();
-      for (const swap of data) {
-        const bucket = Math.floor(swap.block_time / 3600) * 3600;
-        if (!candles.has(bucket)) {
-          candles.set(bucket, { time: bucket, open: swap.price, high: swap.price, low: swap.price, close: swap.price });
-        } else {
-          const c = candles.get(bucket);
-          c.high = Math.max(c.high, swap.price); c.low = Math.min(c.low, swap.price); c.close = swap.price;
-        }
-      }
+      (data || []).forEach(s => {
+        const b = Math.floor(s.block_time / 3600) * 3600;
+        if (!candles.has(b)) candles.set(b, { time: b, open: s.price, high: s.price, low: s.price, close: s.price });
+        else { const c = candles.get(b); c.high = Math.max(c.high, s.price); c.low = Math.min(c.low, s.price); c.close = s.price; }
+      });
       candleSeries.setData(Array.from(candles.values()));
     }
 
-    // 7. COMPRAR
-    document.getElementById('buy-btn').addEventListener('click', async () => {
-      if (!umi || !currentGenesis) return showStatus('Selecciona un token primero.', 'error');
-      const amountSol = parseFloat(document.getElementById('trade-amount').value);
-      const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
-
+    // 7. TRADE (Buy/Sell)
+    async function executeTrade(type) {
+      if (!umi || !currentGenesis) return showToast('Selecciona un token.', 'error');
+      const amount = parseFloat(document.getElementById('trade-amount').value);
+      const slip = parseFloat(document.getElementById('slippage').value) * 100;
+      
       try {
-        showStatus('Comprando...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        showToast(type === 'buy' ? 'Comprando...' : 'Vendiendo...', 'info');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
-        const genesisPubkey = publicKey(currentGenesis);
-        const baseMint = publicKey(currentBaseMint);
-        const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
+        const genKey = publicKey(currentGenesis), base = publicKey(currentBaseMint), quote = publicKey('So11111111111111111111111111111111111111112');
+        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genKey, bucketIndex: 0 });
         const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
-        if (!isSwappable(bucket)) throw new Error("Curva inactiva.");
-
-        const amountIn = BigInt(Math.floor(amountSol * 1_000_000_000));
-        const quote = getSwapResult(bucket, amountIn, SwapDirection.Buy);
-        const minAmountOut = applySlippage(quote.amountOut, slippageBps);
-
-        const SPL_TOKEN = publicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-        const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: quoteMint, owner: umi.identity.publicKey });
-        const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: baseMint, owner: umi.identity.publicKey });
-
-        await transactionBuilder()
-          .add(createTokenIfMissing(umi, { mint: quoteMint, token: userQuoteTokenAccount, tokenProgram: SPL_TOKEN }))
-          .add(transferSol(umi, { destination: userQuoteTokenAccount, amount: sol(amountSol) }))
-          .add(syncNative(umi, { account: userQuoteTokenAccount }))
-          .sendAndConfirm(umi);
-
-        await swapBondingCurveV2(umi, {
-          genesisAccount: genesisPubkey, bucket: bucketPda, baseMint, quoteMint,
-          baseTokenAccount: userBaseTokenAccount, quoteTokenAccount: userQuoteTokenAccount,
-          amount: quote.amountIn, minAmountOutScaled: minAmountOut, swapDirection: SwapDirection.Buy,
-        }).sendAndConfirm(umi);
-
-        showStatus('✅ Compra exitosa', 'success');
+        const dir = type === 'buy' ? SwapDirection.Buy : SwapDirection.Sell;
         
-        const price = amountSol / (Number(quote.amountOut) / 1e9);
-        await supabase.from('bond_swaps').insert({ genesis_address: currentGenesis, block_time: Math.floor(Date.now()/1000), quote_amount: Number(quote.amountIn), base_amount: Number(quote.amountOut), price, swap_direction: 'buy' });
+        const amountIn = BigInt(Math.floor(amount * 1e9));
+        const quoteRes = getSwapResult(bucket, amountIn, dir);
+        const minOut = applySlippage(quoteRes.amountOut, slip);
+
+        const [uBase] = findAssociatedTokenPda(umi, { mint: base, owner: umi.identity.publicKey });
+        const [uQuote] = findAssociatedTokenPda(umi, { mint: quote, owner: umi.identity.publicKey });
+
+        if (type === 'buy') {
+          await transactionBuilder()
+            .add(createTokenIfMissing(umi, { mint: quote, token: uQuote, tokenProgram: publicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }))
+            .add(transferSol(umi, { destination: uQuote, amount: sol(amount) }))
+            .add(syncNative(umi, { account: uQuote }))
+            .sendAndConfirm(umi);
+        }
+
+        await swapBondingCurveV2(umi, { genesisAccount: genKey, bucket: bucketPda, baseMint: base, quoteMint: quote, baseTokenAccount: uBase, quoteTokenAccount: uQuote, amount: quoteRes.amountIn, minAmountOutScaled: minOut, swapDirection: dir }).sendAndConfirm(umi);
         
-        updateTokenStats(currentGenesis);
-        updateChart(currentGenesis);
-        try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
-
-      } catch (err) {
-        showStatus('Error: ' + err.message, 'error');
-      }
-    });
-
-    // 8. VENDER
-    document.getElementById('sell-btn').addEventListener('click', async () => {
-      if (!umi || !currentGenesis) return showStatus('Selecciona un token.', 'error');
-      const amountTokens = parseFloat(document.getElementById('trade-amount').value);
-      const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
-
-      try {
-        showStatus('Vendiendo...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        await supabase.from('bond_swaps').insert({ genesis_address: currentGenesis, block_time: Math.floor(Date.now()/1000), price: (type === 'buy' ? amount / (Number(quoteRes.amountOut)/1e9) : (Number(quoteRes.amountOut)/1e9) / amount) });
         
-        const genesisPubkey = publicKey(currentGenesis);
-        const baseMint = publicKey(currentBaseMint);
-        const quoteMint = publicKey('So11111111111111111111111111111111111111112');
+        showToast('✅ Trade Exitoso', 'success');
+        updateStats(currentGenesis); updateChart(currentGenesis);
 
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
-        if (!isSwappable(bucket)) throw new Error("Curva inactiva.");
+        if (type === 'buy') { try { await closeToken(umi, { account: uQuote, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch(e){} }
 
-        const amountIn = BigInt(Math.floor(amountTokens * 1_000_000_000));
-        const quote = getSwapResult(bucket, amountIn, SwapDirection.Sell);
-        const minAmountOut = applySlippage(quote.amountOut, slippageBps);
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    }
 
-        const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: quoteMint, owner: umi.identity.publicKey });
-        const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: baseMint, owner: umi.identity.publicKey });
-
-        await swapBondingCurveV2(umi, {
-          genesisAccount: genesisPubkey, bucket: bucketPda, baseMint, quoteMint,
-          baseTokenAccount: userBaseTokenAccount, quoteTokenAccount: userQuoteTokenAccount,
-          amount: quote.amountIn, minAmountOutScaled: minAmountOut, swapDirection: SwapDirection.Sell,
-        }).sendAndConfirm(umi);
-
-        showStatus('✅ Venta exitosa', 'success');
-
-        const price = (Number(quote.amountOut) / 1e9) / amountTokens;
-        await supabase.from('bond_swaps').insert({ genesis_address: currentGenesis, block_time: Math.floor(Date.now()/1000), quote_amount: Number(quote.amountIn), base_amount: Number(quote.amountOut), price, swap_direction: 'sell' });
-        
-        updateTokenStats(currentGenesis);
-        updateChart(currentGenesis);
-        try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
-
-      } catch (err) {
-        showStatus('Error: ' + err.message, 'error');
-      }
-    });
+    document.getElementById('buy-btn').onclick = () => executeTrade('buy');
+    document.getElementById('sell-btn').onclick = () => executeTrade('sell');
 
   </script>
 </body>
