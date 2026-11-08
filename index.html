@@ -42,8 +42,12 @@
         
         canvas { width: 100%; height: 220px; background: #0b0b0e; border-radius: 8px; margin-top: 8px; }
         hr { border: 0; border-top: 1px solid #2a2a35; margin: 12px 0; }
-        .btn-group { display: flex; gap: 8px; margin-top: 4px; }
-        .btn-group button { flex: 1; }
+        
+        /* Estilos del input JWT */
+        .jwt-wrapper { display: flex; gap: 8px; align-items: center; }
+        .jwt-wrapper input { margin-bottom: 0; flex: 1; }
+        .jwt-wrapper button { background: #14F195; color: #000; padding: 8px; font-size: 0.8rem; }
+        .jwt-wrapper button:hover { background: #0fbf75; }
     </style>
 </head>
 <body>
@@ -52,15 +56,26 @@
         <!-- COLUMNA IZQUIERDA: Crear Token -->
         <div class="panel">
             <h1 style="font-size: 1.3rem; color:#9945FF;">🚀 Launchpad</h1>
-            <button id="connectBtn" style="width:100%; margin-bottom:12px;">Conectar Phantom</button>
-            <p id="walletStatus" class="status" style="margin-top:0; margin-bottom:12px;">No conectado</p>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #0b0b0e; padding: 10px; border-radius: 8px; border: 1px solid #2a2a35;">
+                <div>
+                    <div style="font-size: 0.75rem; color: #888;">WALLET</div>
+                    <div id="walletBalance" style="font-size: 0.9rem; color: #14F195; font-weight: bold;">0.00 SOL</div>
+                </div>
+                <button id="connectBtn" style="width:auto; margin:0;">Conectar</button>
+            </div>
+            <p id="walletStatus" class="status" style="margin-top:0; margin-bottom:12px; font-size: 0.7rem;">No conectado</p>
 
             <h2>Crear Token</h2>
-            <input id="pinataJwt" type="password" placeholder="Pinata JWT" />
+            <div class="jwt-wrapper">
+                <input id="pinataJwt" type="password" placeholder="Pinata JWT (se guarda automático)" />
+                <button id="saveJwtBtn" title="Guardar JWT">💾</button>
+            </div>
+            <div style="height: 8px;"></div>
             <input id="tokenName" placeholder="Nombre del Token" />
             <input id="tokenSymbol" placeholder="Símbolo (ej. MTK)" />
             <input id="tokenImage" type="file" accept="image/*" />
-            <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial (0.1 SOL)</button>
+            <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial (0.01 SOL)</button>
             <p id="createStatus" class="status"></p>
         </div>
 
@@ -95,12 +110,12 @@
 
             <h2>Comprar</h2>
             <div class="quick-buttons">
+                <button onclick="setSolAmount(0.01)">0.01</button>
+                <button onclick="setSolAmount(0.05)">0.05</button>
+                <button onclick="setSolAmount(0.075)">0.075</button>
                 <button onclick="setSolAmount(0.1)">0.1</button>
-                <button onclick="setSolAmount(0.5)">0.5</button>
-                <button onclick="setSolAmount(0.75)">0.75</button>
-                <button onclick="setSolAmount(1.0)">1.0</button>
             </div>
-            <input id="solAmount" type="number" step="0.01" placeholder="SOL a gastar" />
+            <input id="solAmount" type="number" step="0.001" placeholder="SOL a gastar" />
             <button id="buyBtn" disabled style="width:100%;">Comprar con SOL</button>
 
             <hr />
@@ -126,12 +141,10 @@
     </script>
 
     <script type="module">
-        // CONFIGURACIÓN
         const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
 
-        // IMPORTS (Añadimos VersionedTransaction, TransactionMessage y newBondingCurve)
-        import { Connection, PublicKey, Keypair, Transaction, LAMPORTS_PER_SOL, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
+        import { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL, VersionedTransaction, TransactionMessage, ComputeBudgetProgram } from '@solana/web3.js';
         import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount, newBondingCurve } from '@nirholas/pump-sdk';
         import { createClient } from '@supabase/supabase-js';
         import BN from 'bn.js';
@@ -147,7 +160,34 @@
 
         const canvas = document.getElementById('chartCanvas');
         const ctx = canvas.getContext('2d');
-        
+
+        // --- SISTEMA DE JWT GUARDADO ---
+        const jwtInput = document.getElementById('pinataJwt');
+        const savedJwt = localStorage.getItem('pinata_jwt');
+        if (savedJwt) {
+            jwtInput.value = savedJwt;
+            jwtInput.type = 'text'; // Mostrar que está guardado
+            jwtInput.style.color = '#14F195'; // Color verde para indicar que está listo
+        }
+
+        document.getElementById('saveJwtBtn').addEventListener('click', () => {
+            const val = jwtInput.value.trim();
+            if (val) {
+                localStorage.setItem('pinata_jwt', val);
+                jwtInput.style.color = '#14F195';
+                alert('✅ JWT guardado en el navegador. No tendrás que pegarlo de nuevo.');
+            }
+        });
+
+        // --- ACTUALIZAR BALANCE ---
+        async function updateWalletBalance() {
+            if (!userPublicKey) return;
+            try {
+                const balance = await connection.getBalance(userPublicKey);
+                document.getElementById('walletBalance').textContent = `${(balance / LAMPORTS_PER_SOL).toFixed(3)} SOL`;
+            } catch (e) { console.warn('Error obteniendo balance', e); }
+        }
+
         // 1. Conectar Wallet
         document.getElementById('connectBtn').addEventListener('click', async () => {
             if (!window.solana || !window.solana.isPhantom) return alert('Instala Phantom y ponlo en Devnet.');
@@ -155,9 +195,10 @@
                 const resp = await window.solana.connect();
                 userPublicKey = resp.publicKey;
                 wallet = window.solana;
-                document.getElementById('walletStatus').textContent = `Conectado: ${userPublicKey.toBase58()}`;
+                document.getElementById('walletStatus').textContent = `Conectado`;
                 document.getElementById('connectBtn').style.display = 'none';
                 ['createTokenBtn', 'buyBtn', 'sellBtn', 'loadTokenBtn'].forEach(id => document.getElementById(id).disabled = false);
+                await updateWalletBalance();
             } catch (err) {
                 document.getElementById('walletStatus').textContent = `Error: ${err.message}`;
                 document.getElementById('walletStatus').classList.add('error');
@@ -180,7 +221,7 @@
             const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: imgForm,
             });
-            if (!imgRes.ok) throw new Error('Error subiendo imagen a Pinata');
+            if (!imgRes.ok) throw new Error('Error subiendo imagen. Revisa tu JWT.');
             const imgData = await imgRes.json();
             const imageUri = `https://gateway.pinata.cloud/ipfs/${imgData.IpfsHash}`;
 
@@ -190,22 +231,23 @@
             const metaRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: metaForm,
             });
-            if (!metaRes.ok) throw new Error('Error subiendo metadata a Pinata');
+            if (!metaRes.ok) throw new Error('Error subiendo metadata a Pinata.');
             const metaData = await metaRes.json();
             return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        // 3. Crear Token (CORREGIDO CON VERSIONED TRANSACTION Y CURVA INICIAL)
+        // 3. Crear Token + Compra Inicial (0.01 SOL)
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
             try {
-                const jwt = document.getElementById('pinataJwt').value.trim();
+                const jwt = jwtInput.value.trim();
                 const name = document.getElementById('tokenName').value.trim();
                 const symbol = document.getElementById('tokenSymbol').value.trim();
                 const imgFile = document.getElementById('tokenImage').files[0];
                 
-                if (!jwt || !name || !symbol || !imgFile) throw new Error('Llena todos los campos e imagen.');
+                if (!jwt) throw new Error('Falta el JWT de Pinata.');
+                if (!name || !symbol || !imgFile) throw new Error('Llena todos los campos e imagen.');
 
                 const metadataUri = await uploadToPinata(jwt, imgFile, name, symbol);
                 statusEl.textContent = 'Creando token en la curva...';
@@ -214,22 +256,23 @@
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
                 
-                // Compra inicial de 0.1 SOL
-                const solToSpend = new BN(0.1 * LAMPORTS_PER_SOL);
-                
-                // Obtener la curva inicial real
+                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
                 const initialCurve = newBondingCurve(global);
-                const tokensOut = getBuyTokenAmountFromSolAmount({ 
-                    global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend 
-                });
+                const tokensOut = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend });
 
+                // Instrucciones de creación
                 const instructions = await PUMP_SDK.createV2AndBuyInstructions({
                     global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, 
                     creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, 
-                    slippage: 0.01, mayhemMode: false, cashback: false
+                    slippage: 0.05, mayhemMode: false, cashback: false // 5% slippage por seguridad
                 });
 
-                // EMPAQUETAR COMO VERSIONED TRANSACTION PARA PHANTOM
+                // Añadir Priority Fees para que sea rápido
+                instructions.push(
+                    ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
+                    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
+                );
+
                 const { blockhash } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
@@ -238,11 +281,13 @@
                 }).compileToV0Message();
 
                 const tx = new VersionedTransaction(messageV0);
-                tx.sign([mintKeypair]); // Firmar el Mint localmente
+                tx.sign([mintKeypair]);
 
                 const signed = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction(txId, 'confirmed');
+                
+                // Esperar confirmación real
+                await connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight }, 'confirmed');
 
                 const mintAddress = mintKeypair.publicKey.toBase58();
                 statusEl.textContent = `✅ Token creado.\nMint: ${mintAddress}`;
@@ -254,6 +299,7 @@
                 document.getElementById('tokenDisplay').style.display = 'block';
                 
                 await loadTokenData(mintAddress);
+                await updateWalletBalance();
                 
                 supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]).catch(()=>{});
             } catch (err) {
@@ -262,7 +308,7 @@
             }
         });
 
-        // 4. Cargar Datos y Chart
+        // 4. Cargar Datos (Precio Formateado Limpio)
         document.getElementById('loadTokenBtn').addEventListener('click', () => loadTokenData(document.getElementById('mintAddressInput').value.trim()));
 
         async function loadTokenData(mintStr) {
@@ -279,10 +325,15 @@
                 const mcapLamports = vSol.mul(bondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
                 const progressPct = Math.min((mcapSol / 69) * 100, 100);
+                
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
+                
+                // Formateo limpio del precio (Ej: 0.00000245 SOL)
+                let priceStr = priceSol.toFixed(8); 
+                priceStr = priceStr.replace(/0+$/, '').replace(/\.$/, ''); 
 
                 document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
-                document.getElementById('price').textContent = `${priceSol.toExponential(4)} SOL`;
+                document.getElementById('price').textContent = `${priceStr} SOL`;
                 document.getElementById('progress').textContent = `${progressPct.toFixed(1)}%`;
                 document.getElementById('tokenDisplay').style.display = 'block';
 
@@ -313,7 +364,7 @@
         window.setSolAmount = (val) => { document.getElementById('solAmount').value = val; };
 
         document.getElementById('buyBtn').addEventListener('click', async () => {
-            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Comprando...'; statusEl.classList.remove('error');
+            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Firmando compra...'; statusEl.classList.remove('error');
             try {
                 if (!currentMint) throw new Error('Carga un token primero.');
                 const solInput = parseFloat(document.getElementById('solAmount').value);
@@ -325,9 +376,17 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
-                const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
+                
+                // Slippage de 5% (0.05) para asegurar que pase
+                const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.05 });
 
-                const { blockhash } = await connection.getLatestBlockhash('confirmed');
+                // Añadir Priority Fees
+                instructions.push(
+                    ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
+                    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
+                );
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
                     recentBlockhash: blockhash,
@@ -338,10 +397,11 @@
                 const signed = await wallet.signTransaction(tx);
                 
                 const sig = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction(sig, 'confirmed');
+                await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
                 
-                statusEl.textContent = `✅ Compra OK. Tx: ${sig}`;
+                statusEl.textContent = `✅ Compra OK. Tx: ${sig.substring(0, 15)}...`;
                 await loadTokenData(currentMint.toBase58());
+                await updateWalletBalance();
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
                 console.error(err);
@@ -350,7 +410,7 @@
 
         // 6. Venta
         document.getElementById('sellBtn').addEventListener('click', async () => {
-            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Vendiendo...'; statusEl.classList.remove('error');
+            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Firmando venta...'; statusEl.classList.remove('error');
             try {
                 if (!currentMint) throw new Error('Carga un token primero.');
                 const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
@@ -362,9 +422,17 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
-                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
+                
+                // Slippage de 5% (0.05)
+                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.05 });
 
-                const { blockhash } = await connection.getLatestBlockhash('confirmed');
+                // Añadir Priority Fees
+                instructions.push(
+                    ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
+                    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
+                );
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
                     recentBlockhash: blockhash,
@@ -375,10 +443,11 @@
                 const signed = await wallet.signTransaction(tx);
                 
                 const sig = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction(sig, 'confirmed');
+                await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
                 
-                statusEl.textContent = `✅ Venta OK. Tx: ${sig}`;
+                statusEl.textContent = `✅ Venta OK. Tx: ${sig.substring(0, 15)}...`;
                 await loadTokenData(currentMint.toBase58());
+                await updateWalletBalance();
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
                 console.error(err);
