@@ -6,15 +6,19 @@
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 3rem auto; background: #1a1a1a; color: #fff; padding: 20px; border-radius: 10px;}
     h1 { color: #14F195; }
+    .input-group { margin-bottom: 1rem; text-align: left; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-size: 14px; color: #ccc; }
+    .input-group input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #2a2a2a; color: #fff; box-sizing: border-box;}
     button { padding: 1rem 1.5rem; margin: 0.5rem 0; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; transition: 0.2s;}
     button:hover { opacity: 0.8; }
     button:disabled { background: #555; cursor: not-allowed; }
     #login-btn { background: #9945FF; color: white; width: 100%; }
-    #create-launch-btn { background: #14F195; color: black; width: 100%; }
+    #create-launch-btn { background: #14F195; color: black; width: 100%; margin-top: 1rem;}
     #status { margin-top: 1.5rem; padding: 1rem; border-radius: 8px; font-size: 14px; word-break: break-all;}
     .success { background: #1e3a2b; color: #14F195; border: 1px solid #14F195; }
     .error { background: #3a1e1e; color: #ff6b6b; border: 1px solid #ff6b6b; }
     .info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; }
+    #launch-form { display: none; } /* Oculto hasta que se inicie sesión */
   </style>
 </head>
 <body>
@@ -22,12 +26,33 @@
   <p>Lanza tu token de forma justa y segura en Solana Devnet.</p>
 
   <button id="login-btn">🔐 Conectar Wallet e Iniciar Sesión</button>
-  <button id="create-launch-btn" disabled>✨ Crear Lanzamiento en Devnet</button>
+
+  <div id="launch-form">
+    <hr style="border-color: #333; margin: 1.5rem 0;">
+    <h3>Configura tu Token</h3>
+    <div class="input-group">
+      <label>Nombre del Token</label>
+      <input type="text" id="token-name" placeholder="Ej: Epic ORB Token" value="Epic ORB Token">
+    </div>
+    <div class="input-group">
+      <label>Símbolo</label>
+      <input type="text" id="token-symbol" placeholder="Ej: EORB" value="EORB">
+    </div>
+    <div class="input-group">
+      <label>Meta de Recaudación (SOL)</label>
+      <input type="number" id="raise-goal" placeholder="10" value="10">
+    </div>
+    <div class="input-group">
+      <label>Logo del Token (PNG/JPG)</label>
+      <input type="file" id="logo-input" accept="image/png, image/jpeg">
+    </div>
+    <button id="create-launch-btn">✨ Crear Lanzamiento en Devnet</button>
+  </div>
 
   <div id="status" class="info">Esperando conexión...</div>
 
   <script type="module">
-    // 1. Polyfill para el Buffer (Vital para que Solana funcione en el navegador sin Node.js)
+    // 1. Polyfill para el Buffer (Vital para que Solana y Irys funcionen en el navegador)
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
 
@@ -36,16 +61,20 @@
     import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults';
     import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters';
     import { genesis, createAndRegisterLaunch } from 'https://esm.sh/@metaplex-foundation/genesis';
+    // Importar Irys para el navegador
+    import { WebUploader } from 'https://esm.sh/@irys/web-upload';
+    import { WebSolana } from 'https://esm.sh/@irys/web-upload-solana';
 
     // ⚠️ CONFIGURA TUS DATOS AQUÍ
     const SUPABASE_URL = 'TU_SUPABASE_URL';
     const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
-    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTmLdP9KCSd1gqbhMw2ysjP6cqtKFWorb'; // <-- Pon tu dirección ORB aquí
+    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTmLdP9KCSd1gqbhMw2ysjP6cqtKFWorb'; // Tu dirección vanity
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const statusDiv = document.getElementById('status');
     const loginBtn = document.getElementById('login-btn');
+    const launchForm = document.getElementById('launch-form');
     const createBtn = document.getElementById('create-launch-btn');
 
     let umi = null;
@@ -64,13 +93,9 @@
       
       try {
         showStatus('Conectando a Phantom...', 'info');
-        
-        // Conectar Phantom
         await window.solana.connect();
         
         showStatus('Firmando mensaje seguro en Supabase...', 'info');
-        
-        // Autenticar en Supabase con Web3
         const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
           statement: 'Acepto los Términos de mi Launchpad ORB.',
@@ -79,64 +104,84 @@
         if (error) throw error;
 
         currentUser = data.user;
-        const walletAddress = currentUser.user_metadata.custom_claims.iss;
+        showStatus(`✅ Sesión iniciada. Wallet: ${currentUser.user_metadata.custom_claims.iss}`, 'success');
         
-        showStatus(`✅ Sesión iniciada. Wallet conectada: ${walletAddress}`, 'success');
-        loginBtn.disabled = true;
-        createBtn.disabled = false;
+        loginBtn.style.display = 'none';
+        launchForm.style.display = 'block';
 
-        // Inicializar Umi (Metaplex) apuntando a Devnet
+        // Inicializar Umi (Metaplex)
         umi = createUmi('https://api.devnet.solana.com');
         umi.use(walletAdapterIdentity(window.solana));
         umi.use(genesis());
         
       } catch (err) {
         console.error(err);
-        showStatus('Error: ' + (err.message || 'Rechazaste la firma o hubo un problema.'), 'error');
+        showStatus('Error: ' + (err.message || 'Rechazaste la firma.'), 'error');
       }
     });
 
-    // --- PASO 2: CREAR EL LANZAMIENTO ---
+    // --- PASO 2: CREAR EL LANZAMIENTO (CON SUBIDA AUTOMÁTICA A IRYS) ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Primero inicia sesión.', 'error');
+      
+      const fileInput = document.getElementById('logo-input');
+      if (!fileInput.files.length) {
+        return showStatus('Por favor, selecciona un logo para tu token.', 'error');
+      }
+
+      const tokenName = document.getElementById('token-name').value;
+      const tokenSymbol = document.getElementById('token-symbol').value;
+      const raiseGoal = parseFloat(document.getElementById('raise-goal').value);
+
       createBtn.disabled = true;
-      showStatus('⏳ Creando lanzamiento en Devnet... (Confirma la transacción en Phantom)', 'info');
-
-      // Configuración del lanzamiento
-      const launchInput = {
-        wallet: umi.identity.publicKey,
-        launchType: 'launchpool',
-        token: {
-          name: 'Epic ORB Token',
-          symbol: 'EORB',
-          image: 'https://placehold.co/400x400/14F195/000000?text=ORB', // Cambia por tu logo real
-        },
-        launch: {
-          launchpool: {
-            tokenAllocation: 500_000_000, // 50% del supply
-            depositStartTime: new Date(Date.now() + 3600_000), // Empieza en 1 hora
-            raiseGoal: 10, // Meta de 10 SOL
-            raydiumLiquidityBps: 5000, // 50% para liquidez
-            fundsRecipient: MI_DIRECCION_ORB, 
-          },
-        },
-      };
-
+      
       try {
+        // A. Subir el logo a Irys de forma automática
+        showStatus('⏳ Subiendo logo a Irys... (Firma en Phantom)', 'info');
+        
+        const irysUploader = await WebUploader(WebSolana).withProvider(window.solana);
+        const file = fileInput.files[0];
+        const tags = [{ name: "Content-Type", value: file.type }];
+        
+        const receipt = await irysUploader.uploadFile(file, { tags });
+        const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
+        
+        showStatus('✅ Logo subido. Creando lanzamiento en Solana... (Firma de nuevo)', 'info');
+
+        // B. Configurar el lanzamiento con los datos del formulario y la URL de Irys
+        const launchInput = {
+          wallet: umi.identity.publicKey,
+          launchType: 'launchpool',
+          token: {
+            name: tokenName,
+            symbol: tokenSymbol,
+            image: imageUrl, // URL generada automáticamente
+          },
+          launch: {
+            launchpool: {
+              tokenAllocation: 500_000_000,
+              depositStartTime: new Date(Date.now() + 3600_000),
+              raiseGoal: raiseGoal,
+              raydiumLiquidityBps: 5000,
+              fundsRecipient: MI_DIRECCION_ORB, 
+            },
+          },
+        };
+
+        // C. Crear el lanzamiento usando Metaplex Genesis
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
         console.log('Resultado de Genesis:', result);
         
         showStatus(`✅ ¡Lanzamiento creado! Mint: ${result.mintAddress}`, 'success');
 
-        // Guardar en Supabase
+        // D. Guardar en Supabase
         showStatus('Guardando datos en la base de datos...', 'info');
-        
         const { error: dbError } = await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB,
-          token_name: launchInput.token.name,
-          token_symbol: launchInput.token.symbol,
-          token_image_url: launchInput.token.image,
-          raise_goal_sol: launchInput.launch.launchpool.raiseGoal,
+          token_name: tokenName,
+          token_symbol: tokenSymbol,
+          token_image_url: imageUrl,
+          raise_goal_sol: raiseGoal,
           deposit_start_time: launchInput.launch.launchpool.depositStartTime.toISOString(),
         });
         
@@ -149,7 +194,7 @@
         
       } catch (err) {
         console.error(err);
-        showStatus('Error al crear: ' + (err.message || 'Revisa la consola de tu navegador (F12).'), 'error');
+        showStatus('Error al crear: ' + (err.message || 'Revisa la consola (F12).'), 'error');
       } finally {
         createBtn.disabled = false;
       }
