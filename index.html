@@ -8,32 +8,41 @@
         * { box-sizing: border-box; }
         body { font-family: system-ui, sans-serif; background: #0b0b0e; color: #e0e0e0; margin: 0; padding: 12px; height: 100vh; display: flex; justify-content: center; align-items: center; }
         .app-container { display: grid; grid-template-columns: 320px 1fr; gap: 16px; width: 100%; max-width: 1150px; height: 92vh; max-height: 820px; }
+        
         .panel { background: #15151a; border: 1px solid #2a2a35; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; overflow-y: auto; }
         .panel::-webkit-scrollbar { width: 4px; }
         .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        
         h1, h2, h3 { color: #fff; margin-top: 0; margin-bottom: 8px; font-weight: 600; }
         h2 { font-size: 1rem; color: #a8a8b3; text-transform: uppercase; letter-spacing: 0.5px; }
         button { background: #9945FF; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         button:hover:not(:disabled) { background: #7a35d6; }
         button:disabled { background: #333; color: #777; cursor: not-allowed; }
+        
         input { padding: 8px 10px; border-radius: 6px; border: 1px solid #2a2a35; background: #0b0b0e; color: #fff; margin-bottom: 8px; width: 100%; font-size: 0.9rem; }
         input[type="file"] { padding: 6px; font-size: 0.8rem; }
+        
         .status { font-size: 0.78rem; color: #14F195; margin-top: 4px; word-break: break-all; white-space: pre-wrap; line-height: 1.3; }
         .error { color: #ff6b6b !important; }
+        
         .token-card { display: flex; gap: 12px; background: #0b0b0e; border: 1px solid #2a2a35; padding: 12px; border-radius: 10px; margin-top: 8px; align-items: center; }
         .token-card img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #222; }
         .token-info { flex: 1; overflow: hidden; }
         .token-name { font-weight: bold; font-size: 1.1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .token-symbol { color: #14F195; font-size: 0.85rem; }
+        
         .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
         .metric-box { background: #0b0b0e; border: 1px solid #2a2a35; padding: 8px 10px; border-radius: 8px; text-align: center; }
         .metric-box span { display: block; font-size: 0.7rem; color: #888; text-transform: uppercase; }
         .metric-box strong { font-size: 1rem; color: #fff; }
+        
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
         .quick-buttons button { background: #1f1f28; color: #e0e0e0; font-size: 0.8rem; padding: 6px; border: 1px solid #2a2a35; }
         .quick-buttons button:hover { background: #333; color: #fff; }
+        
         canvas { width: 100%; height: 220px; background: #0b0b0e; border-radius: 8px; margin-top: 8px; }
         hr { border: 0; border-top: 1px solid #2a2a35; margin: 12px 0; }
+        
         .jwt-wrapper { display: flex; gap: 8px; align-items: center; }
         .jwt-wrapper input { margin-bottom: 0; flex: 1; }
         .jwt-wrapper button { background: #14F195; color: #000; padding: 8px; font-size: 0.8rem; }
@@ -58,7 +67,7 @@
 
             <h2>Crear Token</h2>
             <div class="jwt-wrapper">
-                <input id="pinataJwt" type="password" placeholder="Pinata JWT (se guarda automático)" />
+                <input id="pinataJwt" type="password" placeholder="Pinata JWT" />
                 <button id="saveJwtBtn" title="Guardar JWT">💾</button>
             </div>
             <div style="height: 8px;"></div>
@@ -131,6 +140,7 @@
     </script>
 
     <script type="module">
+        // CONFIGURACIÓN
         const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
 
@@ -165,7 +175,7 @@
             if (val) {
                 localStorage.setItem('pinata_jwt', val);
                 jwtInput.style.color = '#14F195';
-                alert('✅ JWT guardado en el navegador. No tendrás que pegarlo de nuevo.');
+                alert('✅ JWT guardado en el navegador.');
             }
         });
 
@@ -211,7 +221,7 @@
             const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: imgForm,
             });
-            if (!imgRes.ok) throw new Error('Error subiendo imagen. Revisa tu JWT.');
+            if (!imgRes.ok) throw new Error('Error subiendo imagen a Pinata');
             const imgData = await imgRes.json();
             const imageUri = `https://gateway.pinata.cloud/ipfs/${imgData.IpfsHash}`;
 
@@ -221,12 +231,12 @@
             const metaRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: metaForm,
             });
-            if (!metaRes.ok) throw new Error('Error subiendo metadata a Pinata.');
+            if (!metaRes.ok) throw new Error('Error subiendo metadata a Pinata');
             const metaData = await metaRes.json();
             return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        // 3. Crear Token + Compra Inicial (0.01 SOL) - SOLUCIÓN FINAL
+        // 3. Crear Token (Lógica original que te funcionaba, pero con 0.01 SOL)
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
@@ -236,97 +246,48 @@
                 const symbol = document.getElementById('tokenSymbol').value.trim();
                 const imgFile = document.getElementById('tokenImage').files[0];
                 
-                if (!jwt) throw new Error('Falta el JWT de Pinata.');
-                if (!name || !symbol || !imgFile) throw new Error('Llena todos los campos e imagen.');
+                if (!jwt || !name || !symbol || !imgFile) throw new Error('Llena todos los campos e imagen.');
 
                 const metadataUri = await uploadToPinata(jwt, imgFile, name, symbol);
-                statusEl.textContent = 'Paso 1/2: Creando token en la curva...';
+                statusEl.textContent = 'Creando token en la curva...';
 
                 const mintKeypair = Keypair.generate();
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
-
-                // PASO 1: Solo crear el token.
-                const createIx = await PUMP_SDK.createV2Instruction({
-                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri,
-                    creator: userPublicKey, user: userPublicKey, mayhemMode: false, cashback: false
+                
+                // Compra inicial de 0.01 SOL
+                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
+                
+                const initialCurve = newBondingCurve(global);
+                const tokensOut = getBuyTokenAmountFromSolAmount({ 
+                    global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend 
                 });
 
-                const { blockhash: bh1, lastValidBlockHeight: lvb1 } = await connection.getLatestBlockhash('confirmed');
+                const instructions = await PUMP_SDK.createV2AndBuyInstructions({
+                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, 
+                    creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, 
+                    slippage: 0.01, mayhemMode: false, cashback: false
+                });
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
-                    recentBlockhash: bh1,
-                    instructions: [createIx],
+                    recentBlockhash: blockhash,
+                    instructions: instructions,
                 }).compileToV0Message();
 
                 const tx = new VersionedTransaction(messageV0);
-                tx.sign([mintKeypair]);
+                tx.sign([mintKeypair]); // Firmar el Mint localmente
 
                 const signed = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction({ signature: txId, blockhash: bh1, lastValidBlockHeight: lvb1 }, 'confirmed');
+                
+                // Confirmación moderna (evita Blockhash Not Found)
+                await connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight }, 'confirmed');
 
                 const mintAddress = mintKeypair.publicKey.toBase58();
+                statusEl.textContent = `✅ Token creado.\nMint: ${mintAddress}`;
                 
-                // --- PASO 2: COMPRA INICIAL CON REINTENTOS ---
-                statusEl.textContent = `✅ Token creado. Esperando a que la red se sincronice...`;
-                
-                // 1. Pausa de 2s para que Helius indexe
-                await new Promise(r => setTimeout(r, 2000)); 
-
-                statusEl.textContent = `Paso 2/2: Preparando compra inicial...`;
-
-                // 2. Reintentos para leer la curva
-                let buyState = null;
-                let retries = 5;
-                while (retries > 0) {
-                    try {
-                        buyState = await onlineSdk.fetchBuyState(mintKeypair.publicKey, userPublicKey);
-                        break;
-                    } catch (e) {
-                        console.warn('La red aún no reconoce el token, reintentando...');
-                        retries--;
-                        if (retries === 0) throw new Error('La red no reconoció el token a tiempo. Cárgalo manualmente y compra.');
-                        await new Promise(r => setTimeout(r, 1500));
-                    }
-                }
-
-                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
-                const tokensOut = getBuyTokenAmountFromSolAmount({ 
-                    global, feeConfig, 
-                    mintSupply: buyState.bondingCurve.tokenTotalSupply, 
-                    bondingCurve: buyState.bondingCurve, 
-                    amount: solToSpend 
-                });
-
-                const buyInstructions = await onlineSdk.buyInstructions({
-                    ...buyState,
-                    mint: mintKeypair.publicKey,
-                    user: userPublicKey,
-                    amount: tokensOut,
-                    solAmount: solToSpend,
-                    slippage: 0.05
-                });
-
-                // 3. Blockhash FRESCO justo antes de firmar
-                const { blockhash: bh2, lastValidBlockHeight: lvb2 } = await connection.getLatestBlockhash('confirmed');
-                const messageV0Buy = new TransactionMessage({
-                    payerKey: userPublicKey,
-                    recentBlockhash: bh2,
-                    instructions: buyInstructions,
-                }).compileToV0Message();
-
-                const txBuy = new VersionedTransaction(messageV0Buy);
-                
-                statusEl.textContent = `✍️ Firma la compra en Phantom...`;
-                const signedBuy = await wallet.signTransaction(txBuy);
-                const txIdBuy = await connection.sendRawTransaction(signedBuy.serialize());
-                
-                statusEl.textContent = `⏳ Confirmando compra...`;
-                await connection.confirmTransaction({ signature: txIdBuy, blockhash: bh2, lastValidBlockHeight: lvb2 }, 'confirmed');
-
-                // Actualizar UI
-                statusEl.textContent = `✅ Token y compra inicial completados.\nMint: ${mintAddress}`;
                 document.getElementById('mintAddressInput').value = mintAddress;
                 document.getElementById('displayName').textContent = name;
                 document.getElementById('displaySymbol').textContent = symbol;
@@ -334,7 +295,7 @@
                 document.getElementById('tokenDisplay').style.display = 'block';
                 
                 await loadTokenData(mintAddress);
-                await updateWalletBalance();
+                await updateWalletBalance(); // Actualizamos saldo
                 
                 supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]).catch(()=>{});
             } catch (err) {
@@ -343,7 +304,7 @@
             }
         });
 
-        // 4. Cargar Datos (Precio Formateado Limpio)
+        // 4. Cargar Datos y Chart
         document.getElementById('loadTokenBtn').addEventListener('click', () => loadTokenData(document.getElementById('mintAddressInput').value.trim()));
 
         async function loadTokenData(mintStr) {
@@ -363,6 +324,7 @@
                 
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
                 
+                // PRECIO FORMATEADO LIMPIO
                 let priceStr = priceSol.toFixed(8); 
                 priceStr = priceStr.replace(/0+$/, '').replace(/\.$/, ''); 
 
@@ -398,7 +360,7 @@
         window.setSolAmount = (val) => { document.getElementById('solAmount').value = val; };
 
         document.getElementById('buyBtn').addEventListener('click', async () => {
-            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Firmando compra...'; statusEl.classList.remove('error');
+            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Comprando...'; statusEl.classList.remove('error');
             try {
                 if (!currentMint) throw new Error('Carga un token primero.');
                 const solInput = parseFloat(document.getElementById('solAmount').value);
@@ -410,15 +372,14 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
-                
-                const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.05 });
+                const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
 
+                // Priority Fee para que entre rápido
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
                     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
                 );
 
-                // Blockhash fresco justo antes de firmar
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
@@ -443,7 +404,7 @@
 
         // 6. Venta
         document.getElementById('sellBtn').addEventListener('click', async () => {
-            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Firmando venta...'; statusEl.classList.remove('error');
+            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Vendiendo...'; statusEl.classList.remove('error');
             try {
                 if (!currentMint) throw new Error('Carga un token primero.');
                 const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
@@ -455,8 +416,7 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
-                
-                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.05 });
+                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
 
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
