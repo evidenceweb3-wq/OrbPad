@@ -253,7 +253,7 @@
       }
     });
 
-    // 2. CREAR NONCE (CORREGIDO)
+    // 2. CREAR NONCE (CON DOBLE FIRMA CORREGIDA)
     document.getElementById('setup-nonce-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet primero.', 'error');
       
@@ -262,20 +262,18 @@
 
       try {
         showToast('Firmando creación de Nonce...', 'info');
-        // ✅ IMPORTAMOS web3.js
         const { Connection, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.95.3');
         
         const connection = new Connection(RPC, 'confirmed');
         const nonceKeypair = Keypair.generate();
         
-        // ✅ CONVERSIÓN: De Umi PublicKey a web3.js PublicKey
         const fromPubkey = new PublicKey(umi.identity.publicKey.toString());
 
         const tx = new Transaction().add(
           SystemProgram.createNonceAccount({
             fromPubkey: fromPubkey,
             noncePubkey: nonceKeypair.publicKey,
-            authorizedPubkey: fromPubkey, // Ahora sí es web3.js
+            authorizedPubkey: fromPubkey,
             lamports: 0.0015 * LAMPORTS_PER_SOL,
           })
         );
@@ -284,11 +282,15 @@
         tx.recentBlockhash = blockhash;
         tx.feePayer = fromPubkey;
         
-        // ✅ Firmamos usando Phantom (provider) en lugar de Umi
+        // ✅ SOLUCIÓN AL ERROR: Firmar con la cuenta Nonce ANTES de enviar a Phantom
+        tx.partialSign(nonceKeypair);
+        
+        // Firmar con Phantom
         const provider = window.phantom?.solana || window.solana;
         const signedTx = await provider.signTransaction(tx);
         
-        await connection.sendRawTransaction(signedTx.serialize());
+        const signature = await connection.sendRawTransaction(signedTx.serialize());
+        await connection.confirmTransaction(signature, 'confirmed');
         
         const nonceStr = nonceKeypair.publicKey.toString();
         localStorage.setItem('orb_nonce', nonceStr);
@@ -341,7 +343,7 @@
       updateChart(currentGenesis);
     }
 
-    // 5. CREATE TOKEN (Con Reintentos Automáticos)
+    // 5. CREATE TOKEN (Con Reintentos Automáticos y Firma Agrupada)
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
@@ -371,7 +373,6 @@
           launch: { firstBuyAmount: 0.1 },
         };
 
-        // Firma agrupada (evita expiración por lentitud)
         const batchTxSender = async (txs) => {
           showToast('👉 Aprueba en Phantom', 'info');
           
@@ -393,7 +394,6 @@
         let res;
         let maxRetries = 3;
         
-        // Auto-reintento invisible si la red falla
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
             res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
