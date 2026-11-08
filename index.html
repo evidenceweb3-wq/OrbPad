@@ -101,7 +101,6 @@
 
         showStatus('Iniciando motor de Solana...', 'info');
         
-        // Umi en la misma versión (1.6.0)
         const { createUmi } = await import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0');
         const { walletAdapterIdentity } = await import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0');
         
@@ -148,7 +147,6 @@
           }
         });
 
-        // ✅ EXTRACCIÓN DEL ERROR REAL DE SUPABASE
         if (uploadError) {
           let realErrorMessage = uploadError.message;
           try {
@@ -166,17 +164,26 @@
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
         umi.use(genesis());
 
+        // ✅ LAUNCHINPUT CON LA ESTRUCTURA CORRECTA PARA METAPLEX
         const launchInput = {
           wallet: umi.identity.publicKey,
           launchType: 'launchpool',
-          token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
+          token: { 
+            name: tokenName, 
+            symbol: tokenSymbol, 
+            image: imageUrl 
+          },
           launch: {
             launchpool: {
+              network: 'solana-devnet',
+              quoteMint: 'So11111111111111111111111111111111111111112',
+              finalize: true,
               tokenAllocation: 500_000_000,
-              depositStartTime: new Date(Date.now() + 3600_000),
+              depositStartTime: new Date(Date.now() + 3600_000).toISOString(),
               raiseGoal: raiseGoal,
               raydiumLiquidityBps: 5000,
               fundsRecipient: MI_DIRECCION_ORB, 
+              allocations: [], 
             },
           },
         };
@@ -191,14 +198,13 @@
           token_symbol: tokenSymbol,
           token_image_url: imageUrl,
           raise_goal_sol: raiseGoal,
-          deposit_start_time: launchInput.launch.launchpool.depositStartTime.toISOString(),
+          deposit_start_time: launchInput.launch.launchpool.depositStartTime,
         });
         
         showStatus('🚀 ¡Lanzamiento creado y guardado exitosamente!', 'success');
         
       } catch (err) {
         console.error(err);
-        // Mostramos el mensaje exacto del error en la caja roja
         showStatus('Error al crear: ' + (err.message || 'Revisa la consola (F12).'), 'error');
       } finally {
         createBtn.disabled = false;
