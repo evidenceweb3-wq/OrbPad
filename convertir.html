@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Convertidor Seguro (Local)</h2>
+    <p>Pega el array de tu archivo JSON aquí:</p>
+    <textarea id="jsonInput" rows="5" cols="50"></textarea><br><br>
+    <button onclick="convert()">Convertir a Base58</button>
+    <p><strong>Tu Clave Privada (No la compartas):</strong></p>
+    <textarea id="output" rows="3" cols="50" readonly></textarea>
+
+    <!-- Cargamos la librería bs58 desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bs58@5.0.0/dist/index.min.js"></script>
+    <script>
+        function convert() {
+            try {
+                const input = document.getElementById('jsonInput').value;
+                const array = JSON.parse(input);
+                const uint8Array = new Uint8Array(array);
+                // bs58 se carga globalmente desde el CDN
+                const base58Key = bs58.encode(uint8Array);
+                document.getElementById('output').value = base58Key;
+            } catch (e) {
+                alert("Error: Asegúrate de pegar el JSON exacto con los corchetes []");
+            }
+        }
+    </script>
+</body>
+</html>
