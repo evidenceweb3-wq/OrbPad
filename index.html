@@ -119,8 +119,8 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
     
-    // ✅ TU RPC DE QUICKNODE
-    const FRONTEND_RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro/1581092744fa8ee03fd0cb1d157f3b907e9840e4/';
+    // ✅ RPC PÚBLICO RESTAURADO
+    const FRONTEND_RPC = 'https://api.devnet.solana.com';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -229,7 +229,7 @@
       updateChart(currentGenesis);
     }
 
-    // --- 3. CREAR LANZAMIENTO (CON FAST TX SENDER) ---
+    // --- 3. CREAR LANZAMIENTO (Firma Agrupada) ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       const fileInput = document.getElementById('logo-input');
@@ -261,7 +261,7 @@
         if (uploadData?.error) throw new Error(uploadData.error);
         
         const imageUrl = uploadData.url;
-        showStatus('✅ Logo subido. Creando lanzamiento... (Aprueba rápido en Phantom)', 'info');
+        showStatus('✅ Logo subido. Preparando transacciones...', 'info');
 
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
@@ -276,23 +276,30 @@
           },
         };
 
-        // ✅ EL TRUCO: Enviar todas las transacciones en ráfaga (skipPreflight)
-        // Esto evita que el blockhash expire mientras Phantom te pide aprobación.
-        const fastTxSender = async (transactions) => {
-          const signatures = [];
-          for (const tx of transactions) {
-            // Firmar y enviar inmediatamente sin esperar confirmación de red
-            const signedTx = await umi.identity.signTransaction(tx);
-            const sig = await umi.rpc.sendTransaction(signedTx, { 
-              skipPreflight: true, 
-              preflightCommitment: 'processed' 
-            });
-            signatures.push(sig);
-          }
+        // ✅ EL TRUCO MAESTRO: Firmar todas las transacciones en un solo popup de Phantom
+        const batchTxSender = async (transactions) => {
+          showStatus('👉 Aprueba TODAS las transacciones en Phantom', 'info');
+          
+          // 1. Firmar todo junto (Phantom abrirá una sola ventana o lo hará rapidísimo)
+          const signedTxs = await umi.identity.signAllTransactions(transactions);
+          
+          // 2. Enviar todas de golpe a la red, sin simulación
+          const signatures = await Promise.all(signedTxs.map(tx => 
+            umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' })
+          ));
+          
+          // 3. Confirmar solo la última
+          const lastIdx = signedTxs.length - 1;
+          await umi.rpc.confirmTransaction({
+            signature: signatures[lastIdx],
+            blockhash: signedTxs[lastIdx].message.recentBlockhash,
+            lastValidBlockHeight: signedTxs[lastIdx].message.lastValidBlockHeight,
+          }, { commitment: 'confirmed' });
+
           return signatures;
         };
 
-        const result = await createAndRegisterLaunch(umi, { txSender: fastTxSender }, launchInput);
+        const result = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
         
         const genesisAddress = result.genesisAccount.toString();
         const baseMint = result.mintAddress.toString();
@@ -307,7 +314,7 @@
         genesisInput.value = genesisAddress;
         baseMintInput.value = baseMint;
 
-        showStatus(`🚀 ¡Lanzamiento creado! Esperando confirmación de red...`, 'success');
+        showStatus(`🚀 ¡Lanzamiento creado!`, 'success');
 
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB,
