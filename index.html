@@ -37,9 +37,6 @@
     .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-primary:disabled { background: #555; cursor: not-allowed; }
 
-    .btn-nonce { width: 100%; background: var(--purple); color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 0.85rem;}
-    .btn-nonce:disabled { background: #555; cursor: not-allowed; }
-
     .token-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
     .token-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
     .token-item:hover { border-color: var(--purple); }
@@ -95,17 +92,7 @@
     
     <div class="sidebar">
       <div class="card">
-        <h3>⚙️ Paso 1: Configurar Nonce (Obligatorio)</h3>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Evita que la red de Devnet rechace tu token por lentitud.</p>
-        <button id="setup-nonce-btn" class="btn-nonce">Generar Nonce</button>
-        <div class="input-group" style="margin-top:10px;">
-          <label>Tu Nonce Address</label>
-          <input type="text" id="nonce-address" placeholder="Pega tu nonce aqui..." readonly>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>✨ Paso 2: Crear Lanzamiento</h3>
+        <h3>✨ Crear Lanzamiento</h3>
         <div class="input-group">
           <label>Nombre del Token</label>
           <input type="text" id="token-name" placeholder="Ej: Epic ORB" value="Epic ORB">
@@ -118,13 +105,13 @@
           <label>Logo (PNG/JPG)</label>
           <input type="file" id="logo-input" accept="image/png, image/jpeg">
         </div>
-        <button id="create-btn" class="btn-primary" disabled>Lanzar Token (0.1 SOL Inicial)</button>
+        <button id="create-btn" class="btn-primary">Lanzar Token (0.1 SOL Inicial)</button>
       </div>
 
       <div class="card" style="flex: 1; display: flex; flex-direction: column;">
         <h3>📚 Mis Tokens</h3>
         <div id="token-list" class="token-list">
-          <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">No hay tokens.</p>
+          <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">No hay tokens aún.</p>
         </div>
       </div>
     </div>
@@ -240,14 +227,6 @@
         const { genesis } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
         
-        const savedNonce = localStorage.getItem('orb_nonce');
-        if (savedNonce) {
-          document.getElementById('nonce-address').value = savedNonce;
-          document.getElementById('create-btn').disabled = false;
-          document.getElementById('setup-nonce-btn').textContent = 'Nonce Ya Configurado';
-          document.getElementById('setup-nonce-btn').disabled = true;
-        }
-
         loadTokens();
         showToast('✅ Conectado', 'success');
       } catch (err) { 
@@ -256,57 +235,7 @@
       }
     });
 
-    // 2. CREAR NONCE
-    document.getElementById('setup-nonce-btn').addEventListener('click', async () => {
-      if (!umi) return showToast('Conecta wallet primero.', 'error');
-      
-      const btn = document.getElementById('setup-nonce-btn');
-      btn.disabled = true; btn.textContent = 'Firmando...';
-
-      try {
-        const { Connection, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.95.3');
-        
-        const connection = new Connection(RPC, 'confirmed');
-        const nonceKeypair = Keypair.generate();
-        
-        const fromPubkey = new PublicKey(umi.identity.publicKey.toString());
-
-        const tx = new Transaction().add(
-          SystemProgram.createNonceAccount({
-            fromPubkey: fromPubkey,
-            noncePubkey: nonceKeypair.publicKey,
-            authorizedPubkey: fromPubkey,
-            lamports: 0.0015 * LAMPORTS_PER_SOL,
-          })
-        );
-
-        const { blockhash } = await connection.getLatestBlockhash();
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = fromPubkey;
-        tx.partialSign(nonceKeypair);
-        
-        const provider = window.phantom?.solana || window.solana;
-        const signedTx = await provider.signTransaction(tx);
-        
-        const signature = await connection.sendRawTransaction(signedTx.serialize());
-        await connection.confirmTransaction(signature, 'confirmed');
-        
-        const nonceStr = nonceKeypair.publicKey.toString();
-        localStorage.setItem('orb_nonce', nonceStr);
-        
-        document.getElementById('nonce-address').value = nonceStr;
-        document.getElementById('create-btn').disabled = false;
-        btn.textContent = 'Nonce Configurado ✅';
-        
-        showToast('✅ Nonce listo. Ya puedes crear tu token.', 'success');
-      } catch (error) {
-        console.error(error);
-        showToast('Error: ' + error.message, 'error');
-        btn.disabled = false; btn.textContent = 'Reintentar Generar Nonce';
-      }
-    });
-
-    // 3. LOAD TOKENS
+    // 2. LOAD TOKENS
     async function loadTokens() {
       const { data } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
       const list = document.getElementById('token-list');
@@ -328,7 +257,7 @@
       });
     }
 
-    // 4. SELECT TOKEN
+    // 3. SELECT TOKEN
     async function selectToken(token, el) {
       document.querySelectorAll('.token-item').forEach(e => e.classList.remove('active'));
       el.classList.add('active');
@@ -343,7 +272,7 @@
       updateChart(currentGenesis);
     }
 
-    // 5. CREATE TOKEN
+    // 4. CREATE TOKEN
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
@@ -372,19 +301,46 @@
           launch: { firstBuyAmount: 0.1 },
         };
 
+        // ✅ EL TRUCO FINAL: Refrescar el Blockhash justo antes de firmar
         const batchTxSender = async (txs) => {
           showToast('👉 Aprueba en Phantom', 'info');
-          const signedTxs = await umi.identity.signAllTransactions(txs);
-          const signatures = await Promise.all(
-            signedTxs.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' }))
-          );
-          const lastIdx = signedTxs.length - 1;
-          await umi.rpc.confirmTransaction({
-            signature: signatures[lastIdx],
-            blockhash: signedTxs[lastIdx].message.recentBlockhash,
-            lastValidBlockHeight: signedTxs[lastIdx].message.lastValidBlockHeight,
-          }, { commitment: 'confirmed' });
-          return signatures;
+          
+          try {
+            // 1. Obtener un blockhash FRESCO
+            const latestBlockhash = await umi.rpc.getLatestBlockhash();
+            
+            // 2. Inyectar el blockhash fresco en todas las transacciones
+            const patchedTxs = txs.map(tx => {
+              if (tx.setBlockhash) {
+                return tx.setBlockhash(latestBlockhash); // Si es TransactionBuilder
+              } else if (tx.message) {
+                tx.message.recentBlockhash = latestBlockhash.blockhash; // Si es Transaction
+                return tx;
+              }
+              return tx;
+            });
+
+            // 3. Firmar todas
+            const signedTxs = await umi.identity.signAllTransactions(patchedTxs);
+            
+            // 4. Enviar
+            const signatures = await Promise.all(
+              signedTxs.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' }))
+            );
+            
+            // 5. Confirmar la última
+            const lastIdx = signedTxs.length - 1;
+            await umi.rpc.confirmTransaction({
+              signature: signatures[lastIdx],
+              blockhash: latestBlockhash.blockhash,
+              lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            }, { commitment: 'confirmed' });
+
+            return signatures;
+          } catch (error) {
+            console.error("Error en batchTxSender:", error);
+            throw error;
+          }
         };
 
         const res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
@@ -404,7 +360,7 @@
       }
     });
 
-    // 6. UPDATE STATS Y CHART
+    // 5. UPDATE STATS Y CHART
     async function updateStats(genesis) {
       try {
         const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
@@ -443,7 +399,7 @@
       candleSeries.setData(Array.from(candles.values()));
     }
 
-    // 7. TRADE
+    // 6. TRADE
     async function executeTrade(type) {
       if (!umi || !currentGenesis) return showToast('Selecciona un token.', 'error');
       const amount = parseFloat(document.getElementById('trade-amount').value);
