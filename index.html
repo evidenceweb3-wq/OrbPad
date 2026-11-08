@@ -53,12 +53,11 @@
         .jwt-wrapper button { background: #14F195; color: #000; padding: 8px; font-size: 0.75rem; }
         .jwt-wrapper button:hover { background: #0fbf75; }
         
-        /* Animación para el badge */
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .graduated-badge { font-size:0.7rem; background:#14F195; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; animation: pulse 2s infinite; }
     </style>
-    <!-- Chart Library -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- FIJAMOS LA VERSIÓN 4.1.3 PARA EVITAR EL ERROR DE LA V5 -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -180,27 +179,31 @@
         let areaSeries = null;
         let lastChartTime = Math.floor(Date.now() / 1000) - 100;
 
-        // --- INICIALIZAR GRÁFICO PRO ---
+        // --- INICIALIZAR GRÁFICO PRO (BLINDADO) ---
         function initChart() {
-            const container = document.getElementById('chartContainer');
-            chart = LightweightCharts.createChart(container, {
-                layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#888' },
-                grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
-                rightPriceScale: { borderColor: '#333' },
-                timeScale: { borderColor: '#333', timeVisible: true },
-                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-            });
-            
-            areaSeries = chart.addAreaSeries({
-                lineColor: '#14F195',
-                topColor: 'rgba(20, 241, 149, 0.3)',
-                bottomColor: 'rgba(20, 241, 149, 0.0)',
-                lineWidth: 2,
-            });
+            try {
+                const container = document.getElementById('chartContainer');
+                chart = LightweightCharts.createChart(container, {
+                    layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#888' },
+                    grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
+                    rightPriceScale: { borderColor: '#333' },
+                    timeScale: { borderColor: '#333', timeVisible: true },
+                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                });
+                
+                areaSeries = chart.addAreaSeries({
+                    lineColor: '#14F195',
+                    topColor: 'rgba(20, 241, 149, 0.3)',
+                    bottomColor: 'rgba(20, 241, 149, 0.0)',
+                    lineWidth: 2,
+                });
 
-            window.addEventListener('resize', () => {
-                chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-            });
+                window.addEventListener('resize', () => {
+                    chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+                });
+            } catch (e) {
+                console.error("El gráfico no pudo cargar, pero la app sigue funcionando.", e);
+            }
         }
         initChart();
 
@@ -354,7 +357,7 @@
 
                 const mcapLamports = vSol.mul(bondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
-                const progressPct = Math.min((mcapSol / 69) * 100, 100); // 69 SOL es el target de graduación
+                const progressPct = Math.min((mcapSol / 69) * 100, 100); 
                 
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
                 
@@ -376,15 +379,12 @@
                     document.getElementById('graduatedBadge').style.display = 'none';
                 }
 
-                // Actualizar Gráfico de TradingView
-                lastChartTime += 1; // Avanzar el tiempo 1 segundo para simular velas vivas
-                if (lastChartTime > Math.floor(Date.now() / 1000)) lastChartTime = Math.floor(Date.now() / 1000);
-                
-                areaSeries.update({ time: lastChartTime, value: mcapSol });
-                
-                // Forzar un pequeño auto-zoom al inicio
-                if (chart.timeScale().getVisibleLogicalRange() === null) {
-                    chart.timeScale().fitContent();
+                // Actualizar Gráfico de TradingView (con protección si el gráfico falló)
+                if (areaSeries) {
+                    lastChartTime += 1; 
+                    if (lastChartTime > Math.floor(Date.now() / 1000)) lastChartTime = Math.floor(Date.now() / 1000);
+                    areaSeries.update({ time: lastChartTime, value: mcapSol });
+                    if (chart.timeScale().getVisibleLogicalRange() === null) chart.timeScale().fitContent();
                 }
 
             } catch (e) {
