@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Launchpad Pump.fun - One Screen</title>
+    <title>Launchpad Pump.fun - Epic Edition</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: system-ui, sans-serif; background: #0b0b0e; color: #e0e0e0; margin: 0; padding: 12px; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .app-container { display: grid; grid-template-columns: 320px 1fr; gap: 16px; width: 100%; max-width: 1150px; height: 92vh; max-height: 820px; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0b0b0e; color: #e0e0e0; margin: 0; padding: 12px; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .app-container { display: grid; grid-template-columns: 340px 1fr; gap: 16px; width: 100%; max-width: 1150px; height: 92vh; max-height: 820px; }
         
-        .panel { background: #15151a; border: 1px solid #2a2a35; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; overflow-y: auto; }
+        .panel { background: #15151a; border: 1px solid #2a2a35; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
         .panel::-webkit-scrollbar { width: 4px; }
         .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         
         h1, h2, h3 { color: #fff; margin-top: 0; margin-bottom: 8px; font-weight: 600; }
         h2 { font-size: 1rem; color: #a8a8b3; text-transform: uppercase; letter-spacing: 0.5px; }
         button { background: #9945FF; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover:not(:disabled) { background: #7a35d6; }
+        button:hover:not(:disabled) { background: #7a35d6; transform: translateY(-1px); }
         button:disabled { background: #333; color: #777; cursor: not-allowed; }
         
-        input { padding: 8px 10px; border-radius: 6px; border: 1px solid #2a2a35; background: #0b0b0e; color: #fff; margin-bottom: 8px; width: 100%; font-size: 0.9rem; }
+        input { padding: 8px 10px; border-radius: 6px; border: 1px solid #2a2a35; background: #0b0b0e; color: #fff; margin-bottom: 8px; width: 100%; font-size: 0.9rem; outline: none; }
+        input:focus { border-color: #9945FF; }
         input[type="file"] { padding: 6px; font-size: 0.8rem; }
         
         .status { font-size: 0.78rem; color: #14F195; margin-top: 4px; word-break: break-all; white-space: pre-wrap; line-height: 1.3; }
@@ -34,14 +35,14 @@
         .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
         .metric-box { background: #0b0b0e; border: 1px solid #2a2a35; padding: 8px 10px; border-radius: 8px; text-align: center; }
         .metric-box span { display: block; font-size: 0.7rem; color: #888; text-transform: uppercase; }
-        .metric-box strong { font-size: 1rem; color: #fff; }
+        .metric-box strong { font-size: 1.05rem; color: #fff; }
         
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
         .quick-buttons button { background: #1f1f28; color: #e0e0e0; font-size: 0.8rem; padding: 6px; border: 1px solid #2a2a35; }
         .quick-buttons button:hover { background: #333; color: #fff; }
         
         canvas { width: 100%; height: 220px; background: #0b0b0e; border-radius: 8px; margin-top: 8px; }
-        hr { border: 0; border-top: 1px solid #2a2a35; margin: 12px 0; }
+        hr { border: 0; border-top: 1px solid #2a2a35; margin: 16px 0; }
         
         .jwt-wrapper { display: flex; gap: 8px; align-items: center; }
         .jwt-wrapper input { margin-bottom: 0; flex: 1; }
@@ -236,7 +237,7 @@
             return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        // 3. Crear Token (Lógica original que te funcionaba, pero con 0.01 SOL)
+        // 3. Crear Token (Slippage arreglado al 5% para Devnet)
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
@@ -255,9 +256,7 @@
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
                 
-                // Compra inicial de 0.01 SOL
                 const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
-                
                 const initialCurve = newBondingCurve(global);
                 const tokensOut = getBuyTokenAmountFromSolAmount({ 
                     global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend 
@@ -266,7 +265,8 @@
                 const instructions = await PUMP_SDK.createV2AndBuyInstructions({
                     global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, 
                     creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, 
-                    slippage: 0.01, mayhemMode: false, cashback: false
+                    slippage: 0.05, // 5% de slippage para que no falle
+                    mayhemMode: false, cashback: false
                 });
 
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
@@ -277,12 +277,11 @@
                 }).compileToV0Message();
 
                 const tx = new VersionedTransaction(messageV0);
-                tx.sign([mintKeypair]); // Firmar el Mint localmente
+                tx.sign([mintKeypair]); 
 
                 const signed = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signed.serialize());
                 
-                // Confirmación moderna (evita Blockhash Not Found)
                 await connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight }, 'confirmed');
 
                 const mintAddress = mintKeypair.publicKey.toBase58();
@@ -295,16 +294,25 @@
                 document.getElementById('tokenDisplay').style.display = 'block';
                 
                 await loadTokenData(mintAddress);
-                await updateWalletBalance(); // Actualizamos saldo
+                await updateWalletBalance(); 
                 
-                supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]).catch(()=>{});
+                // Supabase a prueba de fallos
+                try {
+                    const { error: dbError } = await supabase.from('launchpad_tokens').insert([{ 
+                        mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() 
+                    }]);
+                    if (dbError) console.warn('Aviso de Supabase:', dbError.message);
+                } catch (dbEx) {
+                    console.warn('Supabase offline:', dbEx);
+                }
+
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
                 console.error(err);
             }
         });
 
-        // 4. Cargar Datos y Chart
+        // 4. Cargar Datos y Chart (Precio arreglado)
         document.getElementById('loadTokenBtn').addEventListener('click', () => loadTokenData(document.getElementById('mintAddressInput').value.trim()));
 
         async function loadTokenData(mintStr) {
@@ -324,9 +332,10 @@
                 
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
                 
-                // PRECIO FORMATEADO LIMPIO
-                let priceStr = priceSol.toFixed(8); 
+                // Formateo limpio a 9 decimales
+                let priceStr = priceSol.toFixed(9); 
                 priceStr = priceStr.replace(/0+$/, '').replace(/\.$/, ''); 
+                if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
 
                 document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
@@ -356,7 +365,7 @@
             ctx.fillText(`${currentMcap.toFixed(2)} SOL`, ptX - 20, ptY - 10);
         }
 
-        // 5. Compra Rápida
+        // 5. Compra Rápida (Slippage arreglado al 10%)
         window.setSolAmount = (val) => { document.getElementById('solAmount').value = val; };
 
         document.getElementById('buyBtn').addEventListener('click', async () => {
@@ -372,9 +381,10 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
-                const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
+                
+                // slippage 0.10 = 10%
+                const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
 
-                // Priority Fee para que entre rápido
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
                     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
@@ -402,7 +412,7 @@
             }
         });
 
-        // 6. Venta
+        // 6. Venta (Slippage arreglado al 10%)
         document.getElementById('sellBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Vendiendo...'; statusEl.classList.remove('error');
             try {
@@ -416,7 +426,9 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
-                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 1 });
+                
+                // slippage 0.10 = 10%
+                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
 
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
