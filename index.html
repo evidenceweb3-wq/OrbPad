@@ -62,7 +62,7 @@
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     
-    // ⚠️ COPIA ESTA DIRECCIÓN DIRECTAMENTE DESDE PHANTOM
+    // Asegúrate de que esta dirección sea la correcta (44 caracteres)
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -79,7 +79,6 @@
       statusDiv.className = type;
     }
 
-    // --- PASO 1: AUTENTICACIÓN ---
     loginBtn.addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
       if (!provider || !provider.isPhantom) {
@@ -117,7 +116,6 @@
       }
     });
 
-    // --- PASO 2: CREAR EL LANZAMIENTO ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Primero inicia sesión.', 'error');
       
@@ -170,7 +168,6 @@
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
 
-        // ✅ VALIDACIÓN DE LA DIRECCIÓN ANTES DE ENVIAR
         let recipientPubKey;
         try {
           recipientPubKey = publicKey(MI_DIRECCION_ORB);
@@ -180,6 +177,7 @@
 
         const launchInput = {
           wallet: umi.identity.publicKey,
+          network: 'solana-devnet', // ✅ Fuerza el uso de la infraestructura de Devnet
           token: { 
             name: tokenName, 
             symbol: tokenSymbol, 
