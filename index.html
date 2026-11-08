@@ -39,8 +39,8 @@
       <input type="text" id="token-symbol" placeholder="Ej: EORB" value="EORB">
     </div>
     <div class="input-group">
-      <label>Meta de Recaudación (SOL)</label>
-      <input type="number" id="raise-goal" placeholder="10" value="10">
+      <label>Meta de Recaudación (SOL) - Mínimo 250</label>
+      <input type="number" id="raise-goal" placeholder="250" value="250">
     </div>
     <div class="input-group">
       <label>Logo del Token (PNG/JPG)</label>
@@ -124,10 +124,13 @@
       const tokenSymbol = document.getElementById('token-symbol').value;
       const raiseGoal = parseFloat(document.getElementById('raise-goal').value);
 
+      if (raiseGoal < 250) {
+        return showStatus('La meta de recaudación debe ser de al menos 250 SOL.', 'error');
+      }
+
       createBtn.disabled = true;
       
       try {
-        // 1. Convertir la imagen a Base64
         showStatus('⏳ Procesando imagen...', 'info');
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -137,7 +140,6 @@
           reader.readAsDataURL(file);
         });
 
-        // 2. Llamar a la Edge Function de Supabase
         showStatus('⏳ Subiendo logo a Irys (vía Supabase)...', 'info');
         const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-to-irys', {
           body: {
@@ -162,14 +164,12 @@
         
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
-        // 3. Crear el token con Metaplex Genesis (versión estable desde jsDelivr)
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
 
-        // ✅ LAUNCHINPUT CON CAMPOS EXPLÍCITOS PARA LA API
+        // ✅ ESTRUCTURA CORREGIDA CON ALLOCATIONS Y FUNDFLOWS
         const launchInput = {
           wallet: umi.identity.publicKey,
-          network: 'solana-devnet', 
           token: { 
             name: tokenName, 
             symbol: tokenSymbol, 
@@ -177,35 +177,40 @@
           },
           launchType: 'launchpool',
           launch: {
-            launchpool: {
-              tokenAllocation: 500_000_000,
-              depositStartTime: new Date(Date.now() + 3600_000),
-              raiseGoal: raiseGoal,
-              raydiumLiquidityBps: 5000,
-              fundsRecipient: MI_DIRECCION_ORB,
-              allocations: [], 
-            },
+            raiseGoal: raiseGoal, // Ya validado para ser >= 250
+            allocations: [
+              {
+                type: 'launchpoolV2',
+                tokenAllocation: 500_000_000,
+                depositStartTime: new Date(Date.now() + 3600_000),
+                fundFlows: [
+                  {
+                    recipient: MI_DIRECCION_ORB,
+                    percentageBps: 10000 
+                  }
+                ],
+                raydiumLiquidityBps: 5000,
+              }
+            ],
           },
         };
 
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
         showStatus(`✅ ¡Lanzamiento creado! Mint: ${result.mintAddress}`, 'success');
 
-        // 4. Guardar en la base de datos de Supabase
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB,
           token_name: tokenName,
           token_symbol: tokenSymbol,
           token_image_url: imageUrl,
           raise_goal_sol: raiseGoal,
-          deposit_start_time: launchInput.launch.launchpool.depositStartTime.toISOString(),
+          deposit_start_time: launchInput.launch.allocations[0].depositStartTime.toISOString(),
         });
         
         showStatus('🚀 ¡Lanzamiento creado y guardado exitosamente!', 'success');
         
       } catch (err) {
         console.error(err);
-        // Extraer el error real de la API si es posible
         try {
           const { isGenesisApiError, isGenesisValidationError } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
           if (isGenesisValidationError(err)) {
