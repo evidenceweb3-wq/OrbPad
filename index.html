@@ -51,24 +51,23 @@
 
   <div id="status" class="info">Esperando conexión...</div>
 
-  <script type="module">
-    // 1. Polyfill para el Buffer (Vital para que Solana y Irys funcionen en el navegador)
+   <script type="module">
+    // 1. Polyfill para el Buffer (Vital para Solana)
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
 
-    // 2. Importar librerías
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults';
-    import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters';
-    import { genesis, createAndRegisterLaunch } from 'https://esm.sh/@metaplex-foundation/genesis';
-    // Importar Irys para el navegador
-    import { WebUploader } from 'https://esm.sh/@irys/web-upload';
-    import { WebSolana } from 'https://esm.sh/@irys/web-upload-solana';
+    // 2. Importar librerías (usando versiones fijas para evitar fallos)
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.9.1';
+    import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@0.9.1';
+    import { genesis, createAndRegisterLaunch } from 'https://esm.sh/@metaplex-foundation/genesis@0.0.1';
+    import { WebUploader } from 'https://esm.sh/@irys/web-upload@0.0.15';
+    import { WebSolana } from 'https://esm.sh/@irys/web-upload-solana@0.0.15';
 
     // ⚠️ CONFIGURA TUS DATOS AQUÍ
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
-    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTmLdP9KCSd1gqbhMw2ysjP6cqtKFWorb'; // Tu dirección vanity
+    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTmLdP9KCSd1gqbhMw2ysjP6cqtKFWorb';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -78,7 +77,6 @@
     const createBtn = document.getElementById('create-launch-btn');
 
     let umi = null;
-    let currentUser = null;
 
     function showStatus(msg, type) {
       statusDiv.textContent = msg;
@@ -87,13 +85,15 @@
 
     // --- PASO 1: AUTENTICACIÓN ---
     loginBtn.addEventListener('click', async () => {
-      if (!window.solana || !window.solana.isPhantom) {
-        return showStatus('Instala Phantom Wallet para continuar.', 'error');
+      // Verificación robusta de Phantom
+      const provider = window.phantom?.solana || window.solana;
+      if (!provider || !provider.isPhantom) {
+        return showStatus('Instala Phantom Wallet o actívala en tu navegador.', 'error');
       }
       
       try {
         showStatus('Conectando a Phantom...', 'info');
-        await window.solana.connect();
+        await provider.connect();
         
         showStatus('Firmando mensaje seguro en Supabase...', 'info');
         const { data, error } = await supabase.auth.signInWithWeb3({
@@ -103,15 +103,14 @@
         
         if (error) throw error;
 
-        currentUser = data.user;
-        showStatus(`✅ Sesión iniciada. Wallet: ${currentUser.user_metadata.custom_claims.iss}`, 'success');
+        showStatus(`✅ Sesión iniciada. Wallet: ${data.user.user_metadata.custom_claims.iss}`, 'success');
         
         loginBtn.style.display = 'none';
         launchForm.style.display = 'block';
 
         // Inicializar Umi (Metaplex)
         umi = createUmi('https://api.devnet.solana.com');
-        umi.use(walletAdapterIdentity(window.solana));
+        umi.use(walletAdapterIdentity(provider));
         umi.use(genesis());
         
       } catch (err) {
@@ -120,14 +119,12 @@
       }
     });
 
-    // --- PASO 2: CREAR EL LANZAMIENTO (CON SUBIDA AUTOMÁTICA A IRYS) ---
+    // --- PASO 2: CREAR EL LANZAMIENTO ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Primero inicia sesión.', 'error');
       
       const fileInput = document.getElementById('logo-input');
-      if (!fileInput.files.length) {
-        return showStatus('Por favor, selecciona un logo para tu token.', 'error');
-      }
+      if (!fileInput.files.length) return showStatus('Selecciona un logo.', 'error');
 
       const tokenName = document.getElementById('token-name').value;
       const tokenSymbol = document.getElementById('token-symbol').value;
@@ -136,27 +133,18 @@
       createBtn.disabled = true;
       
       try {
-        // A. Subir el logo a Irys de forma automática
-        showStatus('⏳ Subiendo logo a Irys... (Firma en Phantom)', 'info');
-        
+        showStatus('⏳ Subiendo logo a Irys...', 'info');
         const irysUploader = await WebUploader(WebSolana).withProvider(window.solana);
         const file = fileInput.files[0];
-        const tags = [{ name: "Content-Type", value: file.type }];
-        
-        const receipt = await irysUploader.uploadFile(file, { tags });
+        const receipt = await irysUploader.uploadFile(file, { tags: [{ name: "Content-Type", value: file.type }] });
         const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
         
-        showStatus('✅ Logo subido. Creando lanzamiento en Solana... (Firma de nuevo)', 'info');
+        showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
-        // B. Configurar el lanzamiento con los datos del formulario y la URL de Irys
         const launchInput = {
           wallet: umi.identity.publicKey,
           launchType: 'launchpool',
-          token: {
-            name: tokenName,
-            symbol: tokenSymbol,
-            image: imageUrl, // URL generada automáticamente
-          },
+          token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
           launch: {
             launchpool: {
               tokenAllocation: 500_000_000,
@@ -168,15 +156,10 @@
           },
         };
 
-        // C. Crear el lanzamiento usando Metaplex Genesis
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
-        console.log('Resultado de Genesis:', result);
-        
         showStatus(`✅ ¡Lanzamiento creado! Mint: ${result.mintAddress}`, 'success');
 
-        // D. Guardar en Supabase
-        showStatus('Guardando datos en la base de datos...', 'info');
-        const { error: dbError } = await supabase.from('launches').insert({
+        await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB,
           token_name: tokenName,
           token_symbol: tokenSymbol,
@@ -185,12 +168,7 @@
           deposit_start_time: launchInput.launch.launchpool.depositStartTime.toISOString(),
         });
         
-        if (dbError) {
-          console.error('Error en Supabase:', dbError);
-          showStatus('Lanzamiento creado en Solana, pero falló el guardado en base de datos.', 'error');
-        } else {
-          showStatus('🚀 ¡Lanzamiento creado y guardado en Supabase exitosamente!', 'success');
-        }
+        showStatus('🚀 ¡Lanzamiento creado y guardado exitosamente!', 'success');
         
       } catch (err) {
         console.error(err);
