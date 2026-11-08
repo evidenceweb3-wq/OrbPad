@@ -261,7 +261,9 @@
           network: 'solana-devnet',
           token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
           launchType: 'bondingCurve',
-          launch: {},
+          launch: {
+            firstBuyAmount: 0.1, // ✅ Inyecta 0.1 SOL de liquidez inicial
+          },
         };
 
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
