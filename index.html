@@ -134,7 +134,7 @@
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
         
         // 2. Importamos el uploader de Irys para Umi en su versión WEB
-        const { irysUploader } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-uploader-irys@1.6.0/web/+esm');
+        const { irysUploader } = await import('https://esm.sh/@metaplex-foundation/umi-uploader-irys@1.6.0?target=es2022');
         
         // 3. Importamos la utilidad para convertir archivos en la misma versión (1.6.0)
         const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@1.6.0');
