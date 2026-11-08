@@ -52,12 +52,10 @@
   <div id="status" class="info">Esperando conexión...</div>
 
   <script type="module">
-    // 1. Polyfill de Buffer y Supabase (Carga inmediata para que el botón funcione)
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
-    // ⚠️ CONFIGURA TUS DATOS AQUÍ
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTmLdP9KCSd1gqbhMw2ysjP6cqtKFWorb';
@@ -76,7 +74,6 @@
       statusDiv.className = type;
     }
 
-    // --- PASO 1: AUTENTICACIÓN ---
     loginBtn.addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
       if (!provider || !provider.isPhantom) {
@@ -117,7 +114,6 @@
       }
     });
 
-    // --- PASO 2: CREAR EL LANZAMIENTO ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Primero inicia sesión.', 'error');
       
@@ -133,21 +129,19 @@
       try {
         showStatus('⏳ Cargando librerías de Genesis e Irys...', 'info');
         
-        // 1. Importamos Genesis y el SDK NATIVO de Irys para el navegador
+        // ✅ IMPORTACIONES CORREGIDAS DESDE esm.sh
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
-        const { WebUploader } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload@0.0.15/+esm');
-        const { WebSolana } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload-solana@0.1.8/+esm');
+        const { WebUploader } = await import('https://esm.sh/@irys/web-upload@0.0.15');
+        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.1.8');
 
         umi.use(genesis());
 
         showStatus('⏳ Preparando subida a Irys (Devnet)...', 'info');
         
         const provider = window.phantom?.solana || window.solana;
-        // Inicializamos Irys apuntando explícitamente a Devnet
         const irysUploader = await WebUploader(WebSolana).withProvider(provider).devnet();
         const file = fileInput.files[0];
 
-        // Si la imagen pesa más de 100KB, Irys requiere un pequeño pago
         const price = await irysUploader.getPrice(file.size);
         if (price > 0) { 
           const balance = await irysUploader.getBalance();
