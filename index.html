@@ -25,7 +25,7 @@
     /* Navbar */
     header {
       height: 60px; display: flex; justify-content: space-between; align-items: center;
-      padding: 0 24px; background: var(--panel-bg); border-bottom: 1px solid var(--border);
+      padding: 0 24px; background: var(--panel-bg); border-bottom: 1px solid var(--border); z-index: 10;
     }
     header h1 { font-size: 1.2rem; color: var(--green); display: flex; align-items: center; gap: 8px; }
     #login-btn { 
@@ -36,7 +36,7 @@
 
     /* Layout */
     .app-layout {
-      display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 60px);
+      display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 60px); overflow: hidden;
     }
 
     /* Panel Izquierdo */
@@ -75,7 +75,7 @@
     .token-info p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
 
     /* Panel Derecho (Trading) */
-    .main-content { display: flex; flex-direction: column; padding: 20px; gap: 20px; }
+    .main-content { display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow: hidden; }
     
     .token-header { display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
     .token-title { display: flex; align-items: center; gap: 16px; }
@@ -101,7 +101,7 @@
 
     /* Status Toast */
     #toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
       padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
       opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
     }
@@ -110,6 +110,18 @@
     #toast.success { background: #1e3a2b; color: var(--green); border: 1px solid var(--green); }
     #toast.error { background: #3a1e1e; color: var(--red); border: 1px solid var(--red); }
 
+    /* ERROR BOX (Consola inferior) */
+    #error-box {
+      position: fixed; bottom: 0; left: 0; width: 100%; background: #1a0000; 
+      border-top: 2px solid var(--red); color: var(--red); font-family: monospace; 
+      font-size: 0.85rem; max-height: 150px; overflow-y: auto; display: none; z-index: 2000;
+    }
+    .error-header {
+      display: flex; justify-content: space-between; padding: 8px 16px; 
+      background: #2a0000; font-weight: bold; border-bottom: 1px solid #440000;
+    }
+    .error-header button { background: transparent; color: var(--red); border: none; cursor: pointer; font-weight: bold; font-size: 1rem; }
+    #error-content { padding: 12px 16px; white-space: pre-wrap; line-height: 1.4; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -192,7 +204,17 @@
     </div>
   </div>
 
+  <!-- Toast Notification -->
   <div id="toast"></div>
+
+  <!-- Caja de Errores Visible -->
+  <div id="error-box">
+    <div class="error-header">
+      <span>❌ Error Detectado</span>
+      <button onclick="document.getElementById('error-box').style.display='none'">Cerrar [X]</button>
+    </div>
+    <div id="error-content"></div>
+  </div>
 
   <script type="module">
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
@@ -216,17 +238,32 @@
     function showToast(msg, type) {
       toast.textContent = msg; toast.className = `show ${type}`;
       setTimeout(() => toast.className = '', 4000);
+      if(type === 'error') logError(msg);
     }
 
-    // 1. LOGIN
+    // Log Error to Bottom Box
+    function logError(msg) {
+      const box = document.getElementById('error-box');
+      const content = document.getElementById('error-content');
+      box.style.display = 'block';
+      content.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n${content.textContent}`;
+    }
+
+    // 1. LOGIN (Con corrección de formato ASCII y limpieza de sesión)
     document.getElementById('login-btn').addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
       if (!provider?.isPhantom) return showToast('Instala Phantom.', 'error');
       
       try {
+        // ✅ Limpiar sesión residual de Supabase
+        await supabase.auth.signOut();
+
         await provider.connect();
         const { error } = await supabase.auth.signInWithWeb3({
-          chain: 'solana', statement: 'Acepto los Términos.', wallet: provider 
+          chain: 'solana', 
+          // ✅ STATEMENT EN INGLÉS (Sin tildes) para que Phantom no de error
+          statement: 'I accept the terms of service.', 
+          wallet: provider 
         });
         if (error) throw error;
 
@@ -242,15 +279,21 @@
         
         loadTokens();
         showToast('✅ Conectado', 'success');
-      } catch (err) { showToast(err.message, 'error'); }
+      } catch (err) { 
+        console.error(err);
+        showToast(err.message, 'error'); 
+      }
     });
 
     // 2. LOAD TOKENS
     async function loadTokens() {
-      const { data } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
+      if(error) return logError("Error cargando tokens: " + error.message);
+
       const list = document.getElementById('token-list');
-      list.innerHTML = data.length ? '' : '<p style="color:#888;text-align:center;">No hay tokens.</p>';
+      list.innerHTML = (data && data.length) ? '' : '<p style="color:#888;text-align:center;">No hay tokens.</p>';
       
+      if(!data) return;
       data.forEach(t => {
         const div = document.createElement('div');
         div.className = 'token-item';
@@ -282,7 +325,7 @@
       updateChart(currentGenesis);
     }
 
-    // 4. CREATE TOKEN (Batch Tx)
+    // 4. CREATE TOKEN
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
@@ -295,8 +338,10 @@
         showToast('Subiendo imagen...', 'info');
         const reader = new FileReader();
         const b64 = await new Promise(r => { reader.onload = e => r(e.target.result.split(',')[1]); reader.readAsDataURL(file); });
+        
         const { data: up, error: upErr } = await supabase.functions.invoke('upload-to-irys', { body: { fileBase64: b64, fileName: file.name, fileType: file.type } });
         if (upErr) throw upErr;
+        if (up.error) throw new Error(up.error);
 
         showToast('Preparando lanzamiento...', 'info');
         const { createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
@@ -326,10 +371,10 @@
 
         showToast('🚀 ¡Token creado!', 'success');
         loadTokens();
-        btn.disabled = false; btn.textContent = 'Lanzar Token (0.1 SOL Inicial)';
       } catch (err) {
         console.error(err);
         showToast(err.message || 'Error al crear', 'error');
+      } finally {
         btn.disabled = false; btn.textContent = 'Lanzar Token (0.1 SOL Inicial)';
       }
     });
@@ -413,7 +458,10 @@
 
         if (type === 'buy') { try { await closeToken(umi, { account: uQuote, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch(e){} }
 
-      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+      } catch (e) { 
+        console.error(e);
+        showToast('Error: ' + e.message, 'error'); 
+      }
     }
 
     document.getElementById('buy-btn').onclick = () => executeTrade('buy');
