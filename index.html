@@ -135,8 +135,8 @@
         showStatus('⏳ Cargando Irys y Genesis...', 'info');
         
         // CARGA DINÁMICA DE IRYS Y GENESIS
-        const { WebUploader } = await import('https://esm.run/@irys/web-upload@0.0.15');
-        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.0.15');
+        const { WebUploader } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload@0.0.15/+esm');
+const { WebSolana } = await import('https://cdn.jsdelivr.net/npm/@irys/web-upload-solana@0.0.15/+esm');
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.0.1');
         
         umi.use(genesis());
