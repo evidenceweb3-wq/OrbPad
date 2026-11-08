@@ -134,7 +134,8 @@
         const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
 
-        import { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL, VersionedTransaction, TransactionMessage } from '@solana/web3.js';
+        // INCLUIDO ComputeBudgetProgram correctamente
+        import { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL, VersionedTransaction, TransactionMessage, ComputeBudgetProgram } from '@solana/web3.js';
         import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount, newBondingCurve } from '@nirholas/pump-sdk';
         import { createClient } from '@supabase/supabase-js';
         import BN from 'bn.js';
@@ -226,7 +227,7 @@
             return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        // 3. Crear Token (Paso 1) + Compra Inicial (Paso 2) - DIVIDIDO PARA EVITAR LÍMITE DE BYTES
+        // 3. Crear Token (Paso 1) + Compra Inicial (Paso 2) - DIVIDIDO Y CORREGIDO
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
@@ -246,11 +247,13 @@
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
-                // PASO 1: Solo crear el token (sin compra) para mantener la transacción pequeña.
-                // Se eliminan las instrucciones ComputeBudget para reducir el tamaño.
-                const createInstructions = await PUMP_SDK.createV2Instruction({
-                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri,
-                    creator: userPublicKey, mayhemMode: false, cashback: false
+                // PASO 1: Solo crear el token. Usamos amount: 0 para evitar el error del Provider y no exceder bytes.
+                const createInstructions = await PUMP_SDK.createV2AndBuyInstructions({
+                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, 
+                    creator: userPublicKey, user: userPublicKey, 
+                    amount: new BN(0), 
+                    solAmount: new BN(0), 
+                    slippage: 0.05, mayhemMode: false, cashback: false
                 });
 
                 const { blockhash: bh1, lastValidBlockHeight: lvb1 } = await connection.getLatestBlockhash('confirmed');
@@ -275,9 +278,16 @@
                 const initialCurve = newBondingCurve(global);
                 const tokensOut = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend });
 
+                // Obtenemos el estado real de la curva recién creada
+                const buyState = await onlineSdk.fetchBuyState(mintKeypair.publicKey, userPublicKey);
+                
                 const buyInstructions = await onlineSdk.buyInstructions({
-                    global, feeConfig, mint: mintKeypair.publicKey, user: userPublicKey,
-                    amount: tokensOut, solAmount: solToSpend, slippage: 0.05
+                    ...buyState,
+                    mint: mintKeypair.publicKey,
+                    user: userPublicKey,
+                    amount: tokensOut,
+                    solAmount: solToSpend,
+                    slippage: 0.05
                 });
 
                 const { blockhash: bh2, lastValidBlockHeight: lvb2 } = await connection.getLatestBlockhash('confirmed');
@@ -330,7 +340,6 @@
                 
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
                 
-                // Formateo limpio del precio (Ej: 0.00000245 SOL)
                 let priceStr = priceSol.toFixed(8); 
                 priceStr = priceStr.replace(/0+$/, '').replace(/\.$/, ''); 
 
@@ -379,10 +388,8 @@
 
                 const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
                 
-                // Slippage de 5% (0.05) para asegurar que pase
                 const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.05 });
 
-                // Añadir Priority Fees
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
                     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
@@ -425,10 +432,8 @@
 
                 const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
                 
-                // Slippage de 5% (0.05)
                 const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.05 });
 
-                // Añadir Priority Fees
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
                     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
