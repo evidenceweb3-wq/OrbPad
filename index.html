@@ -129,10 +129,10 @@
       try {
         showStatus('⏳ Cargando librerías de Genesis e Irys...', 'info');
         
-        // ✅ IMPORTACIONES CORREGIDAS DESDE esm.sh
+        // ✅ LA MAGIA ESTÁ AQUÍ: EL PARÁMETRO ?bundle
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
-        const { WebUploader } = await import('https://esm.sh/@irys/web-upload@0.0.15');
-        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.1.8');
+        const { WebUploader } = await import('https://esm.sh/@irys/web-upload@0.0.15?bundle');
+        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.1.8?bundle');
 
         umi.use(genesis());
 
