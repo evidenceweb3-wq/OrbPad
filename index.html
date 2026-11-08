@@ -51,7 +51,7 @@
 
   <div id="status" class="info">Esperando conexión...</div>
 
-  <script type="module">
+   <script type="module">
     // 1. Polyfill de Buffer y Supabase (Carga inmediata para que el botón funcione)
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
@@ -89,7 +89,6 @@
         
         showStatus('Firmando mensaje seguro en Supabase...', 'info');
         
-        // ✅ FIX APLICADO: statement en inglés sin tildes y wallet explícita
         const { data, error } = await supabase.auth.signInWithWeb3({
           chain: 'solana',
           statement: 'I accept the Terms of Service of Epic ORB Launchpad.',
@@ -103,10 +102,11 @@
         loginBtn.style.display = 'none';
         launchForm.style.display = 'block';
 
-        // CARGAMOS METAPLEX SOLO CUANDO EL USUARIO YA ESTÁ LOGUEADO
         showStatus('Iniciando motor de Solana...', 'info');
-        const { createUmi } = await import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.9.1');
-        const { walletAdapterIdentity } = await import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@0.9.1');
+        
+        // ✅ VERSIONES ALINEADAS A 1.5.1
+        const { createUmi } = await import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.5.1');
+        const { walletAdapterIdentity } = await import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.5.1');
         
         umi = createUmi('https://api.devnet.solana.com');
         umi.use(walletAdapterIdentity(provider));
@@ -131,13 +131,13 @@
 
       createBtn.disabled = true;
       
-           try {
+      try {
         showStatus('⏳ Cargando Genesis y el Uploader de Irys...', 'info');
         
-        // 1. Importamos Genesis, el Uploader de Irys y la utilidad para convertir archivos
+        // 1. Importamos Genesis, el Uploader de Irys (versión WEB) y la utilidad para convertir archivos
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
-        const { irysUploader } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-uploader-irys@1.5.0/+esm');
-        const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@0.9.1');
+        const { irysUploader } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-uploader-irys@1.5.0/web/+esm');
+        const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@1.5.1');
 
         // 2. Registramos los plugins en la instancia de Umi
         umi.use(genesis());
