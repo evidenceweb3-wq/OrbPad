@@ -169,6 +169,9 @@
         umi.use(walletAdapterIdentity(provider));
         umi.use(mplToolbox());
         
+        const { genesis } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        umi.use(genesis());
+        
         await loadSavedLaunches();
         showStatus('✅ Conectado.', 'success');
       } catch (err) {
@@ -298,16 +301,17 @@
     // --- 4. TARJETA CON PRECIO Y MCAP REALES ---
     async function renderTokenCard(genesisAddress, name, symbol, image) {
       try {
-        const { findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: publicKey(genesisAddress), bucketIndex: 0 });
-        const bucketAccount = await umi.rpc.getAccount(bucketPda);
+        
+        // ✅ USAR fetchBondingCurveBucketV2 para obtener datos parseados
+        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
         
         let price = 0, marketCap = 0;
 
-        if (bucketAccount.exists) {
-          const data = bucketAccount.data;
-          const totalSol = Number(data.virtualSol + data.realSol) / 1e9;
-          const totalTokens = Number(data.virtualTokens + data.realTokens) / 1e9;
+        if (bucket) {
+          const totalSol = Number(bucket.virtualSol + bucket.realSol) / 1e9;
+          const totalTokens = Number(bucket.virtualTokens + bucket.realTokens) / 1e9;
           price = totalSol / totalTokens;
           const totalSupply = 1_000_000_000; 
           marketCap = price * totalSupply;
@@ -398,7 +402,7 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR (OBJETO ENUM DIRECTO) ---
+    // --- 6. COMPRAR (USANDO fetchBondingCurveBucketV2) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -411,20 +415,22 @@
 
       try {
         showStatus('⏳ Preparando compra...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        const directionBuy = { __kind: 'buy' }; // ✅ SOLUCIÓN AL ERROR __kind
+        const directionBuy = { __kind: 'buy' };
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        const bucketAccount = await umi.rpc.getAccount(bucketPda);
-        if (!bucketAccount.exists) throw new Error("El bucket no existe.");
-        if (!isSwappable(bucketAccount.data)) throw new Error("La curva no está activa.");
+        
+        // ✅ USAR fetchBondingCurveBucketV2 para obtener el objeto parseado
+        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
+        
+        if (!isSwappable(bucket)) throw new Error("La curva no está activa.");
 
         const amountIn = BigInt(Math.floor(amountSol * 1_000_000_000));
-        const quote = getSwapResult(bucketAccount.data, amountIn, directionBuy);
+        const quote = getSwapResult(bucket, amountIn, directionBuy);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Envolviendo SOL...', 'info');
@@ -475,7 +481,7 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER (OBJETO ENUM DIRECTO) ---
+    // --- 7. VENDER (USANDO fetchBondingCurveBucketV2) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -488,20 +494,22 @@
 
       try {
         showStatus('⏳ Preparando venta...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        const directionSell = { __kind: 'sell' }; // ✅ SOLUCIÓN AL ERROR __kind
+        const directionSell = { __kind: 'sell' };
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        const bucketAccount = await umi.rpc.getAccount(bucketPda);
-        if (!bucketAccount.exists) throw new Error("El bucket no existe.");
-        if (!isSwappable(bucketAccount.data)) throw new Error("La curva no está activa.");
+        
+        // ✅ USAR fetchBondingCurveBucketV2 para obtener el objeto parseado
+        const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
+        
+        if (!isSwappable(bucket)) throw new Error("La curva no está activa.");
 
         const amountIn = BigInt(Math.floor(amountTokens * 1_000_000_000));
-        const quote = getSwapResult(bucketAccount.data, amountIn, directionSell);
+        const quote = getSwapResult(bucket, amountIn, directionSell);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Ejecutando venta...', 'info');
