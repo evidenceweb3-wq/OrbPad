@@ -51,10 +51,6 @@
 
   <div id="status" class="info">Esperando conexión...</div>
 
-  <!-- Cargar SDK de Irys para navegador (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@irys/web-upload@0.0.15/dist/cjs/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@irys/web-upload-solana@0.1.8/dist/cjs/index.min.js"></script>
-
   <script type="module">
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
@@ -136,16 +132,16 @@
         // 1. Importamos Genesis (Metaplex)
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
         
-        // 2. Usamos las variables globales de los scripts UMD de Irys
-        const WebUploader = window.WebUploader;
-        const WebSolana = window.WebSolana;
+        // 2. Importamos Irys con ?bundle para forzar el empaquetado de dependencias
+        const { WebUploader } = await import('https://esm.sh/@irys/web-upload@0.0.15?bundle');
+        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.1.8?bundle');
 
         umi.use(genesis());
 
         showStatus('⏳ Preparando subida a Irys (Devnet)...', 'info');
         
         const provider = window.phantom?.solana || window.solana;
-        // 3. Inicializamos el uploader nativo de Irys para Devnet
+        // 3. Inicializamos el uploader de Irys con la wallet y la red Devnet
         const irysUploader = await WebUploader(WebSolana).withProvider(provider).devnet();
         const file = fileInput.files[0];
 
