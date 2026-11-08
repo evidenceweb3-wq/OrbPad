@@ -118,6 +118,9 @@
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
+    
+    // ✅ HELIUS RPC INTEGRADO
+    const HELIUS_RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -168,7 +171,8 @@
         createSection.classList.remove('hidden');
         tradeSection.classList.remove('hidden');
 
-        umi = createUmi('https://api.devnet.solana.com');
+        // ✅ Usando Helius
+        umi = createUmi(HELIUS_RPC);
         umi.use(walletAdapterIdentity(provider));
         umi.use(mplToolbox());
         
@@ -269,7 +273,7 @@
           token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
           launchType: 'bondingCurve',
           launch: {
-            firstBuyAmount: 0.1, // ✅ Inyecta 0.1 SOL de liquidez inicial
+            firstBuyAmount: 0.1,
           },
         };
 
@@ -301,7 +305,6 @@
 
         await loadSavedLaunches();
         
-        // ✅ Esperar 3 segundos para que el RPC actualice los saldos del firstBuyAmount
         setTimeout(() => {
           renderTokenCard(currentGenesis, currentTokenName, currentTokenSymbol, currentTokenImage);
           updateChart(currentGenesis);
@@ -421,7 +424,7 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR (CON SWAPDIRECTION CORRECTO) ---
+    // --- 6. COMPRAR ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -434,14 +437,12 @@
 
       try {
         showStatus('⏳ Preparando compra...', 'info');
-        // ✅ IMPORTAMOS SwapDirection
         const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
         
-        // ✅ USAMOS EL ENUM
         const directionBuy = SwapDirection.Buy;
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
@@ -503,7 +504,7 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER (CON SWAPDIRECTION CORRECTO) ---
+    // --- 7. VENDER ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -516,14 +517,12 @@
 
       try {
         showStatus('⏳ Preparando venta...', 'info');
-        // ✅ IMPORTAMOS SwapDirection
         const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
         
-        // ✅ USAMOS EL ENUM
         const directionSell = SwapDirection.Sell;
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
