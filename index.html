@@ -127,35 +127,25 @@
       createBtn.disabled = true;
       
       try {
-        showStatus('⏳ Cargando librerías de Genesis e Irys...', 'info');
+        showStatus('⏳ Cargando Genesis y el Uploader de Irys...', 'info');
         
-        // ✅ LA MAGIA ESTÁ AQUÍ: EL PARÁMETRO ?bundle
+        // 1. Importamos Genesis, el Uploader de Irys (versión WEB) y la utilidad para convertir archivos
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
-        const { WebUploader } = await import('https://esm.sh/@irys/web-upload@0.0.15?bundle');
-        const { WebSolana } = await import('https://esm.sh/@irys/web-upload-solana@0.1.8?bundle');
+        const { irysUploader } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-uploader-irys@1.5.0/web/+esm');
+        const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@1.5.1');
 
+        // 2. Registramos los plugins en la instancia de Umi
         umi.use(genesis());
-
-        showStatus('⏳ Preparando subida a Irys (Devnet)...', 'info');
-        
-        const provider = window.phantom?.solana || window.solana;
-        const irysUploader = await WebUploader(WebSolana).withProvider(provider).devnet();
-        const file = fileInput.files[0];
-
-        const price = await irysUploader.getPrice(file.size);
-        if (price > 0) { 
-          const balance = await irysUploader.getBalance();
-          if (balance < price) {
-            showStatus('💰 Financiando subida con SOL de Devnet (Firma en Phantom)...', 'info');
-            await irysUploader.fund(price); 
-          }
-        }
+        // Configuramos el uploader para que use Devnet
+        umi.use(irysUploader({ address: "https://devnet.irys.xyz" })); 
 
         showStatus('⏳ Subiendo logo a Irys...', 'info');
-        const receipt = await irysUploader.uploadFile(file, { 
-          tags: [{ name: "Content-Type", value: file.type }] 
-        });
-        const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
+        
+        // 3. Convertimos el archivo del input al formato que entiende Umi
+        const file = await createGenericFileFromBrowserFile(fileInput.files[0]);
+        
+        // 4. Subimos el archivo usando el método nativo de Umi
+        const [imageUrl] = await umi.uploader.upload([file]);
         
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
