@@ -138,7 +138,7 @@
           reader.readAsDataURL(file);
         });
 
-        // 2. Llamar a la Edge Function de Supabase para subir a Irys
+        // 2. Llamar a la Edge Function de Supabase
         showStatus('⏳ Subiendo logo a Irys (vía Supabase)...', 'info');
         const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-to-irys', {
           body: {
@@ -148,8 +148,16 @@
           }
         });
 
-        if (uploadError) throw uploadError;
-        if (uploadData.error) throw new Error(uploadData.error);
+        // ✅ EXTRACCIÓN DEL ERROR REAL DE SUPABASE
+        if (uploadError) {
+          let realErrorMessage = uploadError.message;
+          try {
+            const errorBody = await uploadError.context.json();
+            if (errorBody && errorBody.error) realErrorMessage = errorBody.error;
+          } catch (e) { /* Si falla el JSON, usamos el mensaje genérico */ }
+          throw new Error(realErrorMessage);
+        }
+        if (uploadData && uploadData.error) throw new Error(uploadData.error);
         
         const imageUrl = uploadData.url;
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
@@ -190,6 +198,7 @@
         
       } catch (err) {
         console.error(err);
+        // Mostramos el mensaje exacto del error en la caja roja
         showStatus('Error al crear: ' + (err.message || 'Revisa la consola (F12).'), 'error');
       } finally {
         createBtn.disabled = false;
