@@ -15,58 +15,32 @@
       --red: #ff4d4d;
       --text-muted: #8b8b9a;
     }
-    
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
+    body { background-color: var(--bg-dark); color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
     
-    body { 
-      background-color: var(--bg-dark); color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
-    }
-
-    /* Navbar */
-    header {
-      height: 60px; display: flex; justify-content: space-between; align-items: center;
-      padding: 0 24px; background: var(--panel-bg); border-bottom: 1px solid var(--border); z-index: 10;
-    }
+    header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; background: var(--panel-bg); border-bottom: 1px solid var(--border); z-index: 10; }
     header h1 { font-size: 1.2rem; color: var(--green); display: flex; align-items: center; gap: 8px; }
-    #login-btn { 
-      background: var(--purple); color: white; padding: 8px 16px; border: none; border-radius: 6px; 
-      font-weight: 600; cursor: pointer; transition: 0.2s;
-    }
+    #login-btn { background: var(--purple); color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     #login-btn:hover { opacity: 0.8; }
 
-    /* Layout */
-    .app-layout {
-      display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 60px); overflow: hidden;
-    }
-
-    /* Panel Izquierdo */
-    .sidebar {
-      background: var(--panel-bg); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow-y: auto;
-    }
+    .app-layout { display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 60px); overflow: hidden; }
+    .sidebar { background: var(--panel-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow-y: auto; }
     .card { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
     .card h3 { font-size: 0.9rem; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
     
     .input-group { margin-bottom: 12px; }
     .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
-    .input-group input { 
-      width: 100%; background: var(--panel-bg); border: 1px solid var(--border); color: white; 
-      padding: 10px; border-radius: 6px; font-size: 0.9rem; outline: none;
-    }
+    .input-group input { width: 100%; background: var(--panel-bg); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem; outline: none; }
     .input-group input:focus { border-color: var(--purple); }
     
-    .btn-primary { 
-      width: 100%; background: var(--green); color: #000; padding: 12px; border: none; 
-      border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 8px;
-    }
+    .btn-primary { width: 100%; background: var(--green); color: #000; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 8px; }
     .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { background: #555; cursor: not-allowed; }
 
-    /* Lista de Tokens */
+    .btn-nonce { width: 100%; background: var(--purple); color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 0.85rem;}
+
     .token-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-    .token-item {
-      display: flex; align-items: center; justify-content: space-between; padding: 10px;
-      background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s;
-    }
+    .token-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
     .token-item:hover { border-color: var(--purple); }
     .token-item.active { border-color: var(--green); background: rgba(20, 241, 149, 0.05); }
     .token-info { display: flex; align-items: center; gap: 10px; }
@@ -74,9 +48,7 @@
     .token-info h4 { font-size: 0.9rem; margin: 0; }
     .token-info p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
 
-    /* Panel Derecho (Trading) */
     .main-content { display: flex; flex-direction: column; padding: 20px; gap: 20px; overflow: hidden; }
-    
     .token-header { display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
     .token-title { display: flex; align-items: center; gap: 16px; }
     .token-title img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--green); }
@@ -89,39 +61,18 @@
     .stat-item span:last-child { font-size: 1.2rem; font-weight: bold; color: var(--green); }
 
     .chart-container { flex: 1; background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
-    
-    /* Panel de Trade */
     .trade-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: var(--panel-bg); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
     .trade-inputs { display: flex; gap: 12px; grid-column: span 2; }
     .trade-inputs .input-group { flex: 1; margin: 0; }
-    
     .trade-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; grid-column: span 2; }
     .btn-buy { background: var(--green); color: #000; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .btn-sell { background: var(--red); color: #fff; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-    /* Status Toast */
-    #toast {
-      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-      padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
-      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
-    }
+    #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; }
     #toast.show { opacity: 1; }
     #toast.info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; }
     #toast.success { background: #1e3a2b; color: var(--green); border: 1px solid var(--green); }
     #toast.error { background: #3a1e1e; color: var(--red); border: 1px solid var(--red); }
-
-    /* ERROR BOX (Consola inferior) */
-    #error-box {
-      position: fixed; bottom: 0; left: 0; width: 100%; background: #1a0000; 
-      border-top: 2px solid var(--red); color: var(--red); font-family: monospace; 
-      font-size: 0.85rem; max-height: 150px; overflow-y: auto; display: none; z-index: 2000;
-    }
-    .error-header {
-      display: flex; justify-content: space-between; padding: 8px 16px; 
-      background: #2a0000; font-weight: bold; border-bottom: 1px solid #440000;
-    }
-    .error-header button { background: transparent; color: var(--red); border: none; cursor: pointer; font-weight: bold; font-size: 1rem; }
-    #error-content { padding: 12px 16px; white-space: pre-wrap; line-height: 1.4; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -134,10 +85,19 @@
 
   <div id="app-layout" class="app-layout hidden">
     
-    <!-- Sidebar -->
     <div class="sidebar">
       <div class="card">
-        <h3>✨ Crear Lanzamiento</h3>
+        <h3>⚙️ Paso 1: Configurar Nonce</h3>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Esto evita que las transacciones fallen por tiempo en Devnet.</p>
+        <button id="setup-nonce-btn" class="btn-nonce">Generar Nonce (Solo 1 vez)</button>
+        <div class="input-group" style="margin-top:10px;">
+          <label>Tu Nonce Address</label>
+          <input type="text" id="nonce-address" placeholder="Pega tu nonce aqui..." readonly>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>✨ Paso 2: Crear Lanzamiento</h3>
         <div class="input-group">
           <label>Nombre del Token</label>
           <input type="text" id="token-name" placeholder="Ej: Epic ORB" value="Epic ORB">
@@ -150,18 +110,17 @@
           <label>Logo (PNG/JPG)</label>
           <input type="file" id="logo-input" accept="image/png, image/jpeg">
         </div>
-        <button id="create-btn" class="btn-primary">Lanzar Token (0.1 SOL Inicial)</button>
+        <button id="create-btn" class="btn-primary" disabled>Lanzar Token (0.1 SOL Inicial)</button>
       </div>
 
       <div class="card" style="flex: 1; display: flex; flex-direction: column;">
         <h3>📚 Mis Tokens</h3>
         <div id="token-list" class="token-list">
-          <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">Conecta tu wallet para ver tokens.</p>
+          <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-top:20px;">No hay tokens aún.</p>
         </div>
       </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
       <div class="token-header">
         <div class="token-title">
@@ -204,17 +163,7 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
   <div id="toast"></div>
-
-  <!-- Caja de Errores Visible -->
-  <div id="error-box">
-    <div class="error-header">
-      <span>❌ Error Detectado</span>
-      <button onclick="document.getElementById('error-box').style.display='none'">Cerrar [X]</button>
-    </div>
-    <div id="error-content"></div>
-  </div>
 
   <script type="module">
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
@@ -222,7 +171,7 @@
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
     import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
     import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0';
-    import { publicKey, sol, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
+    import { publicKey, sol, transactionBuilder, setTransactionMessageLifetimeUsingDurableNonce } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
     import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@0.11.4';
 
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
@@ -233,35 +182,23 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let umi = null, currentGenesis = null, currentBaseMint = null, candleSeries = null;
 
-    // UI Helpers
     const toast = document.getElementById('toast');
     function showToast(msg, type) {
       toast.textContent = msg; toast.className = `show ${type}`;
       setTimeout(() => toast.className = '', 4000);
-      if(type === 'error') logError(msg);
     }
 
-    // Log Error to Bottom Box
-    function logError(msg) {
-      const box = document.getElementById('error-box');
-      const content = document.getElementById('error-content');
-      box.style.display = 'block';
-      content.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n${content.textContent}`;
-    }
-
-    // 1. LOGIN (Con corrección de formato ASCII y limpieza de sesión)
+    // 1. LOGIN Y AUTO-CARGA DE NONCE
     document.getElementById('login-btn').addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
       if (!provider?.isPhantom) return showToast('Instala Phantom.', 'error');
       
       try {
-        // ✅ Limpiar sesión residual de Supabase
-        await supabase.auth.signOut();
-
+        await supabase.auth.signOut(); // Limpiar sesión previa
         await provider.connect();
+        
         const { error } = await supabase.auth.signInWithWeb3({
           chain: 'solana', 
-          // ✅ STATEMENT EN INGLÉS (Sin tildes) para que Phantom no de error
           statement: 'I accept the terms of service.', 
           wallet: provider 
         });
@@ -277,19 +214,65 @@
         const { genesis } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
         
+        // Cargar Nonce guardado
+        const savedNonce = localStorage.getItem('orb_nonce');
+        if (savedNonce) {
+          document.getElementById('nonce-address').value = savedNonce;
+          document.getElementById('create-btn').disabled = false;
+        }
+
         loadTokens();
         showToast('✅ Conectado', 'success');
-      } catch (err) { 
-        console.error(err);
-        showToast(err.message, 'error'); 
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+
+    // 2. CREAR NONCE (Botón Visible)
+    document.getElementById('setup-nonce-btn').addEventListener('click', async () => {
+      if (!umi) return showToast('Conecta wallet primero.', 'error');
+      
+      const btn = document.getElementById('setup-nonce-btn');
+      btn.disabled = true; btn.textContent = 'Generando...';
+
+      try {
+        showToast('Firmando creación de Nonce...', 'info');
+        const { Connection, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL } = await import('https://esm.sh/@solana/web3.js@1.95.3');
+        
+        const connection = new Connection(RPC, 'confirmed');
+        const nonceKeypair = Keypair.generate();
+        
+        const tx = new Transaction().add(
+          SystemProgram.createNonceAccount({
+            fromPubkey: umi.identity.publicKey,
+            noncePubkey: nonceKeypair.publicKey,
+            authorizedPubkey: umi.identity.publicKey,
+            lamports: 0.0015 * LAMPORTS_PER_SOL,
+          })
+        );
+
+        const { blockhash } = await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.feePayer = umi.identity.publicKey;
+        
+        const signedTx = await umi.identity.signTransaction(tx);
+        await connection.sendRawTransaction(signedTx.serialize());
+        
+        const nonceStr = nonceKeypair.publicKey.toString();
+        localStorage.setItem('orb_nonce', nonceStr);
+        
+        document.getElementById('nonce-address').value = nonceStr;
+        document.getElementById('create-btn').disabled = false;
+        
+        showToast('✅ Nonce creado y guardado', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast('Error creando nonce: ' + error.message, 'error');
+        btn.disabled = false; btn.textContent = 'Generar Nonce (Solo 1 vez)';
       }
     });
 
-    // 2. LOAD TOKENS
+    // 3. LOAD TOKENS
     async function loadTokens() {
-      const { data, error } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
-      if(error) return logError("Error cargando tokens: " + error.message);
-
+      const { data } = await supabase.from('launches').select('*').order('created_at', { ascending: false });
       const list = document.getElementById('token-list');
       list.innerHTML = (data && data.length) ? '' : '<p style="color:#888;text-align:center;">No hay tokens.</p>';
       
@@ -309,11 +292,10 @@
       });
     }
 
-    // 3. SELECT TOKEN
+    // 4. SELECT TOKEN
     async function selectToken(token, el) {
       document.querySelectorAll('.token-item').forEach(e => e.classList.remove('active'));
       el.classList.add('active');
-
       currentGenesis = token.genesis_address;
       currentBaseMint = token.base_mint;
 
@@ -325,11 +307,14 @@
       updateChart(currentGenesis);
     }
 
-    // 4. CREATE TOKEN
+    // 5. CREATE TOKEN (Con Nonce)
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
       if (!file) return showToast('Sube un logo.', 'error');
+      
+      const nonceAddress = document.getElementById('nonce-address').value;
+      if (!nonceAddress) return showToast('Genera el Nonce primero.', 'error');
 
       const btn = document.getElementById('create-btn');
       btn.disabled = true; btn.textContent = 'Creando...';
@@ -338,10 +323,8 @@
         showToast('Subiendo imagen...', 'info');
         const reader = new FileReader();
         const b64 = await new Promise(r => { reader.onload = e => r(e.target.result.split(',')[1]); reader.readAsDataURL(file); });
-        
         const { data: up, error: upErr } = await supabase.functions.invoke('upload-to-irys', { body: { fileBase64: b64, fileName: file.name, fileType: file.type } });
         if (upErr) throw upErr;
-        if (up.error) throw new Error(up.error);
 
         showToast('Preparando lanzamiento...', 'info');
         const { createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
@@ -354,15 +337,30 @@
           launch: { firstBuyAmount: 0.1 },
         };
 
-        const batchTxSender = async (txs) => {
+        // ✅ TX SENDER CON DURABLE NONCE
+        const nonceTxSender = async (txs) => {
           showToast('👉 Aprueba en Phantom', 'info');
-          const signed = await umi.identity.signAllTransactions(txs);
-          const sigs = await Promise.all(signed.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true })));
-          await umi.rpc.confirmTransaction({ signature: sigs[sigs.length-1], blockhash: signed[signed.length-1].message.recentBlockhash, lastValidBlockHeight: signed[signed.length-1].message.lastValidBlockHeight }, { commitment: 'confirmed' });
-          return sigs;
+          
+          // Firmar todas las transacciones
+          const signedTxs = await umi.identity.signAllTransactions(txs);
+          
+          // Enviar todas de golpe
+          const signatures = await Promise.all(
+            signedTxs.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' }))
+          );
+          
+          // Confirmar la última
+          const lastIdx = signedTxs.length - 1;
+          await umi.rpc.confirmTransaction({
+            signature: signatures[lastIdx],
+            blockhash: signedTxs[lastIdx].message.recentBlockhash,
+            lastValidBlockHeight: signedTxs[lastIdx].message.lastValidBlockHeight,
+          }, { commitment: 'confirmed' });
+
+          return signatures;
         };
 
-        const res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
+        const res = await createAndRegisterLaunch(umi, { txSender: nonceTxSender }, launchInput);
         
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB, token_name: launchInput.token.name, token_symbol: launchInput.token.symbol,
@@ -379,7 +377,7 @@
       }
     });
 
-    // 5. UPDATE STATS
+    // 6. UPDATE STATS Y CHART
     async function updateStats(genesis) {
       try {
         const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
@@ -397,7 +395,6 @@
       } catch (e) { console.warn('Stats err', e); }
     }
 
-    // 6. CHART
     function initChart() {
       if (candleSeries) return;
       const chart = LightweightCharts.createChart(document.getElementById('chart'), {
