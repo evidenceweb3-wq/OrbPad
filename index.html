@@ -95,7 +95,7 @@
     <div class="sidebar">
       <div class="card">
         <h3>⚙️ Paso 1: Configurar Nonce</h3>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Esto evita que las transacciones fallen por tiempo en Devnet.</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Evita que las transacciones fallen por tiempo en Devnet.</p>
         <button id="setup-nonce-btn" class="btn-nonce">Generar Nonce (Solo 1 vez)</button>
         <div class="input-group" style="margin-top:10px;">
           <label>Tu Nonce Address</label>
@@ -192,7 +192,9 @@
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
-    const RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro/1581092744fa8ee03fd0cb1d157f3b907e9840e4/';
+    
+    // ✅ TU NUEVO HELIUS DEVNET RPC
+    const RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let umi = null, currentGenesis = null, currentBaseMint = null, candleSeries = null;
@@ -223,7 +225,7 @@
         
         const { error } = await supabase.auth.signInWithWeb3({
           chain: 'solana', 
-          statement: 'I accept the terms of service.', // ASCII puro para evitar error de Phantom
+          statement: 'I accept the terms of service.', 
           wallet: provider 
         });
         if (error) throw error;
@@ -238,7 +240,6 @@
         const { genesis } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
         
-        // Cargar Nonce guardado
         const savedNonce = localStorage.getItem('orb_nonce');
         if (savedNonce) {
           document.getElementById('nonce-address').value = savedNonce;
@@ -282,10 +283,8 @@
         tx.recentBlockhash = blockhash;
         tx.feePayer = fromPubkey;
         
-        // ✅ SOLUCIÓN AL ERROR: Firmar con la cuenta Nonce ANTES de enviar a Phantom
-        tx.partialSign(nonceKeypair);
+        tx.partialSign(nonceKeypair); // Firma la cuenta nonce
         
-        // Firmar con Phantom
         const provider = window.phantom?.solana || window.solana;
         const signedTx = await provider.signTransaction(tx);
         
@@ -343,7 +342,7 @@
       updateChart(currentGenesis);
     }
 
-    // 5. CREATE TOKEN (Con Reintentos Automáticos y Firma Agrupada)
+    // 5. CREATE TOKEN (Con Firma Agrupada)
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
