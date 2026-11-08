@@ -226,7 +226,7 @@
             return `https://gateway.pinata.cloud/ipfs/${metaData.IpfsHash}`;
         }
 
-        // 3. Crear Token (Paso 1: createV2Instruction) + Compra Inicial (Paso 2)
+        // 3. Crear Token + Compra Inicial (0.01 SOL) - SOLUCIÓN FINAL
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
@@ -246,26 +246,17 @@
                 const global = await onlineSdk.fetchGlobal();
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
-                // PASO 1: Crear el token SIN compra usando createV2Instruction.
-                // Pasamos correctamente 'creator' y 'user' para evitar el error del Provider.
+                // PASO 1: Solo crear el token.
                 const createIx = await PUMP_SDK.createV2Instruction({
-                    global,
-                    feeConfig,
-                    mint: mintKeypair.publicKey,
-                    name,
-                    symbol,
-                    uri: metadataUri,
-                    creator: userPublicKey,
-                    user: userPublicKey,
-                    mayhemMode: false,
-                    cashback: false
+                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri,
+                    creator: userPublicKey, user: userPublicKey, mayhemMode: false, cashback: false
                 });
 
                 const { blockhash: bh1, lastValidBlockHeight: lvb1 } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
                     recentBlockhash: bh1,
-                    instructions: [createIx], // Solo la instrucción de creación
+                    instructions: [createIx],
                 }).compileToV0Message();
 
                 const tx = new VersionedTransaction(messageV0);
@@ -276,15 +267,38 @@
                 await connection.confirmTransaction({ signature: txId, blockhash: bh1, lastValidBlockHeight: lvb1 }, 'confirmed');
 
                 const mintAddress = mintKeypair.publicKey.toBase58();
-                statusEl.textContent = `✅ Token creado. Paso 2/2: Ejecutando compra inicial...`;
-
-                // PASO 2: Compra inicial (0.01 SOL) en una transacción separada.
-                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
-                const initialCurve = newBondingCurve(global);
-                const tokensOut = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend });
-
-                const buyState = await onlineSdk.fetchBuyState(mintKeypair.publicKey, userPublicKey);
                 
+                // --- PASO 2: COMPRA INICIAL CON REINTENTOS ---
+                statusEl.textContent = `✅ Token creado. Esperando a que la red se sincronice...`;
+                
+                // 1. Pausa de 2s para que Helius indexe
+                await new Promise(r => setTimeout(r, 2000)); 
+
+                statusEl.textContent = `Paso 2/2: Preparando compra inicial...`;
+
+                // 2. Reintentos para leer la curva
+                let buyState = null;
+                let retries = 5;
+                while (retries > 0) {
+                    try {
+                        buyState = await onlineSdk.fetchBuyState(mintKeypair.publicKey, userPublicKey);
+                        break;
+                    } catch (e) {
+                        console.warn('La red aún no reconoce el token, reintentando...');
+                        retries--;
+                        if (retries === 0) throw new Error('La red no reconoció el token a tiempo. Cárgalo manualmente y compra.');
+                        await new Promise(r => setTimeout(r, 1500));
+                    }
+                }
+
+                const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
+                const tokensOut = getBuyTokenAmountFromSolAmount({ 
+                    global, feeConfig, 
+                    mintSupply: buyState.bondingCurve.tokenTotalSupply, 
+                    bondingCurve: buyState.bondingCurve, 
+                    amount: solToSpend 
+                });
+
                 const buyInstructions = await onlineSdk.buyInstructions({
                     ...buyState,
                     mint: mintKeypair.publicKey,
@@ -294,6 +308,7 @@
                     slippage: 0.05
                 });
 
+                // 3. Blockhash FRESCO justo antes de firmar
                 const { blockhash: bh2, lastValidBlockHeight: lvb2 } = await connection.getLatestBlockhash('confirmed');
                 const messageV0Buy = new TransactionMessage({
                     payerKey: userPublicKey,
@@ -302,8 +317,12 @@
                 }).compileToV0Message();
 
                 const txBuy = new VersionedTransaction(messageV0Buy);
+                
+                statusEl.textContent = `✍️ Firma la compra en Phantom...`;
                 const signedBuy = await wallet.signTransaction(txBuy);
                 const txIdBuy = await connection.sendRawTransaction(signedBuy.serialize());
+                
+                statusEl.textContent = `⏳ Confirmando compra...`;
                 await connection.confirmTransaction({ signature: txIdBuy, blockhash: bh2, lastValidBlockHeight: lvb2 }, 'confirmed');
 
                 // Actualizar UI
@@ -399,6 +418,7 @@
                     ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
                 );
 
+                // Blockhash fresco justo antes de firmar
                 const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
                 const messageV0 = new TransactionMessage({
                     payerKey: userPublicKey,
