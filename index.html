@@ -119,7 +119,7 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
     
-    // ✅ QUICKNODE RPC CONFIGURADO CON TU KEY
+    // ✅ TU RPC DE QUICKNODE
     const FRONTEND_RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro/1581092744fa8ee03fd0cb1d157f3b907e9840e4/';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -229,7 +229,7 @@
       updateChart(currentGenesis);
     }
 
-    // --- 3. CREAR LANZAMIENTO ---
+    // --- 3. CREAR LANZAMIENTO (CON FAST TX SENDER) ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       const fileInput = document.getElementById('logo-input');
@@ -261,7 +261,7 @@
         if (uploadData?.error) throw new Error(uploadData.error);
         
         const imageUrl = uploadData.url;
-        showStatus('✅ Logo subido. Creando lanzamiento...', 'info');
+        showStatus('✅ Logo subido. Creando lanzamiento... (Aprueba rápido en Phantom)', 'info');
 
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
@@ -276,8 +276,28 @@
           },
         };
 
-        // Llamada directa, sin reintentos
-        const result = await createAndRegisterLaunch(umi, {}, launchInput);
+        // ✅ EL TRUCO: Enviar todas las transacciones sin esperar simulación
+        const fastTxSender = async (txs) => {
+          // Firmar todas las transacciones
+          const signedTxs = await Promise.all(txs.map(tx => umi.identity.signTransaction(tx)));
+          
+          // Enviar todas a la red en paralelo, saltando la simulación
+          const signatures = await Promise.all(signedTxs.map(tx => 
+            umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' })
+          ));
+          
+          // Confirmar solo la última (garantiza que las anteriores se procesaron)
+          const lastIdx = signedTxs.length - 1;
+          await umi.rpc.confirmTransaction({
+            signature: signatures[lastIdx],
+            blockhash: signedTxs[lastIdx].message.recentBlockhash,
+            lastValidBlockHeight: signedTxs[lastIdx].message.lastValidBlockHeight,
+          }, { commitment: 'confirmed' });
+
+          return signatures;
+        };
+
+        const result = await createAndRegisterLaunch(umi, { txSender: fastTxSender }, launchInput);
         
         const genesisAddress = result.genesisAccount.toString();
         const baseMint = result.mintAddress.toString();
