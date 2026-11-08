@@ -312,11 +312,13 @@
         let price = 0, marketCap = 0;
 
         if (bucket) {
-          const totalSol = Number(bucket.virtualSol + bucket.realSol) / 1e9;
-          const totalTokens = Number(bucket.virtualTokens + bucket.realTokens) / 1e9;
-          price = totalSol / totalTokens;
-          const totalSupply = 1_000_000_000; 
-          marketCap = price * totalSupply;
+          const totalSol = (Number(bucket.virtualSol) + Number(bucket.realSol)) / 1e9;
+          const totalTokens = (Number(bucket.virtualTokens) + Number(bucket.realTokens)) / 1e9;
+          if (totalTokens > 0) {
+            price = totalSol / totalTokens;
+            const totalSupply = 1_000_000_000; 
+            marketCap = price * totalSupply;
+          }
         }
 
         tokenDisplay.innerHTML = `
@@ -422,7 +424,7 @@
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        const directionBuy = { __kind: 'buy' };
+        const directionBuy = { __kind: 'Buy' }; // ✅ 'Buy' en mayúscula
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         
@@ -501,7 +503,7 @@
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        const directionSell = { __kind: 'sell' };
+        const directionSell = { __kind: 'Sell' }; // ✅ 'Sell' en mayúscula
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         
