@@ -164,26 +164,22 @@
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
         umi.use(genesis());
 
-        // ✅ LAUNCHINPUT CON LA ESTRUCTURA CORRECTA PARA METAPLEX
+        // ✅ ESTRUCTURA SIMPLIFICADA (CreateLaunchInput)
         const launchInput = {
           wallet: umi.identity.publicKey,
-          launchType: 'launchpool',
           token: { 
             name: tokenName, 
             symbol: tokenSymbol, 
             image: imageUrl 
           },
+          launchType: 'launchpool',
           launch: {
             launchpool: {
-              network: 'solana-devnet',
-              quoteMint: 'So11111111111111111111111111111111111111112',
-              finalize: true,
               tokenAllocation: 500_000_000,
-              depositStartTime: new Date(Date.now() + 3600_000).toISOString(),
+              depositStartTime: new Date(Date.now() + 3600_000), // Objeto Date
               raiseGoal: raiseGoal,
               raydiumLiquidityBps: 5000,
-              fundsRecipient: MI_DIRECCION_ORB, 
-              allocations: [], 
+              fundsRecipient: MI_DIRECCION_ORB,
             },
           },
         };
@@ -198,7 +194,7 @@
           token_symbol: tokenSymbol,
           token_image_url: imageUrl,
           raise_goal_sol: raiseGoal,
-          deposit_start_time: launchInput.launch.launchpool.depositStartTime,
+          deposit_start_time: launchInput.launch.launchpool.depositStartTime.toISOString(),
         });
         
         showStatus('🚀 ¡Lanzamiento creado y guardado exitosamente!', 'success');
