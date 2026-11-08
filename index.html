@@ -24,7 +24,6 @@
     .flex-row > div { flex: 1; }
     .btn-buy { background: #14F195; color: #000; }
     .btn-sell { background: #ff6b6b; color: #fff; }
-    .launch-card { background: #2a2a2a; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
@@ -33,7 +32,6 @@
 
   <button id="login-btn">🔐 Conectar Wallet e Iniciar Sesión</button>
 
-  <!-- SECCIÓN: CREAR LANZAMIENTO -->
   <div id="launch-form">
     <hr style="border-color: #333; margin: 1.5rem 0;">
     <h3>Crear Token (Bonding Curve)</h3>
@@ -52,7 +50,6 @@
     <button id="create-launch-btn">✨ Crear Lanzamiento en Devnet</button>
   </div>
 
-  <!-- SECCIÓN: COMPRAR / VENDER -->
   <div id="trade-section">
     <hr style="border-color: #333; margin: 1.5rem 0;">
     <h3>Comprar / Vender Tokens</h3>
@@ -82,10 +79,11 @@
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
+    import { createUmi, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
     import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0';
     import { publicKey, sol } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
-    import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@1.0.0';
+    // ✅ VERSIÓN CORREGIDA DE MPL-TOOLBOX
+    import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@0.11.4';
 
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
@@ -102,7 +100,6 @@
     const sellBtn = document.getElementById('sell-btn');
 
     let umi = null;
-    let provider = null;
 
     function showStatus(msg, type) {
       statusDiv.textContent = msg;
@@ -111,7 +108,7 @@
 
     // --- PASO 1: AUTENTICACIÓN ---
     loginBtn.addEventListener('click', async () => {
-      provider = window.phantom?.solana || window.solana;
+      const provider = window.phantom?.solana || window.solana;
       if (!provider || !provider.isPhantom) {
         return showStatus('Phantom no está instalado o no se detectó.', 'error');
       }
@@ -139,7 +136,7 @@
         
         umi = createUmi('https://api.devnet.solana.com');
         umi.use(walletAdapterIdentity(provider));
-        umi.use(mplToolbox()); // Necesario para operaciones con tokens (wSOL)
+        umi.use(mplToolbox());
         
         showStatus('✅ Todo listo. Configura tu token o tradea abajo.', 'success');
         
@@ -192,19 +189,17 @@
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         umi.use(genesis());
 
-        // ✅ LAUNCHINPUT PARA BONDING CURVE
         const launchInput = {
           wallet: umi.identity.publicKey,
           network: 'solana-devnet',
           token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
-          launchType: 'bondingCurve', // ✅ Tipo Bonding Curve
-          launch: {}, // El SDK se encarga de los parámetros por defecto
+          launchType: 'bondingCurve',
+          launch: {},
         };
 
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
         showStatus(`✅ ¡Lanzamiento creado! Genesis: ${result.genesisAddress || result.mintAddress}`, 'success');
 
-        // Guardar en Supabase
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB,
           token_name: tokenName,
@@ -230,7 +225,7 @@
       
       const genesisAddress = document.getElementById('genesis-address').value.trim();
       const amountSol = parseFloat(document.getElementById('trade-amount').value);
-      const slippageBps = parseFloat(document.getElementById('slippage').value) * 100; // 1% = 100 bps
+      const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
 
       if (!genesisAddress) return showStatus('Ingresa la dirección de Genesis.', 'error');
       if (isNaN(amountSol) || amountSol <= 0) return showStatus('Cantidad inválida.', 'error');
@@ -241,25 +236,14 @@
       try {
         showStatus('⏳ Preparando compra...', 'info');
         
-        const { 
-          swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection,
-          findBondingCurveBucketV2Pda 
-        } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(genesisAddress);
-        
-        // Derivar la cuenta de la curva (bucket)
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, {
-          genesisAccount: genesisPubkey,
-          bucketIndex: 0,
-        });
-
+        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucket = await umi.rpc.getAccount(bucketPda);
-        if (!isSwappable(bucket)) {
-          throw new Error("La curva no está activa para intercambios.");
-        }
+        if (!isSwappable(bucket)) throw new Error("La curva no está activa para intercambios.");
 
-        const amountIn = BigInt(Math.floor(amountSol * 1_000_000_000)); // Lamports
+        const amountIn = BigInt(Math.floor(amountSol * 1_000_000_000));
         const quote = getSwapResult(bucket, amountIn, SwapDirection.Buy);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
@@ -270,8 +254,6 @@
         const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: WSOL, owner: umi.identity.publicKey });
         const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: quote.baseMint, owner: umi.identity.publicKey });
 
-        // Envolver SOL
-        const { transactionBuilder } = await import('https://esm.sh/@metaplex-foundation/umi@1.6.0');
         await transactionBuilder()
           .add(createTokenIfMissing(umi, { mint: WSOL, token: userQuoteTokenAccount, tokenProgram: SPL_TOKEN }))
           .add(transferSol(umi, { destination: userQuoteTokenAccount, amount: sol(amountSol) }))
@@ -294,10 +276,9 @@
 
         showStatus(`✅ Compra exitosa. Recibiste tokens.`, 'success');
 
-        // Desenvolver wSOL restante (opcional)
         try {
           await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi);
-        } catch (e) { /* Si falla, no es crítico */ }
+        } catch (e) { /* No es crítico */ }
 
       } catch (err) {
         console.error(err);
@@ -325,24 +306,14 @@
       try {
         showStatus('⏳ Preparando venta...', 'info');
         
-        const { 
-          swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection,
-          findBondingCurveBucketV2Pda 
-        } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(genesisAddress);
-        
-        const [bucketPda] = findBondingCurveBucketV2Pda(umi, {
-          genesisAccount: genesisPubkey,
-          bucketIndex: 0,
-        });
-
+        const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucket = await umi.rpc.getAccount(bucketPda);
-        if (!isSwappable(bucket)) {
-          throw new Error("La curva no está activa para intercambios.");
-        }
+        if (!isSwappable(bucket)) throw new Error("La curva no está activa para intercambios.");
 
-        const amountIn = BigInt(Math.floor(amountTokens * 1_000_000_000)); // Asumiendo 9 decimales
+        const amountIn = BigInt(Math.floor(amountTokens * 1_000_000_000));
         const quote = getSwapResult(bucket, amountIn, SwapDirection.Sell);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
@@ -366,10 +337,9 @@
 
         showStatus(`✅ Venta exitosa. Recibiste SOL.`, 'success');
 
-        // Desenvolver wSOL para obtener SOL nativo
         try {
           await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi);
-        } catch (e) { /* Si falla, no es crítico */ }
+        } catch (e) { /* No es crítico */ }
 
       } catch (err) {
         console.error(err);
