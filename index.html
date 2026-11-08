@@ -90,19 +90,20 @@
   <div id="status" class="info">Esperando conexión...</div>
 
   <script type="module">
+    // ✅ IMPORTACIONES CORREGIDAS
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-    import { createUmi, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
+    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
     import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0';
-    import { publicKey, sol } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
+    import { publicKey, sol, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0'; // <-- Aquí estaba el error
     import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@0.11.4';
 
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
     
-    // ✅ TU RPC DE HELIUS
+    // ✅ RPC DE HELIUS
     const RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -143,7 +144,7 @@
         createSection.classList.remove('hidden');
         tradeSection.classList.remove('hidden');
 
-        umi = createUmi(RPC); // ✅ Usando Helius
+        umi = createUmi(RPC);
         umi.use(walletAdapterIdentity(provider));
         umi.use(mplToolbox());
         showStatus('✅ Conectado. Crea un token o tradea abajo.', 'success');
@@ -194,7 +195,7 @@
           launch: { firstBuyAmount: 0.1 },
         };
 
-        // ✅ INYECCIÓN DE BLOCKHASH FRESCO (Evita el error sin romper nada)
+        // INYECCIÓN DE BLOCKHASH FRESCO
         const freshTxSender = async (txs) => {
           showStatus('👉 Aprueba en Phantom', 'info');
           const latestBlockhash = await umi.rpc.getLatestBlockhash();
