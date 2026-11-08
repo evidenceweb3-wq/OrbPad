@@ -203,7 +203,6 @@
       genesisInput.value = currentGenesis;
       baseMintInput.value = currentBaseMint || '';
 
-      // Si falta baseMint, intentar obtenerlo de la API de Metaplex
       if (!currentBaseMint) {
         try {
           const res = await fetch(`https://api.metaplex.com/v1/launches/${currentGenesis}?network=solana-devnet`);
@@ -310,7 +309,7 @@
           const totalSol = Number(data.virtualSol + data.realSol) / 1e9;
           const totalTokens = Number(data.virtualTokens + data.realTokens) / 1e9;
           price = totalSol / totalTokens;
-          const totalSupply = 1_000_000_000; // Asumiendo 1B de suministro; ajusta si es diferente
+          const totalSupply = 1_000_000_000; 
           marketCap = price * totalSupply;
         }
 
@@ -373,7 +372,6 @@
     }
 
     async function fetchHistoricalData(genesisAddress) {
-      // Consultar la tabla bond_swaps en Supabase
       const { data, error } = await supabase
         .from('bond_swaps')
         .select('block_time, price')
@@ -385,7 +383,6 @@
         return [];
       }
 
-      // Agrupar en velas de 1 hora (3600 segundos)
       const candles = new Map();
       for (const swap of data) {
         const bucket = Math.floor(swap.block_time / 3600) * 3600;
@@ -401,7 +398,7 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR (CON VALIDACIÓN Y wSOL MANUAL) ---
+    // --- 6. COMPRAR (CON VALIDACIÓN, wSOL MANUAL Y GUARDADO DE VELA) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
@@ -417,7 +414,7 @@
         const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
-        const baseMint = publicKey(currentBaseMint); // ✅ PublicKey válido
+        const baseMint = publicKey(currentBaseMint); 
         
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucketAccount = await umi.rpc.getAccount(bucketPda);
@@ -454,7 +451,22 @@
           swapDirection: SwapDirection.Buy,
         }).sendAndConfirm(umi);
 
-        showStatus(`✅ Compra exitosa.`, 'success');
+        showStatus(`✅ Compra exitosa. Actualizando gráfico...`, 'success');
+
+        // ✅ GUARDAR EN SUPABASE PARA EL GRÁFICO
+        const price = amountSol / (Number(quote.amountOut) / 1e9);
+        await supabase.from('bond_swaps').insert({
+          genesis_address: currentGenesis,
+          block_time: Math.floor(Date.now() / 1000),
+          quote_amount: Number(quote.amountIn),
+          base_amount: Number(quote.amountOut),
+          price: price,
+          swap_direction: 'buy'
+        });
+
+        // Recargar la tarjeta y el gráfico
+        await renderTokenCard(currentGenesis, "Token", "TKN", ""); 
+        updateChart(currentGenesis);
 
         try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
 
@@ -464,7 +476,7 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER (CON VALIDACIÓN Y wSOL MANUAL) ---
+    // --- 7. VENDER (CON VALIDACIÓN, wSOL MANUAL Y GUARDADO DE VELA) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
@@ -508,7 +520,23 @@
           swapDirection: SwapDirection.Sell,
         }).sendAndConfirm(umi);
 
-        showStatus(`✅ Venta exitosa.`, 'success');
+        showStatus(`✅ Venta exitosa. Actualizando gráfico...`, 'success');
+
+        // ✅ GUARDAR EN SUPABASE PARA EL GRÁFICO
+        const price = (Number(quote.amountOut) / 1e9) / amountTokens;
+        await supabase.from('bond_swaps').insert({
+          genesis_address: currentGenesis,
+          block_time: Math.floor(Date.now() / 1000),
+          quote_amount: Number(quote.amountIn),
+          base_amount: Number(quote.amountOut),
+          price: price,
+          swap_direction: 'sell'
+        });
+
+        // Recargar la tarjeta y el gráfico
+        await renderTokenCard(currentGenesis, "Token", "TKN", ""); 
+        updateChart(currentGenesis);
+
         try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
 
       } catch (err) {
