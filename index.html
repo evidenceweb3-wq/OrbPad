@@ -398,10 +398,10 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR (PARÁMETROS OFICIALES DEL SDK) ---
+    // --- 6. COMPRAR (OBJETO ENUM DIRECTO) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
-      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
+      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
       
       const amountSol = parseFloat(document.getElementById('trade-amount').value);
       const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
@@ -411,11 +411,12 @@
 
       try {
         showStatus('⏳ Preparando compra...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
+        const directionBuy = { __kind: 'buy' }; // ✅ SOLUCIÓN AL ERROR __kind
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucketAccount = await umi.rpc.getAccount(bucketPda);
@@ -423,7 +424,7 @@
         if (!isSwappable(bucketAccount.data)) throw new Error("La curva no está activa.");
 
         const amountIn = BigInt(Math.floor(amountSol * 1_000_000_000));
-        const quote = getSwapResult(bucketAccount.data, amountIn, SwapDirection.Buy);
+        const quote = getSwapResult(bucketAccount.data, amountIn, directionBuy);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Envolviendo SOL...', 'info');
@@ -439,7 +440,6 @@
 
         showStatus('⏳ Ejecutando compra...', 'info');
 
-        // ✅ Parámetros exactos del SDK oficial
         await swapBondingCurveV2(umi, {
           genesisAccount: genesisPubkey,
           bucket: bucketPda,
@@ -449,12 +449,11 @@
           quoteTokenAccount: userQuoteTokenAccount,
           amount: quote.amountIn,
           minAmountOutScaled: minAmountOut,
-          swapDirection: SwapDirection.Buy,
+          swapDirection: directionBuy,
         }).sendAndConfirm(umi);
 
         showStatus(`✅ Compra exitosa. Actualizando gráfico...`, 'success');
 
-        // Guardar swap en Supabase
         const price = amountSol / (Number(quote.amountOut) / 1e9);
         await supabase.from('bond_swaps').insert({
           genesis_address: currentGenesis,
@@ -476,10 +475,10 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER (PARÁMETROS OFICIALES DEL SDK) ---
+    // --- 7. VENDER (OBJETO ENUM DIRECTO) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
-      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero (falta baseMint).', 'error');
+      if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
       
       const amountTokens = parseFloat(document.getElementById('trade-amount').value);
       const slippageBps = parseFloat(document.getElementById('slippage').value) * 100;
@@ -489,11 +488,12 @@
 
       try {
         showStatus('⏳ Preparando venta...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, SwapDirection, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
+        const directionSell = { __kind: 'sell' }; // ✅ SOLUCIÓN AL ERROR __kind
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
         const bucketAccount = await umi.rpc.getAccount(bucketPda);
@@ -501,14 +501,13 @@
         if (!isSwappable(bucketAccount.data)) throw new Error("La curva no está activa.");
 
         const amountIn = BigInt(Math.floor(amountTokens * 1_000_000_000));
-        const quote = getSwapResult(bucketAccount.data, amountIn, SwapDirection.Sell);
+        const quote = getSwapResult(bucketAccount.data, amountIn, directionSell);
         const minAmountOut = applySlippage(quote.amountOut, slippageBps);
 
         showStatus('⏳ Ejecutando venta...', 'info');
         const [userQuoteTokenAccount] = findAssociatedTokenPda(umi, { mint: quoteMint, owner: umi.identity.publicKey });
         const [userBaseTokenAccount] = findAssociatedTokenPda(umi, { mint: baseMint, owner: umi.identity.publicKey });
 
-        // ✅ Parámetros exactos del SDK oficial
         await swapBondingCurveV2(umi, {
           genesisAccount: genesisPubkey,
           bucket: bucketPda,
@@ -518,12 +517,11 @@
           quoteTokenAccount: userQuoteTokenAccount,
           amount: quote.amountIn,
           minAmountOutScaled: minAmountOut,
-          swapDirection: SwapDirection.Sell,
+          swapDirection: directionSell,
         }).sendAndConfirm(umi);
 
         showStatus(`✅ Venta exitosa. Actualizando gráfico...`, 'success');
 
-        // Guardar swap en Supabase
         const price = (Number(quote.amountOut) / 1e9) / amountTokens;
         await supabase.from('bond_swaps').insert({
           genesis_address: currentGenesis,
