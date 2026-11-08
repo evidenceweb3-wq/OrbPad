@@ -68,11 +68,18 @@
     .btn-buy { background: var(--green); color: #000; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .btn-sell { background: var(--red); color: #fff; padding: 14px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
+    /* Toasts */
     #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; }
     #toast.show { opacity: 1; }
     #toast.info { background: #1e2a3a; color: #58a6ff; border: 1px solid #58a6ff; }
     #toast.success { background: #1e3a2b; color: var(--green); border: 1px solid var(--green); }
     #toast.error { background: #3a1e1e; color: var(--red); border: 1px solid var(--red); }
+
+    /* Error Box */
+    #error-box { position: fixed; bottom: 0; left: 0; width: 100%; background: #1a0000; border-top: 2px solid var(--red); color: var(--red); font-family: monospace; font-size: 0.85rem; max-height: 150px; overflow-y: auto; display: none; z-index: 2000; }
+    .error-header { display: flex; justify-content: space-between; padding: 8px 16px; background: #2a0000; font-weight: bold; border-bottom: 1px solid #440000; }
+    .error-header button { background: transparent; color: var(--red); border: none; cursor: pointer; font-weight: bold; font-size: 1rem; }
+    #error-content { padding: 12px 16px; white-space: pre-wrap; line-height: 1.4; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -165,6 +172,14 @@
 
   <div id="toast"></div>
 
+  <div id="error-box">
+    <div class="error-header">
+      <span>❌ Error Detectado (Detalles técnicos)</span>
+      <button onclick="document.getElementById('error-box').style.display='none'">Cerrar [X]</button>
+    </div>
+    <div id="error-content"></div>
+  </div>
+
   <script type="module">
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
@@ -182,13 +197,22 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let umi = null, currentGenesis = null, currentBaseMint = null, candleSeries = null;
 
+    // UI Helpers
     const toast = document.getElementById('toast');
     function showToast(msg, type) {
       toast.textContent = msg; toast.className = `show ${type}`;
       setTimeout(() => toast.className = '', 4000);
+      if(type === 'error') logError(msg);
     }
 
-    // 1. LOGIN (Con corrección de formato ASCII)
+    function logError(msg) {
+      const box = document.getElementById('error-box');
+      const content = document.getElementById('error-content');
+      box.style.display = 'block';
+      content.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n${content.textContent}`;
+    }
+
+    // 1. LOGIN
     document.getElementById('login-btn').addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
       if (!provider?.isPhantom) return showToast('Instala Phantom.', 'error');
@@ -199,7 +223,7 @@
         
         const { error } = await supabase.auth.signInWithWeb3({
           chain: 'solana', 
-          statement: 'I accept the terms of service.', // ✅ ASCII puro
+          statement: 'I accept the terms of service.', // ASCII puro para evitar error de Phantom
           wallet: provider 
         });
         if (error) throw error;
@@ -229,7 +253,7 @@
       }
     });
 
-    // 2. CREAR NONCE (Botón Visible)
+    // 2. CREAR NONCE (CORREGIDO)
     document.getElementById('setup-nonce-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet primero.', 'error');
       
@@ -238,25 +262,32 @@
 
       try {
         showToast('Firmando creación de Nonce...', 'info');
-        const { Connection, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL } = await import('https://esm.sh/@solana/web3.js@1.95.3');
+        // ✅ IMPORTAMOS web3.js
+        const { Connection, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.95.3');
         
         const connection = new Connection(RPC, 'confirmed');
         const nonceKeypair = Keypair.generate();
         
+        // ✅ CONVERSIÓN: De Umi PublicKey a web3.js PublicKey
+        const fromPubkey = new PublicKey(umi.identity.publicKey.toString());
+
         const tx = new Transaction().add(
           SystemProgram.createNonceAccount({
-            fromPubkey: umi.identity.publicKey,
+            fromPubkey: fromPubkey,
             noncePubkey: nonceKeypair.publicKey,
-            authorizedPubkey: umi.identity.publicKey,
+            authorizedPubkey: fromPubkey, // Ahora sí es web3.js
             lamports: 0.0015 * LAMPORTS_PER_SOL,
           })
         );
 
         const { blockhash } = await connection.getLatestBlockhash();
         tx.recentBlockhash = blockhash;
-        tx.feePayer = umi.identity.publicKey;
+        tx.feePayer = fromPubkey;
         
-        const signedTx = await umi.identity.signTransaction(tx);
+        // ✅ Firmamos usando Phantom (provider) en lugar de Umi
+        const provider = window.phantom?.solana || window.solana;
+        const signedTx = await provider.signTransaction(tx);
+        
         await connection.sendRawTransaction(signedTx.serialize());
         
         const nonceStr = nonceKeypair.publicKey.toString();
@@ -310,7 +341,7 @@
       updateChart(currentGenesis);
     }
 
-    // 5. CREATE TOKEN (Con Durable Nonce)
+    // 5. CREATE TOKEN (Con Reintentos Automáticos)
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
@@ -340,8 +371,8 @@
           launch: { firstBuyAmount: 0.1 },
         };
 
-        // ✅ TX SENDER CON DURABLE NONCE
-        const nonceTxSender = async (txs) => {
+        // Firma agrupada (evita expiración por lentitud)
+        const batchTxSender = async (txs) => {
           showToast('👉 Aprueba en Phantom', 'info');
           
           const signedTxs = await umi.identity.signAllTransactions(txs);
@@ -359,7 +390,23 @@
           return signatures;
         };
 
-        const res = await createAndRegisterLaunch(umi, { txSender: nonceTxSender }, launchInput);
+        let res;
+        let maxRetries = 3;
+        
+        // Auto-reintento invisible si la red falla
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            res = await createAndRegisterLaunch(umi, { txSender: batchTxSender }, launchInput);
+            break; 
+          } catch (err) {
+            if (err.message?.includes('Blockhash') && attempt < maxRetries) {
+              showToast(`Red lenta, reintentando (${attempt}/${maxRetries})...`, 'info');
+              await new Promise(r => setTimeout(r, 3000));
+            } else {
+              throw err;
+            }
+          }
+        }
         
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB, token_name: launchInput.token.name, token_symbol: launchInput.token.symbol,
