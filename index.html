@@ -158,13 +158,14 @@
         if (uploadData && uploadData.error) throw new Error(uploadData.error);
         
         const imageUrl = uploadData.url;
+        console.log("URL de la imagen a enviar a Metaplex:", imageUrl); // ✅ Verificación
+        
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
-        // 3. Crear el token con Metaplex Genesis (versión corregida)
-        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.27.0');
+        // 3. Crear el token con Metaplex Genesis (versión actualizada)
+        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.43.5');
         umi.use(genesis());
 
-        // ✅ ESTRUCTURA CORREGIDA SEGÚN EL EJEMPLO OFICIAL
         const launchInput = {
           wallet: umi.identity.publicKey,
           token: { 
@@ -172,7 +173,7 @@
             symbol: tokenSymbol, 
             image: imageUrl 
           },
-          launchType: 'project', // ✅ Según el ejemplo oficial de npm
+          launchType: 'launchpool',
           launch: {
             launchpool: {
               tokenAllocation: 500_000_000,
