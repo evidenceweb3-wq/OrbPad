@@ -119,8 +119,8 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
     
-    // ✅ RPC PÚBLICO RESTAURADO (Más rápido para crear tokens en Devnet)
-    const FRONTEND_RPC = 'https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931';
+    // ✅ VOLVEMOS AL RPC NATIVO DE SOLANA (Rápido y sin problemas de Blockhash)
+    const FRONTEND_RPC = 'https://api.devnet.solana.com';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -272,11 +272,11 @@
           token: { name: tokenName, symbol: tokenSymbol, image: imageUrl },
           launchType: 'bondingCurve',
           launch: {
-            firstBuyAmount: 0.1, // Liquidez inicial de 0.1 SOL
+            firstBuyAmount: 0.1, // ✅ Liquidez inicial inyectada
           },
         };
 
-        // Reintentos en caso de Blockhash expirado
+        // Reintentos por si el RPC público da 429 o Blockhash
         let result;
         let maxRetries = 3;
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -287,7 +287,7 @@
             const isRetryable = err.message?.includes('Blockhash not found') || err.message?.includes('429') || err.message?.includes('block height exceeded');
             if (isRetryable && attempt < maxRetries) {
               const delay = attempt * 3000;
-              showStatus(`⏳ Red lenta. Reintentando en ${delay / 1000}s... (Intento ${attempt}/${maxRetries})`, 'info');
+              showStatus(`⏳ Red un poco lenta. Reintentando en ${delay / 1000}s... (Intento ${attempt}/${maxRetries})`, 'info');
               await new Promise(resolve => setTimeout(resolve, delay));
             } else {
               throw err;
