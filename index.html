@@ -1,28 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Convertidor Seguro de Solana</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+        textarea { width: 100%; padding: 10px; margin-bottom: 10px; font-family: monospace; }
+        button { padding: 10px 20px; cursor: pointer; background: #14F195; border: none; font-weight: bold; border-radius: 5px; }
+        #output { background: #f0f0f0; }
+    </style>
+</head>
 <body>
-    <h2>Convertidor Seguro (Local)</h2>
-    <p>Pega el array de tu archivo JSON aquí:</p>
-    <textarea id="jsonInput" rows="5" cols="50"></textarea><br><br>
-    <button onclick="convert()">Convertir a Base58</button>
-    <p><strong>Tu Clave Privada (No la compartas):</strong></p>
-    <textarea id="output" rows="3" cols="50" readonly></textarea>
+    <h2>Convertidor Local Seguro</h2>
+    <p>1. Pega el array JSON de tu archivo descargado:</p>
+    <textarea id="jsonInput" rows="5" placeholder="[76, 79, 146, ...]"></textarea>
+    
+    <button id="convertBtn">Convertir a Base58</button>
+    
+    <p>2. Tu Clave Privada (Cópiala y luego borra todo):</p>
+    <textarea id="output" rows="3" readonly placeholder="Aquí aparecerá tu clave..."></textarea>
 
-    <!-- Cargamos la librería bs58 desde un CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/bs58@5.0.0/dist/index.min.js"></script>
-    <script>
-        function convert() {
+    <!-- Cargamos bs58 usando un módulo moderno (ESM) -->
+    <script type="module">
+        import bs58 from 'https://esm.sh/bs58@5.0.0';
+
+        document.getElementById('convertBtn').addEventListener('click', () => {
             try {
                 const input = document.getElementById('jsonInput').value;
                 const array = JSON.parse(input);
                 const uint8Array = new Uint8Array(array);
-                // bs58 se carga globalmente desde el CDN
+                
+                // Codificar a Base58
                 const base58Key = bs58.encode(uint8Array);
+                
                 document.getElementById('output').value = base58Key;
             } catch (e) {
-                alert("Error: Asegúrate de pegar el JSON exacto con los corchetes []");
+                console.error(e);
+                alert("Error: Asegúrate de pegar el JSON exacto con los corchetes [] y sin texto extra.");
             }
-        }
+        });
     </script>
 </body>
 </html>
