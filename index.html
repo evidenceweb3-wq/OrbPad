@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: system-ui, -apple-system, sans-serif; background: #0b0b0e; color: #e0e0e0; margin: 0; padding: 8px; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .app-container { display: grid; grid-template-columns: 320px 1fr; gap: 12px; width: 100%; max-width: 1150px; height: 98vh; max-height: 850px; }
+        .app-container { display: grid; grid-template-columns: 340px 1fr; gap: 12px; width: 100%; max-width: 1200px; height: 98vh; max-height: 850px; }
         
         .panel { background: #15151a; border: 1px solid #2a2a35; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.4); overflow: hidden; }
         .panel-scroll { overflow-y: auto; flex: 1; padding-right: 4px; }
@@ -52,11 +52,18 @@
         .jwt-wrapper input { margin-bottom: 0; flex: 1; }
         .jwt-wrapper button { background: #14F195; color: #000; padding: 8px; font-size: 0.75rem; }
         .jwt-wrapper button:hover { background: #0fbf75; }
+
+        .saved-tokens-list { max-height: 120px; overflow-y: auto; border: 1px solid #2a2a35; border-radius: 8px; padding: 4px; margin-top: 4px; }
+        .saved-token-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-bottom: 1px solid #222; cursor: pointer; border-radius: 4px; }
+        .saved-token-item:hover { background: #2a2a35; }
+        .saved-token-item:last-child { border-bottom: none; }
+        .saved-token-symbol { font-weight: bold; color: #14F195; font-size: 0.8rem; }
+        .saved-token-mint { font-size: 0.65rem; color: #888; }
         
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .graduated-badge { font-size:0.7rem; background:#14F195; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold; animation: pulse 2s infinite; }
     </style>
-    <!-- FIJAMOS LA VERSIÓN 4.1.3 PARA EVITAR EL ERROR DE LA V5 -->
+    <!-- Forzamos una versión estable del gráfico -->
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -86,6 +93,10 @@
                 <input id="tokenImage" type="file" accept="image/*" />
                 <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial (0.01 SOL)</button>
                 <p id="createStatus" class="status"></p>
+
+                <h2 style="margin-top: 15px;">Mis Tokens Creados</h2>
+                <button id="loadSavedTokensBtn" disabled style="width:100%; background: #333; font-size: 0.75rem; padding: 4px;">Cargar Mis Tokens</button>
+                <div id="savedTokensList" class="saved-tokens-list" style="display: none;"></div>
             </div>
         </div>
 
@@ -143,12 +154,12 @@
         </div>
     </div>
 
-    <!-- IMPORT MAP -->
+    <!-- IMPORT MAP: FIJAMOS LA VERSIÓN 1.32.0 DEL SDK PARA SOLUCIONAR EL ERROR DE VENTA -->
     <script type="importmap">
         {
             "imports": {
                 "@solana/web3.js": "https://esm.sh/@solana/web3.js@1.98.0",
-                "@nirholas/pump-sdk": "https://esm.sh/@nirholas/pump-sdk@latest",
+                "@nirholas/pump-sdk": "https://esm.sh/@nirholas/pump-sdk@1.32.0",
                 "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
                 "bn.js": "https://esm.sh/bn.js@5"
             }
@@ -178,11 +189,15 @@
         let chart = null;
         let areaSeries = null;
         let lastChartTime = Math.floor(Date.now() / 1000) - 100;
+        let chartInitialized = false;
 
-        // --- INICIALIZAR GRÁFICO PRO (BLINDADO) ---
-        function initChart() {
+        // --- INICIALIZAR GRÁFICO (Solo cuando sea visible) ---
+        function initChartIfNeeded() {
+            if (chartInitialized) return;
+            const container = document.getElementById('chartContainer');
+            if (container.clientWidth === 0 || container.clientHeight === 0) return;
+
             try {
-                const container = document.getElementById('chartContainer');
                 chart = LightweightCharts.createChart(container, {
                     layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#888' },
                     grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } },
@@ -198,14 +213,18 @@
                     lineWidth: 2,
                 });
 
-                window.addEventListener('resize', () => {
-                    chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+                const resizeObserver = new ResizeObserver(entries => {
+                    if (entries.length === 0 || entries[0].target !== container) return;
+                    const newRect = entries[0].contentRect;
+                    chart.applyOptions({ width: newRect.width, height: newRect.height });
                 });
+                resizeObserver.observe(container);
+
+                chartInitialized = true;
             } catch (e) {
-                console.error("El gráfico no pudo cargar, pero la app sigue funcionando.", e);
+                console.error("Error al inicializar el gráfico:", e);
             }
         }
-        initChart();
 
         // --- SISTEMA DE JWT GUARDADO ---
         const jwtInput = document.getElementById('pinataJwt');
@@ -243,7 +262,7 @@
                 wallet = window.solana;
                 document.getElementById('walletStatus').textContent = `Conectado`;
                 document.getElementById('connectBtn').style.display = 'none';
-                ['createTokenBtn', 'buyBtn', 'sellBtn', 'loadTokenBtn'].forEach(id => document.getElementById(id).disabled = false);
+                ['createTokenBtn', 'buyBtn', 'sellBtn', 'loadTokenBtn', 'loadSavedTokensBtn'].forEach(id => document.getElementById(id).disabled = false);
                 await updateWalletBalance();
             } catch (err) {
                 document.getElementById('walletStatus').textContent = `Error: ${err.message}`;
@@ -328,6 +347,9 @@
                 document.getElementById('tokenDisplay').style.display = 'flex';
                 document.getElementById('tradeSection').style.display = 'block';
                 
+                // Inicializar gráfico si no se ha hecho
+                setTimeout(initChartIfNeeded, 100);
+
                 await loadTokenData(mintAddress);
                 await updateWalletBalance(); 
                 
@@ -338,6 +360,49 @@
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
                 console.error(err);
+            }
+        });
+
+        // 3.5. Cargar Tokens Guardados
+        document.getElementById('loadSavedTokensBtn').addEventListener('click', async () => {
+            const listContainer = document.getElementById('savedTokensList');
+            listContainer.innerHTML = 'Cargando...';
+            listContainer.style.display = 'block';
+            try {
+                const { data, error } = await supabase
+                    .from('launchpad_tokens')
+                    .select('*')
+                    .eq('creator_wallet', userPublicKey.toBase58());
+
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = 'No tienes tokens creados.';
+                    return;
+                }
+
+                listContainer.innerHTML = '';
+                data.forEach(token => {
+                    const item = document.createElement('div');
+                    item.className = 'saved-token-item';
+                    item.innerHTML = `
+                        <div>
+                            <div class="saved-token-symbol">${token.symbol}</div>
+                            <div class="saved-token-mint">${token.mint_address.substring(0, 8)}...</div>
+                        </div>
+                        <button style="padding: 2px 6px; font-size: 0.7rem;">Cargar</button>
+                    `;
+                    item.onclick = () => {
+                        document.getElementById('mintAddressInput').value = token.mint_address;
+                        document.getElementById('displayName').textContent = token.name;
+                        document.getElementById('displaySymbol').textContent = token.symbol;
+                        // Nota: La imagen se cargaría desde el metadataUri, pero para simplificar, no la mostramos aquí.
+                        document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=' + token.symbol;
+                        loadTokenData(token.mint_address);
+                    };
+                    listContainer.appendChild(item);
+                });
+            } catch (e) {
+                listContainer.innerHTML = `Error: ${e.message}`;
             }
         });
 
@@ -372,14 +437,14 @@
                 document.getElementById('tokenDisplay').style.display = 'flex';
                 document.getElementById('tradeSection').style.display = 'block';
 
-                // Lógica del Badge: Solo si realmente supera el 99%
                 if (progressPct >= 99.0 || bondingCurve.complete) {
                     document.getElementById('graduatedBadge').style.display = 'block';
                 } else {
                     document.getElementById('graduatedBadge').style.display = 'none';
                 }
 
-                // Actualizar Gráfico de TradingView (con protección si el gráfico falló)
+                // Inicializar gráfico si es necesario y actualizar datos
+                initChartIfNeeded();
                 if (areaSeries) {
                     lastChartTime += 1; 
                     if (lastChartTime > Math.floor(Date.now() / 1000)) lastChartTime = Math.floor(Date.now() / 1000);
@@ -445,7 +510,7 @@
                 const feeConfig = await onlineSdk.fetchFeeConfig();
 
                 const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
-                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
+                const instructions = await onlineSdk.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
 
                 instructions.push(
                     ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
