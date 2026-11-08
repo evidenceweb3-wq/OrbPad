@@ -160,11 +160,11 @@
         const imageUrl = uploadData.url;
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
-        // 3. Crear el token con Metaplex Genesis
-        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
+        // 3. Crear el token con Metaplex Genesis (versión corregida)
+        const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.27.0');
         umi.use(genesis());
 
-        // ✅ ESTRUCTURA SIMPLIFICADA (CreateLaunchInput)
+        // ✅ ESTRUCTURA CORREGIDA SEGÚN EL EJEMPLO OFICIAL
         const launchInput = {
           wallet: umi.identity.publicKey,
           token: { 
@@ -172,11 +172,11 @@
             symbol: tokenSymbol, 
             image: imageUrl 
           },
-          launchType: 'launchpool',
+          launchType: 'project', // ✅ Según el ejemplo oficial de npm
           launch: {
             launchpool: {
               tokenAllocation: 500_000_000,
-              depositStartTime: new Date(Date.now() + 3600_000), // Objeto Date
+              depositStartTime: new Date(Date.now() + 3600_000),
               raiseGoal: raiseGoal,
               raydiumLiquidityBps: 5000,
               fundsRecipient: MI_DIRECCION_ORB,
