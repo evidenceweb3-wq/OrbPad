@@ -55,10 +55,15 @@
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+    import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
+    import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0';
+    import { publicKey } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
 
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
-    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTmLdP9KCSd1gqbhMw2ysjP6cqtKFWorb';
+    
+    // ⚠️ COPIA ESTA DIRECCIÓN DIRECTAMENTE DESDE PHANTOM
+    const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -74,6 +79,7 @@
       statusDiv.className = type;
     }
 
+    // --- PASO 1: AUTENTICACIÓN ---
     loginBtn.addEventListener('click', async () => {
       const provider = window.phantom?.solana || window.solana;
       if (!provider || !provider.isPhantom) {
@@ -101,9 +107,6 @@
 
         showStatus('Iniciando motor de Solana...', 'info');
         
-        const { createUmi } = await import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0');
-        const { walletAdapterIdentity } = await import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0');
-        
         umi = createUmi('https://api.devnet.solana.com');
         umi.use(walletAdapterIdentity(provider));
         showStatus('✅ Todo listo. Configura tu token abajo.', 'success');
@@ -114,6 +117,7 @@
       }
     });
 
+    // --- PASO 2: CREAR EL LANZAMIENTO ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Primero inicia sesión.', 'error');
       
@@ -160,15 +164,20 @@
         if (uploadData && uploadData.error) throw new Error(uploadData.error);
         
         const imageUrl = uploadData.url;
-        console.log("URL de la imagen a enviar a Metaplex:", imageUrl);
         
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
         const { genesis, createAndRegisterLaunch } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-        const { publicKey } = await import('https://esm.sh/@metaplex-foundation/umi@1.6.0');
         umi.use(genesis());
 
-        // ✅ ESTRUCTURA CORREGIDA
+        // ✅ VALIDACIÓN DE LA DIRECCIÓN ANTES DE ENVIAR
+        let recipientPubKey;
+        try {
+          recipientPubKey = publicKey(MI_DIRECCION_ORB);
+        } catch (err) {
+          throw new Error(`La dirección ORB (${MI_DIRECCION_ORB}) es inválida. Asegúrate de copiar la dirección pública completa (44 caracteres) desde tu wallet Phantom.`);
+        }
+
         const launchInput = {
           wallet: umi.identity.publicKey,
           token: { 
@@ -183,7 +192,7 @@
               depositStartTime: new Date(Date.now() + 3600_000),
               raiseGoal: raiseGoal,
               raydiumLiquidityBps: 5000,
-              fundsRecipient: publicKey(MI_DIRECCION_ORB), 
+              fundsRecipient: recipientPubKey, 
             },
           },
         };
@@ -204,20 +213,7 @@
         
       } catch (err) {
         console.error(err);
-        try {
-          const { isGenesisApiError, isGenesisValidationError } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
-          if (isGenesisValidationError(err)) {
-            showStatus(`Error de validación en "${err.field}": ${err.message}`, 'error');
-          } else if (isGenesisApiError(err)) {
-            console.error('API Error Status:', err.statusCode);
-            console.error('API Error Body:', err.responseBody);
-            showStatus(`Error de API (${err.statusCode}): ${JSON.stringify(err.responseBody)}`, 'error');
-          } else {
-            showStatus('Error al crear: ' + (err.message || 'Revisa la consola (F12).'), 'error');
-          }
-        } catch (importError) {
-          showStatus('Error al crear: ' + (err.message || 'Revisa la consola (F12).'), 'error');
-        }
+        showStatus('Error al crear: ' + (err.message || 'Revisa la consola (F12).'), 'error');
       } finally {
         createBtn.disabled = false;
       }
