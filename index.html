@@ -119,8 +119,8 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_geHNN8tkjCA6BWmlMukJYQ_PFIpRAFB';
     const MI_DIRECCION_ORB = 'DeQ2hgNRnFTm1dDp9CKSdiGqbhMwoy2sjP6cqTkFWorb';
     
-    // RPC NATIVO (Como ayer)
-    const FRONTEND_RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro';
+    // ✅ QUICKNODE RPC CONFIGURADO CON TU KEY
+    const FRONTEND_RPC = 'https://attentive-black-feather.solana-devnet.quiknode.pro/1581092744fa8ee03fd0cb1d157f3b907e9840e4/';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -229,7 +229,7 @@
       updateChart(currentGenesis);
     }
 
-    // --- 3. CREAR LANZAMIENTO (SIN REINTENTOS) ---
+    // --- 3. CREAR LANZAMIENTO ---
     createBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       const fileInput = document.getElementById('logo-input');
@@ -276,7 +276,7 @@
           },
         };
 
-        // ✅ Llamada directa, sin bucles de reintento. Si falla, lanza el error.
+        // Llamada directa, sin reintentos
         const result = await createAndRegisterLaunch(umi, {}, launchInput);
         
         const genesisAddress = result.genesisAccount.toString();
