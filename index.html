@@ -139,6 +139,9 @@
     let umi = null;
     let currentGenesis = null;
     let currentBaseMint = null;
+    let currentTokenName = "";
+    let currentTokenSymbol = "";
+    let currentTokenImage = "";
     let candleSeries = null;
 
     function showStatus(msg, type) {
@@ -203,6 +206,10 @@
     async function selectLaunch(launch) {
       currentGenesis = launch.genesis_address;
       currentBaseMint = launch.base_mint;
+      currentTokenName = launch.token_name;
+      currentTokenSymbol = launch.token_symbol;
+      currentTokenImage = launch.token_image_url;
+      
       genesisInput.value = currentGenesis;
       baseMintInput.value = currentBaseMint || '';
 
@@ -215,7 +222,7 @@
         } catch (e) { console.warn('No se pudo obtener baseMint de la API:', e); }
       }
 
-      renderTokenCard(currentGenesis, launch.token_name, launch.token_symbol, launch.token_image_url);
+      renderTokenCard(currentGenesis, currentTokenName, currentTokenSymbol, currentTokenImage);
       updateChart(currentGenesis);
     }
 
@@ -272,12 +279,16 @@
         const baseMint = result.mintAddress.toString();
         if (!genesisAddress || !baseMint) throw new Error("No se pudieron obtener las direcciones.");
 
-        genesisInput.value = genesisAddress;
-        baseMintInput.value = baseMint;
         currentGenesis = genesisAddress;
         currentBaseMint = baseMint;
+        currentTokenName = tokenName;
+        currentTokenSymbol = tokenSymbol;
+        currentTokenImage = imageUrl;
+        
+        genesisInput.value = genesisAddress;
+        baseMintInput.value = baseMint;
 
-        showStatus(`🚀 ¡Lanzamiento creado!`, 'success');
+        showStatus(`🚀 ¡Lanzamiento creado! Esperando confirmación de red...`, 'success');
 
         await supabase.from('launches').insert({
           authority: MI_DIRECCION_ORB,
@@ -288,9 +299,14 @@
           base_mint: baseMint,
         });
 
-        await renderTokenCard(genesisAddress, tokenName, tokenSymbol, imageUrl);
         await loadSavedLaunches();
-        updateChart(genesisAddress);
+        
+        // ✅ Esperar 3 segundos para que el RPC actualice los saldos del firstBuyAmount
+        setTimeout(() => {
+          renderTokenCard(currentGenesis, currentTokenName, currentTokenSymbol, currentTokenImage);
+          updateChart(currentGenesis);
+          showStatus(`🚀 ¡Lanzamiento listo para operar!`, 'success');
+        }, 3000);
 
       } catch (err) {
         console.error(err);
@@ -306,7 +322,6 @@
         const { findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: publicKey(genesisAddress), bucketIndex: 0 });
         
-        // ✅ USAR fetchBondingCurveBucketV2 para obtener datos parseados
         const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
         
         let price = 0, marketCap = 0;
@@ -406,7 +421,7 @@
       return Array.from(candles.values());
     }
 
-    // --- 6. COMPRAR (USANDO fetchBondingCurveBucketV2) ---
+    // --- 6. COMPRAR (CON SWAPDIRECTION CORRECTO) ---
     buyBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -419,16 +434,17 @@
 
       try {
         showStatus('⏳ Preparando compra...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        // ✅ IMPORTAMOS SwapDirection
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        const directionBuy = { __kind: 'Buy' }; // ✅ 'Buy' en mayúscula
+        
+        // ✅ USAMOS EL ENUM
+        const directionBuy = SwapDirection.Buy;
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        
-        // ✅ USAR fetchBondingCurveBucketV2 para obtener el objeto parseado
         const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
         
         if (!isSwappable(bucket)) throw new Error("La curva no está activa.");
@@ -474,8 +490,10 @@
           swap_direction: 'buy'
         });
 
-        await renderTokenCard(currentGenesis, "Token", "TKN", "");
-        updateChart(currentGenesis);
+        setTimeout(async () => {
+          await renderTokenCard(currentGenesis, currentTokenName, currentTokenSymbol, currentTokenImage);
+          updateChart(currentGenesis);
+        }, 1500);
 
         try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
 
@@ -485,7 +503,7 @@
       } finally { buyBtn.disabled = false; sellBtn.disabled = false; }
     });
 
-    // --- 7. VENDER (USANDO fetchBondingCurveBucketV2) ---
+    // --- 7. VENDER (CON SWAPDIRECTION CORRECTO) ---
     sellBtn.addEventListener('click', async () => {
       if (!umi) return showStatus('Conecta tu wallet primero.', 'error');
       if (!currentGenesis || !currentBaseMint) return showStatus('Selecciona o crea un token primero.', 'error');
@@ -498,16 +516,17 @@
 
       try {
         showStatus('⏳ Preparando venta...', 'info');
-        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2 } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
+        // ✅ IMPORTAMOS SwapDirection
+        const { swapBondingCurveV2, getSwapResult, applySlippage, isSwappable, findBondingCurveBucketV2Pda, fetchBondingCurveBucketV2, SwapDirection } = await import('https://cdn.jsdelivr.net/npm/@metaplex-foundation/genesis@0.43.4/+esm');
         
         const genesisPubkey = publicKey(currentGenesis);
         const baseMint = publicKey(currentBaseMint);
         const quoteMint = publicKey('So11111111111111111111111111111111111111112');
-        const directionSell = { __kind: 'Sell' }; // ✅ 'Sell' en mayúscula
+        
+        // ✅ USAMOS EL ENUM
+        const directionSell = SwapDirection.Sell;
 
         const [bucketPda] = findBondingCurveBucketV2Pda(umi, { genesisAccount: genesisPubkey, bucketIndex: 0 });
-        
-        // ✅ USAR fetchBondingCurveBucketV2 para obtener el objeto parseado
         const bucket = await fetchBondingCurveBucketV2(umi, bucketPda);
         
         if (!isSwappable(bucket)) throw new Error("La curva no está activa.");
@@ -544,8 +563,10 @@
           swap_direction: 'sell'
         });
 
-        await renderTokenCard(currentGenesis, "Token", "TKN", "");
-        updateChart(currentGenesis);
+        setTimeout(async () => {
+          await renderTokenCard(currentGenesis, currentTokenName, currentTokenSymbol, currentTokenImage);
+          updateChart(currentGenesis);
+        }, 1500);
 
         try { await closeToken(umi, { account: userQuoteTokenAccount, destination: umi.identity.publicKey, owner: umi.identity }).sendAndConfirm(umi); } catch (e) {}
 
