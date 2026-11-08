@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Epic ORB Launchpad - Solución Definitiva</title>
+  <title>Epic ORB Launchpad</title>
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     :root { --bg-dark: #0d0d0f; --panel-bg: #16161a; --border: #2a2a32; --purple: #9945FF; --green: #14F195; --red: #ff4d4d; --text-muted: #8b8b9a; }
@@ -150,7 +150,8 @@
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
     import { createUmi } from 'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.6.0';
     import { walletAdapterIdentity } from 'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.6.0';
-    import { publicKey, sol, transactionBuilder, setTransactionMessageLifetimeUsingDurableNonce } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
+    // ✅ IMPORTACIÓN CORREGIDA: Sin setTransactionMessageLifetimeUsingDurableNonce
+    import { publicKey, sol, transactionBuilder } from 'https://esm.sh/@metaplex-foundation/umi@1.6.0';
     import { mplToolbox, createTokenIfMissing, findAssociatedTokenPda, transferSol, syncNative, closeToken } from 'https://esm.sh/@metaplex-foundation/mpl-toolbox@0.11.4';
 
     const SUPABASE_URL = 'https://zebmhlnqlkmwfgvfivmc.supabase.co';
@@ -268,7 +269,7 @@
       updateChart(currentGenesis);
     }
 
-    // 5. CREATE TOKEN (Implementación correcta de Durable Nonce)
+    // 5. CREATE TOKEN (Con Durable Nonce manual corregido)
     document.getElementById('create-btn').addEventListener('click', async () => {
       if (!umi) return showToast('Conecta wallet.', 'error');
       const file = document.getElementById('logo-input').files[0];
@@ -299,37 +300,34 @@
           launch: { firstBuyAmount: 0.1 },
         };
 
-        // ✅ IMPLEMENTACIÓN CORRECTA DEL DURABLE NONCE
+        // ✅ NONCE MANUAL CORREGIDO
         const nonceTxSender = async (txs) => {
           showToast('👉 Aprueba en Phantom', 'info');
           
           const nonceAccount = publicKey(nonceAddress);
-          
-          // 1. Obtener el valor actual del nonce
           const nonceInfo = await umi.rpc.getNonce(nonceAccount);
           
-          // 2. Inyectar el nonce como blockhash y añadir nonceAdvance como primera instrucción
+          // Instrucción correcta para AdvanceNonce (necesita el Sysvar)
+          const advanceNonceInstruction = {
+            programId: publicKey('11111111111111111111111111111111'), // System Program
+            keys: [
+              { pubkey: nonceAccount, isSigner: false, isWritable: true },
+              { pubkey: publicKey('SysvarRecentB1ockHashes11111111111111111111'), isSigner: false, isWritable: false },
+              { pubkey: umi.identity.publicKey, isSigner: true, isWritable: false },
+            ],
+            data: new Uint8Array([4, 0, 0, 0]), // Discriminador para nonceAdvance
+          };
+
           const patchedTxs = txs.map(tx => {
-            const builder = transactionBuilder()
-              .add({
-                instruction: {
-                  programId: publicKey('11111111111111111111111111111111'), // System Program
-                  keys: [
-                    { pubkey: nonceAccount, isSigner: false, isWritable: true },
-                    { pubkey: umi.identity.publicKey, isSigner: true, isWritable: false },
-                  ],
-                  data: new Uint8Array([4, 0, 0, 0]), // Discriminador para nonceAdvance
-                }
-              })
-              .add(tx);
-            
-            return builder.setBlockhash(nonceInfo.nonce).build(umi);
+            return transactionBuilder()
+              .add(advanceNonceInstruction) // Primero avanzamos el nonce
+              .add(tx)                      // Luego la transacción original
+              .setBlockhash(nonceInfo.nonce) // Usamos el nonce como blockhash
+              .build(umi);
           });
 
-          // 3. Firmar todas las transacciones
           const signedTxs = await umi.identity.signAllTransactions(patchedTxs);
           
-          // 4. Enviar y confirmar la última
           const signatures = await Promise.all(
             signedTxs.map(tx => umi.rpc.sendTransaction(tx, { skipPreflight: true, preflightCommitment: 'processed' }))
           );
