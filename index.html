@@ -51,6 +51,10 @@
 
   <div id="status" class="info">Esperando conexión...</div>
 
+  <!-- Cargar SDK de Irys para navegador (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@irys/web-upload@0.0.15/dist/cjs/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@irys/web-upload-solana@0.1.8/dist/cjs/index.min.js"></script>
+
   <script type="module">
     import { Buffer } from 'https://esm.sh/buffer@6.0.3';
     window.Buffer = Buffer;
@@ -129,23 +133,38 @@
       try {
         showStatus('⏳ Cargando Genesis y el Uploader de Irys...', 'info');
         
-        // ✅ CORRECCIÓN: Usar versión 1.6.0 y el CDN esm.sh con /web
+        // 1. Importamos Genesis (Metaplex)
         const { genesis, createAndRegisterLaunch } = await import('https://esm.sh/@metaplex-foundation/genesis@0.40.0');
-        const { irysUploader } = await import('https://esm.sh/@metaplex-foundation/umi-uploader-irys@1.6.0/web');
-        const { createGenericFileFromBrowserFile } = await import('https://esm.sh/@metaplex-foundation/umi@1.6.0');
+        
+        // 2. Usamos las variables globales de los scripts UMD de Irys
+        const WebUploader = window.WebUploader;
+        const WebSolana = window.WebSolana;
 
-        // 2. Registramos los plugins en la instancia de Umi
         umi.use(genesis());
-        // Configuramos el uploader para que use Devnet
-        umi.use(irysUploader({ address: "https://devnet.irys.xyz" })); 
+
+        showStatus('⏳ Preparando subida a Irys (Devnet)...', 'info');
+        
+        const provider = window.phantom?.solana || window.solana;
+        // 3. Inicializamos el uploader nativo de Irys para Devnet
+        const irysUploader = await WebUploader(WebSolana).withProvider(provider).devnet();
+        const file = fileInput.files[0];
+
+        // 4. Financiamiento automático si la imagen supera los 100 KB (usa SOL de Devnet)
+        const price = await irysUploader.getPrice(file.size);
+        if (price > 0) { 
+          const balance = await irysUploader.getBalance();
+          if (balance < price) {
+            showStatus('💰 Financiando subida con SOL de Devnet (Firma en Phantom)...', 'info');
+            await irysUploader.fund(price); 
+          }
+        }
 
         showStatus('⏳ Subiendo logo a Irys...', 'info');
-        
-        // 3. Convertimos el archivo del input al formato que entiende Umi
-        const file = await createGenericFileFromBrowserFile(fileInput.files[0]);
-        
-        // 4. Subimos el archivo usando el método nativo de Umi
-        const [imageUrl] = await umi.uploader.upload([file]);
+        // 5. Subimos el archivo y obtenemos la URL
+        const receipt = await irysUploader.uploadFile(file, { 
+          tags: [{ name: "Content-Type", value: file.type }] 
+        });
+        const imageUrl = `https://gateway.irys.xyz/${receipt.id}`;
         
         showStatus('✅ Logo subido. Creando lanzamiento en Solana...', 'info');
 
