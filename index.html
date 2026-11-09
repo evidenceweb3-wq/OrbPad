@@ -114,15 +114,15 @@
         .planet-img {
             width: 75px; height: 75px; border-radius: 50%; object-fit: cover; z-index: 2;
             border: 3px solid rgba(255,255,255,.2);
-            box-shadow: 0 0 20px rgba(20, 241, 149, 0.5), inset 0 0 15px rgba(0,0,0,.8);
+            box-shadow: 0 0 25px rgba(20, 241, 149, 0.6), inset 0 0 15px rgba(0,0,0,.8);
             animation: float 6s ease-in-out infinite; background: #111;
         }
         
         .planet-ring {
             position: absolute; width: 110px; height: 35px;
-            border: 2px solid rgba(153, 69, 255, 0.5); border-radius: 50%;
+            border: 2px solid rgba(153, 69, 255, 0.6); border-radius: 50%;
             transform: rotate(-20deg); z-index: 1; animation: spinRing 12s linear infinite;
-            box-shadow: 0 0 15px rgba(153, 69, 255, 0.3);
+            box-shadow: 0 0 20px rgba(153, 69, 255, 0.5);
         }
         
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -157,6 +157,14 @@
         .metric-box strong { font-family: var(--font-mono); font-size: 1.05rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
         .metric-box.real strong { color: var(--sol-green); text-shadow: 0 0 10px rgba(20, 241, 149, 0.4); }
         
+        /* COPY BUTTON */
+        .copy-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+            color: white; padding: 0 12px; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
+
         /* TABS & CHART */
         .chart-tabs { display: flex; gap: 8px; margin-bottom: 8px; position: relative; z-index: 10; }
         .chart-tab {
@@ -219,6 +227,9 @@
 
         .a { color: var(--sol-purple); text-decoration: none; font-weight: bold; }
         .a:hover { text-decoration: underline; }
+        
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -264,6 +275,7 @@
             <h2>Active Token</h2>
             <div style="display:flex; gap:8px; margin-bottom: 16px;">
                 <input id="mintAddressInput" type="text" placeholder="Mint Address" style="margin-bottom:0;" />
+                <button id="copyMintBtn" class="copy-btn" title="Copy Mint">📋</button>
                 <button id="loadTokenBtn" style="width:auto;">Load</button>
             </div>
 
@@ -304,7 +316,9 @@
                 <div class="content-wrapper">
                     <div id="chartContainer" class="chart-container"></div>
                     <div id="tradesContainer" class="trades-container">
-                        <div id="tradesList" style="padding: 10px; text-align: center; color: var(--mut);">Loading trades...</div>
+                        <div id="tradesList" style="padding: 20px; text-align: center; color: var(--mut);">
+                            <span class="spinner"></span> Loading trades...
+                        </div>
                     </div>
                 </div>
 
@@ -375,13 +389,13 @@
         function drawBackground() {
             ctx.clearRect(0, 0, W, H); time += 0.005;
             const cx = W / 2, cy = H / 2;
-            ctx.strokeStyle = 'rgba(153, 69, 255, 0.05)'; ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(153, 69, 255, 0.08)'; ctx.lineWidth = 1.5;
             for (let i = 1; i <= 4; i++) { ctx.beginPath(); ctx.ellipse(cx, cy, W * 0.3 * i, H * 0.15 * i, 0, 0, Math.PI * 2); ctx.stroke(); }
-            ctx.fillStyle = 'rgba(20, 241, 149, 0.4)';
+            ctx.fillStyle = 'rgba(20, 241, 149, 0.6)';
             for (let i = 0; i < 4; i++) {
                 const radius = W * 0.3 * (i + 1); const angle = time * (1 + i * 0.5);
                 const px = cx + Math.cos(angle) * radius; const py = cy + Math.sin(angle) * (H * 0.15 * (i + 1));
-                ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2); ctx.fill();
             }
             stars.forEach(s => {
                 s.a += s.speed; ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(s.a) * 0.3})`;
@@ -419,9 +433,8 @@
         let cachedFeeConfig = null;
         let userTokenBalance = 0;
         let pollingInterval = null;
-        let currentSolPriceUsd = 150; // Default, will fetch live
+        let currentSolPriceUsd = 150;
 
-        // Fetch SOL price for USD conversion
         async function fetchSolPrice() {
             try {
                 const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT');
@@ -433,7 +446,6 @@
         }
         fetchSolPrice();
 
-        // Handle commas and dots in inputs
         function parseLocaleNumber(stringNumber) {
             if (!stringNumber) return 0;
             return parseFloat(stringNumber.toString().replace(',', '.'));
@@ -484,11 +496,9 @@
             } catch (e) { console.error("Chart error:", e); }
         }
 
-        // ==========================================
-        // LOCAL STORAGE: CHART & TRADES
-        // ==========================================
-        const CHART_KEY_PREFIX = 'pump_chart_mcap_'; // Changed to store mcap
+        const CHART_KEY_PREFIX = 'pump_chart_mcap_';
         const TRADES_KEY_PREFIX = 'pump_trades_';
+        let dexCache = { time: 0, data: null };
 
         function saveChartPoint(mintStr, mcapSol) {
             try {
@@ -505,7 +515,14 @@
                 if (history.length > 500) history = history.slice(history.length - 500);
                 localStorage.setItem(key, JSON.stringify(history));
                 
-                if (areaSeries) areaSeries.setData(history);
+                if (areaSeries) {
+                    if (history.length <= 2) {
+                        areaSeries.setData(history);
+                        chart.timeScale().fitContent();
+                    } else {
+                        areaSeries.update(history[history.length - 1]);
+                    }
+                }
             } catch (e) { console.warn('Chart save error:', e); }
         }
 
@@ -562,28 +579,50 @@
                 list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--mut);">No local trades yet.</div>';
             }
 
+            // Caching DexScreener to prevent rate limits
+            if (Date.now() - dexCache.time < 30000 && dexCache.data) {
+                appendDexData(dexCache.data, list);
+                return;
+            }
+
+            list.innerHTML += `<div style="padding: 10px; text-align: center; color: var(--mut);"><span class="spinner"></span> Fetching external data...</div>`;
+
             try {
                 const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintStr}`);
                 if (res.ok) {
                     const json = await res.json();
                     if (json.pairs && json.pairs.length > 0) {
-                        const pair = json.pairs[0];
-                        list.innerHTML += `
-                            <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.02); border-top: 1px solid #333;">
-                                <div style="color:var(--sol-purple); font-size:0.75rem; margin-bottom:4px;">External Market Data (DexScreener)</div>
-                                <div class="trade-row" style="border:none;">
-                                    <span style="color:var(--mut);">24h Buys</span>
-                                    <span class="trade-type buy">${pair.txns.h24.buys}</span>
-                                </div>
-                                <div class="trade-row" style="border:none;">
-                                    <span style="color:var(--mut);">24h Sells</span>
-                                    <span class="trade-type sell">${pair.txns.h24.sells}</span>
-                                </div>
-                            </div>
-                        `;
+                        dexCache = { time: Date.now(), data: json.pairs[0] };
+                        appendDexData(json.pairs[0], list);
+                    } else {
+                        const sp = list.querySelector('.spinner');
+                        if(sp) sp.parentElement.remove();
                     }
                 }
-            } catch(e) { /* Ignore external errors */ }
+            } catch(e) { /* Ignore */ }
+        }
+
+        function appendDexData(pair, list) {
+            const spinner = list.querySelector('.spinner');
+            if (spinner) spinner.parentElement.remove();
+
+            list.innerHTML += `
+                <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.02); border-top: 1px solid #333;">
+                    <div style="color:var(--sol-purple); font-size:0.75rem; margin-bottom:4px;">External Market Data (DexScreener)</div>
+                    <div class="trade-row" style="border:none;">
+                        <span style="color:var(--mut);">24h Buys</span>
+                        <span class="trade-type buy">${pair.txns.h24.buys}</span>
+                    </div>
+                    <div class="trade-row" style="border:none;">
+                        <span style="color:var(--mut);">24h Sells</span>
+                        <span class="trade-type sell">${pair.txns.h24.sells}</span>
+                    </div>
+                    <div class="trade-row" style="border:none;">
+                        <span style="color:var(--mut);">24h Volume</span>
+                        <span>$${parseFloat(pair.volume.h24).toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
         }
 
         async function updateWalletBalance() {
@@ -608,6 +647,17 @@
             } catch (err) {
                 document.getElementById('walletStatus').textContent = `Error: ${err.message}`;
                 document.getElementById('walletStatus').classList.add('error');
+            }
+        });
+
+        document.getElementById('copyMintBtn').addEventListener('click', () => {
+            const val = document.getElementById('mintAddressInput').value.trim();
+            if (val) {
+                navigator.clipboard.writeText(val);
+                const btn = document.getElementById('copyMintBtn');
+                const oldText = btn.innerHTML;
+                btn.innerHTML = '✅';
+                setTimeout(() => btn.innerHTML = oldText, 2000);
             }
         });
 
@@ -712,7 +762,7 @@
         async function loadSavedTokens() {
             const listContainer = document.getElementById('savedTokensList');
             listContainer.style.display = 'grid';
-            listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">Loading tokens...</div>';
+            listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;"><span class="spinner"></span> Loading tokens...</div>';
             try {
                 const { data, error } = await supabase.from('launchpad_tokens').select('*').eq('creator_wallet', userPublicKey.toBase58());
                 if (error) throw error;
@@ -737,6 +787,15 @@
                         document.getElementById('mintAddressInput').value = token.mint_address;
                         document.getElementById('displayName').textContent = token.name;
                         document.getElementById('displaySymbol').textContent = token.symbol;
+                        
+                        // Show instant UI loading feedback
+                        document.getElementById('tokenDisplay').style.display = 'flex';
+                        document.getElementById('tradeSection').style.display = 'block';
+                        document.getElementById('tradeStatus').textContent = '⏳ Loading token...';
+                        document.getElementById('tradeStatus').classList.remove('error');
+                        document.getElementById('buyBtn').disabled = true;
+                        document.getElementById('sellBtn').disabled = true;
+
                         loadTokenData(token.mint_address);
                     };
                     listContainer.appendChild(item);
@@ -746,7 +805,12 @@
             }
         }
 
-        document.getElementById('loadTokenBtn').addEventListener('click', () => loadTokenData(document.getElementById('mintAddressInput').value.trim()));
+        document.getElementById('loadTokenBtn').addEventListener('click', () => {
+            document.getElementById('tradeStatus').textContent = '⏳ Loading token...';
+            document.getElementById('buyBtn').disabled = true;
+            document.getElementById('sellBtn').disabled = true;
+            loadTokenData(document.getElementById('mintAddressInput').value.trim());
+        });
 
         async function fetchUserTokenBalance() {
             if (!userPublicKey || !currentMint) return 0;
@@ -755,23 +819,44 @@
                 if (accounts.value.length > 0) {
                     return accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
                 }
-            } catch (e) { /* Ignore if account doesn't exist yet */ }
+            } catch (e) { /* Ignore */ }
             return 0;
         }
 
+        // ==========================================
+        // OPTIMIZED LOAD TOKEN DATA (Parallel Fetch)
+        // ==========================================
         async function loadTokenData(mintStr) {
             if (!mintStr) return;
+            
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+
             try {
                 currentMint = new PublicKey(mintStr);
-                currentBondingCurve = await withTimeout(onlineSdk.fetchBondingCurve(currentMint));
-                cachedGlobal = await withTimeout(onlineSdk.fetchGlobal());
-                cachedFeeConfig = await withTimeout(onlineSdk.fetchFeeConfig());
+
+                // 1. Fetch ALL necessary data in parallel simultaneously (FAST)
+                const [curve, globalData, feeConf, balance] = await withTimeout(
+                    Promise.all([
+                        onlineSdk.fetchBondingCurve(currentMint),
+                        onlineSdk.fetchGlobal(),
+                        onlineSdk.fetchFeeConfig(),
+                        fetchUserTokenBalance()
+                    ]), 20000);
+
+                currentBondingCurve = curve;
+                cachedGlobal = globalData;
+                cachedFeeConfig = feeConf;
+                userTokenBalance = balance;
                 
+                // 2. Math
                 const vSol = currentBondingCurve.virtualQuoteReserves ? currentBondingCurve.virtualQuoteReserves : currentBondingCurve.virtualSolReserves;
                 const vToken = currentBondingCurve.virtualTokenReserves;
                 const rSol = currentBondingCurve.realQuoteReserves ? currentBondingCurve.realQuoteReserves : currentBondingCurve.realSolReserves;
                 
-                if (!vSol || !vToken || !rSol) throw new Error('Curve not recognized.');
+                if (!vSol || !vToken || !rSol) throw new Error('Curve data not recognized.');
 
                 const mcapLamports = vSol.mul(currentBondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
@@ -785,15 +870,13 @@
                 let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, ''); 
                 if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
 
-                userTokenBalance = await fetchUserTokenBalance();
+                // 3. Update UI instantly
                 document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
-
                 document.getElementById('mcapSol').textContent = `${mcapSol.toFixed(2)} SOL`;
                 document.getElementById('mcapUsd').textContent = `$${mcapUsd.toFixed(2)}`;
                 document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
                 
-                // Price Change Calculation (from chart data)
                 const history = JSON.parse(localStorage.getItem(CHART_KEY_PREFIX + mintStr) || '[]');
                 let changePct = 0;
                 if (history.length > 1) {
@@ -805,9 +888,6 @@
                 const changeEl = document.getElementById('priceChange');
                 changeEl.textContent = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
                 changeEl.className = `price-change ${changePct >= 0 ? 'up' : 'down'}`;
-                
-                document.getElementById('tokenDisplay').style.display = 'flex';
-                document.getElementById('tradeSection').style.display = 'block';
 
                 isCurrentTokenGraduated = currentBondingCurve.complete || progressPct >= 99.9;
 
@@ -825,36 +905,80 @@
                     document.getElementById('graduatedBadge').style.display = 'none';
                     document.getElementById('buyBtn').disabled = false;
                     document.getElementById('sellBtn').disabled = false;
-                    document.getElementById('tradeStatus').textContent = '';
+                    document.getElementById('tradeStatus').textContent = ''; // Clear loading state
                 }
 
+                // 4. Load Image Asynchronously (Does not block UI)
                 if (activeImageUrl && document.getElementById('mintAddressInput').value === mintStr) {
                     document.getElementById('tokenImagePreview').src = activeImageUrl;
                 } else {
-                    const { data } = await supabase.from('launchpad_tokens').select('metadata_uri').eq('mint_address', mintStr).single();
-                    if (data && data.metadata_uri) {
-                        document.getElementById('tokenImagePreview').src = await fetchTokenImage(data.metadata_uri);
-                    } else {
-                        document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=Coin';
-                    }
+                    document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=Coin';
+                    supabase.from('launchpad_tokens').select('metadata_uri').eq('mint_address', mintStr).single().then(({ data }) => {
+                        if (data && data.metadata_uri && currentMint.toBase58() === mintStr) {
+                            fetchTokenImage(data.metadata_uri).then(imgUrl => {
+                                if (currentMint.toBase58() === mintStr) {
+                                    document.getElementById('tokenImagePreview').src = imgUrl;
+                                }
+                            });
+                        }
+                    }).catch(e => console.warn('Img fetch error', e));
                 }
 
+                // 5. Chart
                 initChartIfNeeded();
                 saveChartPoint(mintStr, mcapSol);
 
+                // 6. Quotes
                 updateBuyQuote();
                 updateSellQuote();
 
-                if (pollingInterval) clearInterval(pollingInterval);
+                // 7. Polling
                 pollingInterval = setInterval(() => {
                     if (currentMint && currentMint.toBase58() === mintStr) {
-                        loadTokenData(mintStr);
+                        pollTokenData(mintStr);
                     }
                 }, 10000);
 
             } catch (e) {
                 console.error(e);
+                document.getElementById('tradeStatus').textContent = `❌ Error loading: ${e.message}`;
+                document.getElementById('tradeStatus').classList.add('error');
+                document.getElementById('buyBtn').disabled = true;
+                document.getElementById('sellBtn').disabled = true;
             }
+        }
+
+        // Silent polling to prevent UI jumping
+        async function pollTokenData(mintStr) {
+            try {
+                const curve = await withTimeout(onlineSdk.fetchBondingCurve(new PublicKey(mintStr)));
+                currentBondingCurve = curve;
+                
+                const vSol = curve.virtualQuoteReserves ? curve.virtualQuoteReserves : curve.virtualSolReserves;
+                const vToken = curve.virtualTokenReserves;
+                const rSol = curve.realQuoteReserves ? curve.realQuoteReserves : curve.realSolReserves;
+                
+                if (!vSol || !vToken || !rSol) return;
+
+                const mcapLamports = vSol.mul(curve.tokenTotalSupply).div(vToken);
+                const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
+                const mcapUsd = mcapSol * currentSolPriceUsd;
+                const realSol = rSol.toNumber() / LAMPORTS_PER_SOL;
+                
+                const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
+                let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, ''); 
+                if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
+
+                document.getElementById('mcapSol').textContent = `${mcapSol.toFixed(2)} SOL`;
+                document.getElementById('mcapUsd').textContent = `$${mcapUsd.toFixed(2)}`;
+                document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
+                document.getElementById('price').textContent = `${priceStr} SOL`;
+                
+                if (document.getElementById('solAmount').value) updateBuyQuote();
+                if (document.getElementById('tokenAmountToSell').value) updateSellQuote();
+
+                saveChartPoint(mintStr, mcapSol);
+            } catch (e) { console.warn("Polling error:", e); }
         }
 
         window.setSolAmount = (val) => { 
@@ -894,7 +1018,13 @@
             if (!tokenInput || tokenInput <= 0) { quoteEl.textContent = '—'; return; }
 
             try {
-                const MAX_SAFE_CHUNK = new BN(35000000000);
+                const U64_MAX = new BN('18446744073709551615');
+                const vSol = currentBondingCurve.virtualQuoteReserves ? currentBondingCurve.virtualQuoteReserves : currentBondingCurve.virtualSolReserves;
+                
+                // Calculate the exact mathematical max safe chunk dynamically
+                const maxSafeRaw = U64_MAX.div(vSol);
+                const MAX_SAFE_CHUNK = maxSafeRaw.sub(new BN(1000000)); // 1M buffer
+
                 let amount = new BN(Math.floor(tokenInput * 1e6));
                 
                 // Clamp for quote calculation to avoid UI breaking
@@ -947,9 +1077,7 @@
             }
         });
 
-        // ==========================================
-        // CLAMPED SELL LOGIC (FIXES OVERFLOW)
-        // ==========================================
+        // Dynamic Clamped Sell Logic
         document.getElementById('sellBtn').addEventListener('click', async () => {
             if (isCurrentTokenGraduated) return alert('Token graduated. Use Jupiter or Raydium.');
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Selling...'; statusEl.classList.remove('error');
@@ -959,17 +1087,21 @@
                 if (!tokenInput || tokenInput <= 0) throw new Error('Invalid amount.');
                 if (tokenInput > userTokenBalance) throw new Error('Insufficient token balance.');
 
-                let amount = new BN(Math.floor(tokenInput * 1e6));
-                const MAX_SAFE_CHUNK = new BN(35000000000); // ~35 Billion raw units limit
-
-                // CLAMP LOGIC: If user asks for too much, we reduce it to the max safe amount
-                if (amount.gt(MAX_SAFE_CHUNK)) {
-                    amount = MAX_SAFE_CHUNK;
-                    statusEl.textContent = `⚠️ Amount too large. Clamping to max safe sell (35,000 Tokens)...`;
-                }
-
                 const sellState = await withTimeout(onlineSdk.fetchSellState(currentMint, userPublicKey));
                 if (sellState.bondingCurve.complete) throw new Error('Curve completed. Go to Raydium.');
+
+                const U64_MAX = new BN('18446744073709551615');
+                const vSol = sellState.bondingCurve.virtualQuoteReserves ? sellState.bondingCurve.virtualQuoteReserves : sellState.bondingCurve.virtualSolReserves;
+                
+                const maxSafeRaw = U64_MAX.div(vSol);
+                const MAX_SAFE_CHUNK = maxSafeRaw.sub(new BN(1000000));
+
+                let amount = new BN(Math.floor(tokenInput * 1e6));
+
+                if (amount.gt(MAX_SAFE_CHUNK)) {
+                    amount = MAX_SAFE_CHUNK;
+                    statusEl.textContent = `⚠️ Amount too large. Clamping to max safe sell (${(amount.toNumber()/1e6).toLocaleString()} Tokens)...`;
+                }
 
                 const solAmount = getSellSolAmountFromTokenAmount({ 
                     global: cachedGlobal, 
