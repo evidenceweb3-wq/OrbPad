@@ -90,123 +90,105 @@
         
         /* Custom File Upload */
         .custom-file-upload {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: rgba(0,0,0,.3);
-            border: 1px dashed rgba(255,255,255,.2);
-            border-radius: 8px;
-            padding: 14px;
-            cursor: pointer;
-            margin-bottom: 8px;
-            transition: all 0.2s;
-            color: var(--mut);
-            font-size: 0.85rem;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: rgba(0,0,0,.3); border: 1px dashed rgba(255,255,255,.2);
+            border-radius: 8px; padding: 14px; cursor: pointer; margin-bottom: 8px;
+            transition: all 0.2s; color: var(--mut); font-size: 0.85rem;
         }
-        .custom-file-upload:hover {
-            border-color: var(--sol-purple);
-            background: rgba(153, 69, 255, 0.05);
-            color: var(--ui);
-        }
-        .custom-file-upload input[type="file"] {
-            display: none;
-        }
+        .custom-file-upload:hover { border-color: var(--sol-purple); background: rgba(153, 69, 255, 0.05); color: var(--ui); }
+        .custom-file-upload input[type="file"] { display: none; }
 
         /* PLANET TOKEN CARD */
         .planet-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: rgba(0,0,0,.4);
-            border: 1px solid rgba(255,255,255,.1);
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            position: relative;
-            overflow: hidden;
+            display: flex; align-items: center; gap: 20px;
+            background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.1);
+            padding: 20px; border-radius: 16px; margin-bottom: 16px;
+            position: relative; overflow: hidden;
         }
         
         .planet-container {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
+            position: relative; width: 100px; height: 100px;
+            display: flex; justify-content: center; align-items: center; flex-shrink: 0;
         }
         
         .planet-img {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            object-fit: cover;
-            z-index: 2;
+            width: 75px; height: 75px; border-radius: 50%; object-fit: cover; z-index: 2;
             border: 3px solid rgba(255,255,255,.2);
             box-shadow: 0 0 20px rgba(20, 241, 149, 0.5), inset 0 0 15px rgba(0,0,0,.8);
-            animation: float 6s ease-in-out infinite;
-            background: #111;
+            animation: float 6s ease-in-out infinite; background: #111;
         }
         
         .planet-ring {
-            position: absolute;
-            width: 130px;
-            height: 40px;
-            border: 2px solid rgba(153, 69, 255, 0.5);
-            border-radius: 50%;
-            transform: rotate(-20deg);
-            z-index: 1;
-            animation: spinRing 12s linear infinite;
+            position: absolute; width: 110px; height: 35px;
+            border: 2px solid rgba(153, 69, 255, 0.5); border-radius: 50%;
+            transform: rotate(-20deg); z-index: 1; animation: spinRing 12s linear infinite;
             box-shadow: 0 0 15px rgba(153, 69, 255, 0.3);
         }
         
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-        @keyframes spinRing {
-            0% { transform: rotate(-20deg); }
-            100% { transform: rotate(340deg); }
-        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes spinRing { 0% { transform: rotate(-20deg); } 100% { transform: rotate(340deg); } }
         
         .planet-info { flex: 1; overflow: hidden; z-index: 2; }
-        .planet-name { font-weight: 800; font-size: 1.8rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; margin-bottom: 4px; }
-        .planet-symbol { color: var(--sol-green); font-size: 1rem; font-family: var(--font-mono); letter-spacing: 1px; }
+        .planet-name { font-weight: 800; font-size: 1.6rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+        .planet-symbol { color: var(--sol-green); font-size: 0.9rem; font-family: var(--font-mono); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
         
-        .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+        /* LIVE PRICE DISPLAY */
+        .live-price-box {
+            background: rgba(20, 241, 149, 0.1); border: 1px solid rgba(20, 241, 149, 0.3);
+            padding: 4px 10px; border-radius: 6px; font-size: 1.1rem; font-weight: bold;
+            color: var(--sol-green); font-family: var(--font-mono); text-shadow: 0 0 10px rgba(20, 241, 149, 0.5);
+        }
+
+        .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
         .metric-box { 
             background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.05); 
             padding: 10px; border-radius: 12px; text-align: center; 
         }
         .metric-box span { display: block; font-size: 0.65rem; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .metric-box strong { font-family: var(--font-mono); font-size: 1.1rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
+        .metric-box strong { font-family: var(--font-mono); font-size: 1.05rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
         .metric-box.real strong { color: var(--sol-green); text-shadow: 0 0 10px rgba(20, 241, 149, 0.4); }
         
-        .chart-container { 
+        /* TABS & CHART */
+        .chart-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+        .chart-tab {
+            background: transparent; border: none; color: var(--mut); padding: 4px 12px;
+            font-size: 0.8rem; cursor: pointer; border-radius: 6px; font-weight: bold;
+            box-shadow: none; transition: 0.2s;
+        }
+        .chart-tab:hover { background: rgba(255,255,255,0.05); color: #fff; transform: none; box-shadow: none; }
+        .chart-tab.active { background: rgba(153, 69, 255, 0.2); color: var(--sol-purple); border: 1px solid rgba(153, 69, 255, 0.3); }
+
+        .content-wrapper { 
             flex: 1; min-height: 200px; width: 100%; position: relative; 
             background: rgba(0,0,0,.2); border-radius: 12px; 
             border: 1px solid rgba(255,255,255,.05); overflow: hidden; margin-bottom: 16px; 
         }
+        .chart-container { width: 100%; height: 100%; position: absolute; inset: 0; }
         
-        /* Trade Grid Alignment */
+        /* TRADES LIST */
+        .trades-container {
+            position: absolute; inset: 0; overflow-y: auto; display: none; flex-direction: column;
+        }
+        .trade-row {
+            display: flex; justify-content: space-between; padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); font-family: var(--font-mono); font-size: 0.85rem;
+        }
+        .trade-row:hover { background: rgba(255,255,255,0.02); }
+        .trade-type { font-weight: bold; }
+        .trade-type.buy { color: var(--sol-green); }
+        .trade-type.sell { color: var(--red); }
+        
         .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .trade-col { display: flex; flex-direction: column; }
         
-        .trade-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 8px;
-            min-height: 24px;
-        }
+        .trade-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; min-height: 24px; }
         
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
         .quick-buttons button { background: rgba(255,255,255,.05); color: var(--ui); font-size: 0.8rem; padding: 8px; border: 1px solid rgba(255,255,255,.1); box-shadow: none; border-radius: 8px; }
         .quick-buttons button:hover { background: rgba(255,255,255,.15); color: #fff; border-color: var(--c); }
         
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(20, 241, 149, 0); } 100% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0); } }
-        .graduated-badge { font-size:0.75rem; background:var(--sol-green); color:#000; padding:4px 10px; border-radius:20px; font-weight:bold; animation: pulse 2s infinite; position: absolute; top: 20px; right: 20px; }
+        .graduated-badge { font-size:0.75rem; background:var(--sol-green); color:#000; padding:4px 10px; border-radius:20px; font-weight:bold; animation: pulse 2s infinite; position: absolute; top: 15px; right: 15px; }
         
         .my-tokens-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
         .my-token-item { 
@@ -286,7 +268,10 @@
                     </div>
                     <div class="planet-info">
                         <div class="planet-name" id="displayName">—</div>
-                        <div class="planet-symbol" id="displaySymbol">—</div>
+                        <div class="planet-symbol">
+                            <span id="displaySymbol">—</span>
+                            <div class="live-price-box"><span id="price">—</span></div>
+                        </div>
                     </div>
                 </div>
 
@@ -294,12 +279,21 @@
                 <div class="metrics-row">
                     <div class="metric-box"><span>Virtual MCap</span><strong id="mcap">—</strong></div>
                     <div class="metric-box real"><span>Real SOL</span><strong id="realSol">—</strong></div>
-                    <div class="metric-box"><span>Price</span><strong id="price">—</strong></div>
                     <div class="metric-box"><span>Progress</span><strong id="progress">—</strong></div>
                 </div>
                 
-                <!-- CHART -->
-                <div id="chartContainer" class="chart-container"></div>
+                <!-- TABS & CONTENT -->
+                <div class="chart-tabs">
+                    <button class="chart-tab active" id="tabChart" onclick="switchTab('chart')">📈 Chart</button>
+                    <button class="chart-tab" id="tabTrades" onclick="switchTab('trades')">🧾 Trades</button>
+                </div>
+                
+                <div class="content-wrapper">
+                    <div id="chartContainer" class="chart-container"></div>
+                    <div id="tradesContainer" class="trades-container">
+                        <div id="tradesList" style="padding: 10px; text-align: center; color: var(--mut);">Loading trades...</div>
+                    </div>
+                </div>
 
                 <!-- TRADE SECTION -->
                 <div id="tradeSection" style="display:none;">
@@ -404,7 +398,6 @@
         
         let chart = null;
         let areaSeries = null;
-        let lastChartTime = Math.floor(Date.now() / 1000) - 100;
         let chartInitialized = false;
         let isCurrentTokenGraduated = false;
         
@@ -412,6 +405,7 @@
         let cachedGlobal = null;
         let cachedFeeConfig = null;
         let userTokenBalance = 0;
+        let pollingInterval = null;
 
         // Handle commas and dots in inputs
         function parseLocaleNumber(stringNumber) {
@@ -453,6 +447,117 @@
                 resizeObserver.observe(container);
                 chartInitialized = true;
             } catch (e) { console.error("Chart error:", e); }
+        }
+
+        // ==========================================
+        // LOCAL STORAGE: CHART & TRADES
+        // ==========================================
+        const CHART_KEY_PREFIX = 'pump_chart_';
+        const TRADES_KEY_PREFIX = 'pump_trades_';
+
+        function saveChartPoint(mintStr, priceSol) {
+            try {
+                const key = CHART_KEY_PREFIX + mintStr;
+                let history = JSON.parse(localStorage.getItem(key) || '[]');
+                const now = Math.floor(Date.now() / 1000);
+                
+                // Avoid spamming exact same second, just update it
+                if (history.length > 0 && history[history.length - 1].time >= now) {
+                    history[history.length - 1].value = priceSol;
+                } else {
+                    history.push({ time: now, value: priceSol });
+                }
+
+                // Keep last 500 points max
+                if (history.length > 500) history = history.slice(history.length - 500);
+                
+                localStorage.setItem(key, JSON.stringify(history));
+                
+                if (areaSeries) {
+                    areaSeries.setData(history);
+                }
+            } catch (e) { console.warn('Chart save error:', e); }
+        }
+
+        function saveTrade(mintStr, type, solAmount, tokenAmount) {
+            try {
+                const key = TRADES_KEY_PREFIX + mintStr;
+                let trades = JSON.parse(localStorage.getItem(key) || '[]');
+                trades.unshift({
+                    type,
+                    solAmount: parseFloat(solAmount),
+                    tokenAmount: parseFloat(tokenAmount),
+                    time: Date.now()
+                });
+                // Keep last 50 trades
+                localStorage.setItem(key, JSON.stringify(trades.slice(0, 50)));
+            } catch (e) { console.warn('Trade save error:', e); }
+        }
+
+        function switchTab(tab) {
+            if (tab === 'chart') {
+                document.getElementById('tabChart').classList.add('active');
+                document.getElementById('tabTrades').classList.remove('active');
+                document.getElementById('chartContainer').style.display = 'block';
+                document.getElementById('tradesContainer').style.display = 'none';
+                if (chart) chart.applyOptions({ width: document.getElementById('chartContainer').clientWidth });
+            } else {
+                document.getElementById('tabChart').classList.remove('active');
+                document.getElementById('tabTrades').classList.add('active');
+                document.getElementById('chartContainer').style.display = 'none';
+                document.getElementById('tradesContainer').style.display = 'flex';
+                loadRecentTrades();
+            }
+        }
+
+        async function loadRecentTrades() {
+            const list = document.getElementById('tradesList');
+            if (!currentMint) return;
+            const mintStr = currentMint.toBase58();
+            
+            list.innerHTML = '';
+            
+            // 1. Load local trades
+            const localTrades = JSON.parse(localStorage.getItem(TRADES_KEY_PREFIX + mintStr) || '[]');
+            
+            if (localTrades.length > 0) {
+                localTrades.forEach(t => {
+                    const date = new Date(t.time).toLocaleTimeString();
+                    list.innerHTML += `
+                        <div class="trade-row">
+                            <span class="trade-type ${t.type.toLowerCase()}">${t.type}</span>
+                            <span>${t.solAmount.toFixed(3)} SOL</span>
+                            <span style="color:#888">${date}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--mut);">No local trades yet.</div>';
+            }
+
+            // 2. Try fetching external data (DexScreener)
+            try {
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintStr}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.pairs && json.pairs.length > 0) {
+                        const pair = json.pairs[0];
+                        list.innerHTML += `
+                            <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.02); border-top: 1px solid #333;">
+                                <div style="color:var(--sol-purple); font-size:0.75rem; margin-bottom:4px;">External Market Data (DexScreener)</div>
+                                <div class="trade-row" style="border:none;">
+                                    <span style="color:var(--mut);">24h Buys</span>
+                                    <span class="trade-type buy">${pair.txns.h24.buys}</span>
+                                </div>
+                                <div class="trade-row" style="border:none;">
+                                    <span style="color:var(--mut);">24h Sells</span>
+                                    <span class="trade-type sell">${pair.txns.h24.sells}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            } catch(e) { /* Ignore external errors */ }
         }
 
         async function updateWalletBalance() {
@@ -657,6 +762,7 @@
                 userTokenBalance = await fetchUserTokenBalance();
                 document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
+                // --- UPDATE METRICS ---
                 document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
                 document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
@@ -695,16 +801,20 @@
                     }
                 }
 
+                // --- UPDATE CHART & HISTORY ---
                 initChartIfNeeded();
-                if (areaSeries) {
-                    lastChartTime += 1; 
-                    if (lastChartTime > Math.floor(Date.now() / 1000)) lastChartTime = Math.floor(Date.now() / 1000);
-                    areaSeries.update({ time: lastChartTime, value: mcapSol });
-                    if (chart.timeScale().getVisibleLogicalRange() === null) chart.timeScale().fitContent();
-                }
+                saveChartPoint(mintStr, priceSol);
 
                 updateBuyQuote();
                 updateSellQuote();
+
+                // Setup polling for live updates
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(() => {
+                    if (currentMint && currentMint.toBase58() === mintStr) {
+                        loadTokenData(mintStr);
+                    }
+                }, 10000);
 
             } catch (e) {
                 console.error(e);
@@ -786,6 +896,10 @@
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
                 statusEl.textContent = `✅ Buy successful.`;
+                
+                // Save local trade log
+                saveTrade(currentMint.toBase58(), 'BUY', solInput, amount.toNumber() / 1e6);
+
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
             } catch (err) {
@@ -827,6 +941,10 @@
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
                 statusEl.textContent = `✅ Sell successful.`;
+
+                // Save local trade log
+                saveTrade(currentMint.toBase58(), 'SELL', solAmount.toNumber() / LAMPORTS_PER_SOL, tokenInput);
+
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
             } catch (err) {
