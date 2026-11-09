@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Launchpad Pump.fun - Cosmic Edition</title>
-    <!-- Tipografía para los números y datos -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -30,7 +29,6 @@
             overflow: hidden; 
         }
 
-        /* Fondo animado de estrellas y órbitas (Canvas) */
         #space-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
         .app-container { 
@@ -44,7 +42,6 @@
             z-index: 1;
         }
         
-        /* Paneles estilo Glassmorphism */
         .panel { 
             background: linear-gradient(180deg, rgba(14,17,38,.75), rgba(9,11,24,.85));
             backdrop-filter: blur(20px) saturate(150%);
@@ -66,7 +63,6 @@
         h1 span { background: linear-gradient(135deg, #fff 0%, #ffd27a 50%, #ffb347 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         h2 { font-size: 0.85rem; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; margin-bottom: 8px; font-weight: 600; }
         
-        /* Botones con brillo */
         button { 
             background: linear-gradient(135deg, var(--sol-purple), #7a35d6); 
             color: white; border: none; padding: 10px 14px; border-radius: 10px; 
@@ -86,7 +82,6 @@
         .status { font-size: 0.75rem; color: var(--sol-green); margin-top: 4px; word-break: break-all; white-space: pre-wrap; line-height: 1.3; text-shadow: 0 0 8px rgba(20, 241, 149, 0.3); }
         .error { color: var(--red) !important; text-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
         
-        /* Wallet Box */
         .wallet-box { 
             display: flex; justify-content: space-between; align-items: center; 
             background: rgba(0,0,0,.3); padding: 10px 12px; border-radius: 10px; 
@@ -94,13 +89,11 @@
         }
         .wallet-balance { font-family: var(--font-mono); font-size: 1.1rem; color: var(--sol-green); font-weight: bold; text-shadow: 0 0 10px rgba(20,241,149,.4); }
         
-        /* Token Card */
         .token-card { 
             display: flex; gap: 12px; background: rgba(0,0,0,.4); 
             border: 1px solid rgba(255,255,255,.1); padding: 12px; 
             border-radius: 12px; align-items: center; margin-bottom: 12px; position: relative; overflow: hidden;
         }
-        /* Anillo orbitando la imagen del token */
         .token-card::before {
             content: ''; position: absolute; top: 50%; left: 32px; width: 50px; height: 50px;
             border: 1px dashed rgba(20, 241, 149, 0.4); border-radius: 50%; transform: translate(-50%, -50%);
@@ -113,36 +106,48 @@
         .token-name { font-weight: bold; font-size: 1.1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .token-symbol { color: var(--sol-green); font-size: 0.8rem; font-family: var(--font-mono); }
         
-        /* Métricas */
-        .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
         .metric-box { 
             background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.05); 
-            padding: 8px; border-radius: 10px; text-align: center; 
+            padding: 6px; border-radius: 10px; text-align: center; 
         }
-        .metric-box span { display: block; font-size: 0.65rem; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .metric-box strong { font-family: var(--font-mono); font-size: 0.95rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
+        .metric-box span { display: block; font-size: 0.6rem; color: var(--mut); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .metric-box strong { font-family: var(--font-mono); font-size: 0.85rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
+        .metric-box.real strong { color: var(--sol-green); text-shadow: 0 0 10px rgba(20, 241, 149, 0.4); }
         
-        /* Gráfico */
         .chart-container { 
-            flex: 1; min-height: 180px; width: 100%; position: relative; 
+            flex: 1; min-height: 160px; width: 100%; position: relative; 
             background: rgba(0,0,0,.2); border-radius: 12px; 
             border: 1px solid rgba(255,255,255,.05); overflow: hidden; margin-bottom: 12px; 
         }
         
-        /* Zona de Trading */
         .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
         .quick-buttons button { background: rgba(255,255,255,.05); color: var(--ui); font-size: 0.75rem; padding: 6px; border: 1px solid rgba(255,255,255,.1); box-shadow: none; }
         .quick-buttons button:hover { background: rgba(255,255,255,.15); color: #fff; border-color: var(--c); }
         
-        /* JWT */
-        .jwt-wrapper { display: flex; gap: 6px; align-items: center; margin-bottom: 8px;}
-        .jwt-wrapper input { margin-bottom: 0; flex: 1; }
-        .jwt-wrapper button { background: var(--sol-green); color: #000; padding: 8px; font-size: 0.8rem; box-shadow: 0 0 10px rgba(20,241,149,.4); }
-        
-        /* Badge Graduado */
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(20, 241, 149, 0); } 100% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0); } }
         .graduated-badge { font-size:0.7rem; background:var(--sol-green); color:#000; padding:2px 8px; border-radius:20px; font-weight:bold; animation: pulse 2s infinite; }
+        
+        .my-tokens-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+        .my-token-item { 
+            background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.08); 
+            border-radius: 8px; padding: 8px; display: flex; flex-direction: column; 
+            align-items: center; cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .my-token-item:hover { border-color: var(--sol-green); background: rgba(20, 241, 149, 0.05); }
+        .my-token-item img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-bottom: 6px; background: #222; }
+        .my-token-symbol { font-weight: bold; color: #fff; font-size: 0.8rem; margin-bottom: 2px; }
+        .my-token-mint { font-size: 0.6rem; color: var(--mut); font-family: var(--font-mono); }
+        
+        .quote-text { font-size: 0.75rem; color: var(--mut); margin-bottom: 8px; min-height: 16px; }
+        .quote-text span { color: var(--sol-green); font-weight: bold; font-family: var(--font-mono); }
+        
+        .balance-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--mut); margin-bottom: 4px; }
+        .balance-row span { color: var(--sol-green); font-family: var(--font-mono); font-weight: bold; }
+
+        .a { color: var(--sol-purple); text-decoration: none; font-weight: bold; }
+        .a:hover { text-decoration: underline; }
     </style>
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -151,13 +156,12 @@
     <canvas id="space-bg"></canvas>
 
     <div class="app-container">
-        <!-- COLUMNA IZQUIERDA -->
         <div class="panel">
             <h1><span>🚀 Launchpad</span></h1>
             
             <div class="wallet-box">
                 <div>
-                    <div style="font-size: 0.65rem; color: var(--mut);">WALLET</div>
+                    <div style="font-size: 0.65rem; color: var(--mut);">WALLET SOL</div>
                     <div id="walletBalance" class="wallet-balance">0.00 SOL</div>
                 </div>
                 <button id="connectBtn" style="width:auto; margin:0; padding: 8px 12px; font-size: 0.75rem;">Conectar</button>
@@ -166,23 +170,17 @@
 
             <div class="panel-scroll">
                 <h2>Crear Token</h2>
-                <div class="jwt-wrapper">
-                    <input id="pinataJwt" type="password" placeholder="Pinata JWT" />
-                    <button id="saveJwtBtn" title="Guardar JWT">💾</button>
-                </div>
                 <input id="tokenName" placeholder="Nombre del Token" />
                 <input id="tokenSymbol" placeholder="Símbolo (ej. MTK)" />
                 <input id="tokenImage" type="file" accept="image/*" />
                 <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial (0.01 SOL)</button>
                 <p id="createStatus" class="status"></p>
 
-                <h2 style="margin-top: 15px;">Mis Tokens</h2>
-                <button id="loadSavedTokensBtn" disabled style="width:100%; background: rgba(255,255,255,0.1); font-size: 0.75rem;">Cargar Mis Tokens</button>
-                <div id="savedTokensList" class="saved-tokens-list" style="display: none; margin-top: 8px;"></div>
+                <h2 style="margin-top: 15px;">Mis Tokens Creados</h2>
+                <div id="savedTokensList" class="my-tokens-grid" style="display: none;"></div>
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA -->
         <div class="panel">
             <h2>Token Activo</h2>
             <div style="display:flex; gap:8px; margin-bottom: 12px;">
@@ -201,7 +199,8 @@
                 </div>
 
                 <div class="metrics-row">
-                    <div class="metric-box"><span>Market Cap</span><strong id="mcap">—</strong></div>
+                    <div class="metric-box"><span>Mcap Virtual</span><strong id="mcap">—</strong></div>
+                    <div class="metric-box real"><span>SOL Real</span><strong id="realSol">—</strong></div>
                     <div class="metric-box"><span>Precio</span><strong id="price">—</strong></div>
                     <div class="metric-box"><span>Progreso</span><strong id="progress">—</strong></div>
                 </div>
@@ -220,13 +219,26 @@
                             <button onclick="setSolAmount(0.1)">0.1</button>
                             <button onclick="setSolAmount(0.5)">0.5</button>
                         </div>
-                        <input id="solAmount" type="number" step="0.001" placeholder="SOL a gastar" />
+                        <input id="solAmount" type="number" step="0.001" placeholder="SOL a gastar" oninput="updateBuyQuote()" />
+                        <p class="quote-text" id="buyQuote">Recibirás: <span>—</span></p>
                         <button id="buyBtn" disabled style="width:100%;">Comprar</button>
                     </div>
+                    
                     <!-- VENDER -->
                     <div>
                         <h2>Vender</h2>
-                        <input id="tokenAmountToSell" type="number" step="any" placeholder="Cantidad" style="margin-top: 24px;" />
+                        <div class="balance-row">
+                            <span>Tu balance:</span>
+                            <span id="userTokenBalanceDisplay">0.00</span>
+                        </div>
+                        <div class="quick-buttons">
+                            <button onclick="setSellPercent(0.25)">25%</button>
+                            <button onclick="setSellPercent(0.50)">50%</button>
+                            <button onclick="setSellPercent(0.75)">75%</button>
+                            <button onclick="setSellPercent(1.00)">100%</button>
+                        </div>
+                        <input id="tokenAmountToSell" type="number" step="any" placeholder="Cantidad de Tokens" oninput="updateSellQuote()" />
+                        <p class="quote-text" id="sellQuote">Recibirás: <span>—</span></p>
                         <button id="sellBtn" disabled style="width:100%; background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">Vender</button>
                     </div>
                 </div>
@@ -235,7 +247,6 @@
         </div>
     </div>
 
-    <!-- IMPORT MAP -->
     <script type="importmap">
         {
             "imports": {
@@ -248,69 +259,37 @@
     </script>
 
     <script type="module">
-        // ==========================================
-        // BACKGROUND CANVAS (ORBITAL EFFECT)
-        // ==========================================
+        // JWT DE PINATA HARDCODEADO
+        const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyZjcwOGYwYy1iNGQzLTRjZmUtOTFiMi1jYmVjNTcxZmM5ZDciLCJlbWFpbCI6ImV2aWRlbmNld2ViM0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNzJmZTRmMGI2ZjliZjk2ZTQ0ODQiLCJzY29wZWRLZXlTZWNyZXQiOiIyZjZmYmQ4ZDI5OWI4ZDVmMzcwYzgwNjFjYTE1MDA2NzI5NjhlN2FhYWJlZjBiNDhiOWU4YzdkNGIzYTBjNmJhIiwiZXhwIjoxODI1NzExODU5fQ.5Xll5N_DAJi4B4N8wD2DwqhAyeOQN55M9ZAv-HOPPi8';
+
+        // BACKGROUND
         const canvas = document.getElementById('space-bg');
         const ctx = canvas.getContext('2d');
         let W = window.innerWidth, H = window.innerHeight;
         canvas.width = W; canvas.height = H;
-
-        window.addEventListener('resize', () => {
-            W = window.innerWidth; H = window.innerHeight;
-            canvas.width = W; canvas.height = H;
-        });
-
-        const stars = Array.from({ length: 150 }, () => ({
-            x: Math.random() * W, y: Math.random() * H,
-            r: Math.random() * 1.5, a: Math.random() * Math.PI * 2,
-            speed: 0.05 + Math.random() * 0.1
-        }));
-
+        window.addEventListener('resize', () => { W = window.innerWidth; H = window.innerHeight; canvas.width = W; canvas.height = H; });
+        const stars = Array.from({ length: 150 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.5, a: Math.random() * Math.PI * 2, speed: 0.05 + Math.random() * 0.1 }));
         let time = 0;
         function drawBackground() {
-            ctx.clearRect(0, 0, W, H);
-            time += 0.005;
-
-            // Dibujar órbitas sutiles (anillos concéntricos en el centro)
+            ctx.clearRect(0, 0, W, H); time += 0.005;
             const cx = W / 2, cy = H / 2;
-            ctx.strokeStyle = 'rgba(153, 69, 255, 0.05)'; // Morado Solana tenue
-            ctx.lineWidth = 1;
-            
-            for (let i = 1; i <= 4; i++) {
-                ctx.beginPath();
-                ctx.ellipse(cx, cy, W * 0.3 * i, H * 0.15 * i, 0, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            // Puntos orbitando
+            ctx.strokeStyle = 'rgba(153, 69, 255, 0.05)'; ctx.lineWidth = 1;
+            for (let i = 1; i <= 4; i++) { ctx.beginPath(); ctx.ellipse(cx, cy, W * 0.3 * i, H * 0.15 * i, 0, 0, Math.PI * 2); ctx.stroke(); }
             ctx.fillStyle = 'rgba(20, 241, 149, 0.4)';
             for (let i = 0; i < 4; i++) {
-                const radius = W * 0.3 * (i + 1);
-                const angle = time * (1 + i * 0.5);
-                const px = cx + Math.cos(angle) * radius;
-                const py = cy + Math.sin(angle) * (H * 0.15 * (i + 1));
-                ctx.beginPath();
-                ctx.arc(px, py, 2, 0, Math.PI * 2);
-                ctx.fill();
+                const radius = W * 0.3 * (i + 1); const angle = time * (1 + i * 0.5);
+                const px = cx + Math.cos(angle) * radius; const py = cy + Math.sin(angle) * (H * 0.15 * (i + 1));
+                ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
             }
-
-            // Dibujar estrellas
             stars.forEach(s => {
-                s.a += s.speed;
-                ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(s.a) * 0.3})`;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                ctx.fill();
+                s.a += s.speed; ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(s.a) * 0.3})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
             });
-
             requestAnimationFrame(drawBackground);
         }
         drawBackground();
 
-        // ==========================================
-        // LÓGICA WEB3 Y APP (Intacta)
-        // ==========================================
+        // WEB3
         const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
 
@@ -332,12 +311,30 @@
         let areaSeries = null;
         let lastChartTime = Math.floor(Date.now() / 1000) - 100;
         let chartInitialized = false;
+        let isCurrentTokenGraduated = false;
+        
+        let currentBondingCurve = null;
+        let cachedGlobal = null;
+        let cachedFeeConfig = null;
+        let userTokenBalance = 0;
+
+        async function withTimeout(promise, timeoutMs = 15000) {
+            return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de red.')), timeoutMs))]);
+        }
+
+        async function fetchTokenImage(metadataUri) {
+            try {
+                const res = await fetch(metadataUri);
+                if (!res.ok) return 'https://placehold.co/100x100/1f1f28/14F195?text=?';
+                const json = await res.json();
+                return json.image || 'https://placehold.co/100x100/1f1f28/14F195?text=?';
+            } catch (e) { return 'https://placehold.co/100x100/1f1f28/14F195?text=?'; }
+        }
 
         function initChartIfNeeded() {
             if (chartInitialized) return;
             const container = document.getElementById('chartContainer');
             if (container.clientWidth === 0 || container.clientHeight === 0) return;
-
             try {
                 chart = LightweightCharts.createChart(container, {
                     layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#8b91b8' },
@@ -346,46 +343,21 @@
                     timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true },
                     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
                 });
-                
-                areaSeries = chart.addAreaSeries({
-                    lineColor: '#14F195',
-                    topColor: 'rgba(20, 241, 149, 0.4)',
-                    bottomColor: 'rgba(20, 241, 149, 0.0)',
-                    lineWidth: 2,
-                });
-
+                areaSeries = chart.addAreaSeries({ lineColor: '#14F195', topColor: 'rgba(20, 241, 149, 0.4)', bottomColor: 'rgba(20, 241, 149, 0.0)', lineWidth: 2 });
                 const resizeObserver = new ResizeObserver(entries => {
                     if (entries.length === 0 || entries[0].target !== container) return;
                     const newRect = entries[0].contentRect;
                     chart.applyOptions({ width: newRect.width, height: newRect.height });
                 });
                 resizeObserver.observe(container);
-
                 chartInitialized = true;
             } catch (e) { console.error("Error chart:", e); }
         }
 
-        const jwtInput = document.getElementById('pinataJwt');
-        const savedJwt = localStorage.getItem('pinata_jwt');
-        if (savedJwt) {
-            jwtInput.value = savedJwt;
-            jwtInput.type = 'text';
-            jwtInput.style.color = '#14F195';
-        }
-
-        document.getElementById('saveJwtBtn').addEventListener('click', () => {
-            const val = jwtInput.value.trim();
-            if (val) {
-                localStorage.setItem('pinata_jwt', val);
-                jwtInput.style.color = '#14F195';
-                alert('✅ JWT guardado.');
-            }
-        });
-
         async function updateWalletBalance() {
             if (!userPublicKey) return;
             try {
-                const balance = await connection.getBalance(userPublicKey);
+                const balance = await withTimeout(connection.getBalance(userPublicKey));
                 document.getElementById('walletBalance').textContent = `${(balance / LAMPORTS_PER_SOL).toFixed(3)} SOL`;
             } catch (e) { console.warn('Error balance', e); }
         }
@@ -398,8 +370,9 @@
                 wallet = window.solana;
                 document.getElementById('walletStatus').textContent = `Conectado`;
                 document.getElementById('connectBtn').style.display = 'none';
-                ['createTokenBtn', 'buyBtn', 'sellBtn', 'loadTokenBtn', 'loadSavedTokensBtn'].forEach(id => document.getElementById(id).disabled = false);
+                ['createTokenBtn', 'loadTokenBtn'].forEach(id => document.getElementById(id).disabled = false);
                 await updateWalletBalance();
+                loadSavedTokens();
             } catch (err) {
                 document.getElementById('walletStatus').textContent = `Error: ${err.message}`;
                 document.getElementById('walletStatus').classList.add('error');
@@ -408,27 +381,19 @@
 
         document.getElementById('tokenImage').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
-                activeImageUrl = URL.createObjectURL(file);
-                document.getElementById('tokenImagePreview').src = activeImageUrl;
-            }
+            if (file) { activeImageUrl = URL.createObjectURL(file); document.getElementById('tokenImagePreview').src = activeImageUrl; }
         });
 
-        async function uploadToPinata(jwt, file, name, symbol) {
-            const imgForm = new FormData();
-            imgForm.append('file', file);
-            const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-                method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: imgForm,
-            });
+        async function uploadToPinata(file, name, symbol) {
+            const imgForm = new FormData(); imgForm.append('file', file);
+            const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', { method: 'POST', headers: { Authorization: `Bearer ${PINATA_JWT}` }, body: imgForm });
             if (!imgRes.ok) throw new Error('Error en imagen Pinata');
             const imageUri = `https://gateway.pinata.cloud/ipfs/${(await imgRes.json()).IpfsHash}`;
 
             const metadata = { name, symbol, image: imageUri, description: '' };
             const metaForm = new FormData();
             metaForm.append('file', new Blob([JSON.stringify(metadata)], { type: 'application/json' }), 'metadata.json');
-            const metaRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-                method: 'POST', headers: { Authorization: `Bearer ${jwt}` }, body: metaForm,
-            });
+            const metaRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', { method: 'POST', headers: { Authorization: `Bearer ${PINATA_JWT}` }, body: metaForm });
             if (!metaRes.ok) throw new Error('Error en metadata Pinata');
             return `https://gateway.pinata.cloud/ipfs/${(await metaRes.json()).IpfsHash}`;
         }
@@ -437,19 +402,17 @@
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
             try {
-                const jwt = jwtInput.value.trim();
                 const name = document.getElementById('tokenName').value.trim();
                 const symbol = document.getElementById('tokenSymbol').value.trim();
                 const imgFile = document.getElementById('tokenImage').files[0];
-                
-                if (!jwt || !name || !symbol || !imgFile) throw new Error('Llena todos los campos.');
+                if (!name || !symbol || !imgFile) throw new Error('Llena todos los campos.');
 
-                const metadataUri = await uploadToPinata(jwt, imgFile, name, symbol);
+                const metadataUri = await withTimeout(uploadToPinata(imgFile, name, symbol), 20000);
                 statusEl.textContent = 'Creando token en la curva...';
 
                 const mintKeypair = Keypair.generate();
-                const global = await onlineSdk.fetchGlobal();
-                const feeConfig = await onlineSdk.fetchFeeConfig();
+                const global = await withTimeout(onlineSdk.fetchGlobal());
+                const feeConfig = await withTimeout(onlineSdk.fetchFeeConfig());
                 
                 const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
                 const initialCurve = newBondingCurve(global);
@@ -461,14 +424,17 @@
                     slippage: 0.10, mayhemMode: false, cashback: false
                 });
 
-                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 tx.sign([mintKeypair]);
 
+                statusEl.textContent = '✍️ Firma en Phantom...';
                 const signed = await wallet.signTransaction(tx);
+                
+                statusEl.textContent = 'Enviando a la red...';
                 const txId = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight }, 'confirmed');
+                await withTimeout(connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
 
                 const mintAddress = mintKeypair.publicKey.toBase58();
                 statusEl.textContent = `✅ Token creado.\nMint: ${mintAddress}`;
@@ -481,95 +447,133 @@
                 document.getElementById('tradeSection').style.display = 'block';
                 
                 setTimeout(initChartIfNeeded, 100);
-
                 await loadTokenData(mintAddress);
                 await updateWalletBalance(); 
                 
                 try {
                     await supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]);
+                    loadSavedTokens();
                 } catch (e) { console.warn('Supabase offline'); }
-
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
-                console.error(err);
             }
         });
 
-        document.getElementById('loadSavedTokensBtn').addEventListener('click', async () => {
+        async function loadSavedTokens() {
             const listContainer = document.getElementById('savedTokensList');
-            listContainer.innerHTML = 'Cargando...';
-            listContainer.style.display = 'block';
+            listContainer.style.display = 'grid';
+            listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">Buscando tokens...</div>';
             try {
-                const { data, error } = await supabase
-                    .from('launchpad_tokens')
-                    .select('*')
-                    .eq('creator_wallet', userPublicKey.toBase58());
-
+                const { data, error } = await supabase.from('launchpad_tokens').select('*').eq('creator_wallet', userPublicKey.toBase58());
                 if (error) throw error;
                 if (!data || data.length === 0) {
-                    listContainer.innerHTML = 'No tienes tokens creados.';
+                    listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">No tienes tokens aún.</div>';
                     return;
                 }
-
                 listContainer.innerHTML = '';
                 data.forEach(token => {
                     const item = document.createElement('div');
-                    item.style = "display:flex; justify-content:space-between; align-items:center; padding:6px; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; border-radius:4px;";
+                    item.className = 'my-token-item';
                     item.innerHTML = `
-                        <div>
-                            <div style="font-weight:bold; color:var(--sol-green); font-size:0.8rem;">${token.symbol}</div>
-                            <div style="font-size:0.65rem; color:var(--mut);">${token.mint_address.substring(0, 8)}...</div>
-                        </div>
-                        <button style="padding: 2px 8px; font-size: 0.7rem;">Cargar</button>
+                        <img src="https://placehold.co/100x100/1f1f28/14F195?text=..." class="token-logo-${token.mint_address}" />
+                        <div class="my-token-symbol">${token.symbol}</div>
+                        <div class="my-token-mint">${token.mint_address.substring(0, 4)}...</div>
                     `;
+                    fetchTokenImage(token.metadata_uri).then(imgUrl => {
+                        const imgEl = item.querySelector('.token-logo-' + token.mint_address);
+                        if (imgEl) imgEl.src = imgUrl;
+                    });
                     item.onclick = () => {
                         document.getElementById('mintAddressInput').value = token.mint_address;
                         document.getElementById('displayName').textContent = token.name;
                         document.getElementById('displaySymbol').textContent = token.symbol;
-                        document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=' + token.symbol;
                         loadTokenData(token.mint_address);
                     };
                     listContainer.appendChild(item);
                 });
             } catch (e) {
-                listContainer.innerHTML = `Error: ${e.message}`;
+                listContainer.innerHTML = `<div style="grid-column: span 2; text-align: center; color: var(--red); font-size: 0.7rem;">Error: ${e.message}</div>`;
             }
-        });
+        }
 
         document.getElementById('loadTokenBtn').addEventListener('click', () => loadTokenData(document.getElementById('mintAddressInput').value.trim()));
+
+        async function fetchUserTokenBalance() {
+            if (!userPublicKey || !currentMint) return 0;
+            try {
+                const accounts = await connection.getParsedTokenAccountsByOwner(userPublicKey, { mint: currentMint });
+                if (accounts.value.length > 0) {
+                    return accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
+                }
+            } catch (e) { console.warn(e); }
+            return 0;
+        }
 
         async function loadTokenData(mintStr) {
             if (!mintStr) return;
             try {
                 currentMint = new PublicKey(mintStr);
-                const bondingCurve = await onlineSdk.fetchBondingCurve(currentMint);
+                currentBondingCurve = await withTimeout(onlineSdk.fetchBondingCurve(currentMint));
+                cachedGlobal = await withTimeout(onlineSdk.fetchGlobal());
+                cachedFeeConfig = await withTimeout(onlineSdk.fetchFeeConfig());
                 
-                const vSol = bondingCurve.virtualQuoteReserves ? bondingCurve.virtualQuoteReserves : bondingCurve.virtualSolReserves;
-                const vToken = bondingCurve.virtualTokenReserves;
+                const vSol = currentBondingCurve.virtualQuoteReserves ? currentBondingCurve.virtualQuoteReserves : currentBondingCurve.virtualSolReserves;
+                const vToken = currentBondingCurve.virtualTokenReserves;
+                const rSol = currentBondingCurve.realQuoteReserves ? currentBondingCurve.realQuoteReserves : currentBondingCurve.realSolReserves;
                 
-                if (!vSol || !vToken) throw new Error('Curva no reconocida.');
+                if (!vSol || !vToken || !rSol) throw new Error('Curva no reconocida.');
 
-                const mcapLamports = vSol.mul(bondingCurve.tokenTotalSupply).div(vToken);
+                const mcapLamports = vSol.mul(currentBondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
-                const progressPct = Math.min((mcapSol / 69) * 100, 100); 
+                const realSol = rSol.toNumber() / LAMPORTS_PER_SOL;
+                
+                const GRADUATION_TARGET = 69;
+                const progressPct = Math.min((realSol / GRADUATION_TARGET) * 100, 100); 
                 
                 const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
-                
-                let priceStr = priceSol.toFixed(9); 
-                priceStr = priceStr.replace(/0+$/, '').replace(/\.$/, ''); 
+                let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, ''); 
                 if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
 
+                // Fetch user token balance
+                userTokenBalance = await fetchUserTokenBalance();
+                document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
                 document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
+                document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
                 document.getElementById('progress').textContent = `${progressPct.toFixed(1)}%`;
                 
                 document.getElementById('tokenDisplay').style.display = 'flex';
                 document.getElementById('tradeSection').style.display = 'block';
 
-                if (progressPct >= 99.0 || bondingCurve.complete) {
+                isCurrentTokenGraduated = currentBondingCurve.complete || progressPct >= 99.9;
+
+                if (isCurrentTokenGraduated) {
                     document.getElementById('graduatedBadge').style.display = 'block';
+                    document.getElementById('buyBtn').disabled = true;
+                    document.getElementById('sellBtn').disabled = true;
+                    document.getElementById('tradeStatus').innerHTML = `
+                        <span style="color:var(--sol-green); font-weight:bold;">✅ Token Graduado (Liquidez migrada).</span><br>
+                        Comercia este token en: 
+                        <a href="https://jup.ag/swap/SOL-${mintStr}" target="_blank" class="a">Jupiter</a> o 
+                        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=${mintStr}" target="_blank" class="a">Raydium</a>.
+                    `;
                 } else {
                     document.getElementById('graduatedBadge').style.display = 'none';
+                    document.getElementById('buyBtn').disabled = false;
+                    document.getElementById('sellBtn').disabled = false;
+                    document.getElementById('tradeStatus').textContent = '';
+                }
+
+                if (activeImageUrl && document.getElementById('mintAddressInput').value === mintStr) {
+                    document.getElementById('tokenImagePreview').src = activeImageUrl;
+                } else {
+                    const { data } = await supabase.from('launchpad_tokens').select('metadata_uri').eq('mint_address', mintStr).single();
+                    if (data && data.metadata_uri) {
+                        document.getElementById('tokenImagePreview').src = await fetchTokenImage(data.metadata_uri);
+                    } else {
+                        document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=Coin';
+                    }
                 }
 
                 initChartIfNeeded();
@@ -580,14 +584,61 @@
                     if (chart.timeScale().getVisibleLogicalRange() === null) chart.timeScale().fitContent();
                 }
 
+                updateBuyQuote();
+                updateSellQuote();
+
             } catch (e) {
                 console.error(e);
             }
         }
 
-        window.setSolAmount = (val) => { document.getElementById('solAmount').value = val; };
+        window.setSolAmount = (val) => { 
+            document.getElementById('solAmount').value = val; 
+            updateBuyQuote();
+        };
+
+        window.setSellPercent = (pct) => {
+            if (!userTokenBalance || userTokenBalance <= 0) {
+                document.getElementById('tradeStatus').textContent = 'No tienes tokens para vender.';
+                return;
+            }
+            const amount = Math.floor(userTokenBalance * pct * 1e6) / 1e6;
+            document.getElementById('tokenAmountToSell').value = amount; 
+            updateSellQuote();
+        };
+
+        async function updateBuyQuote() {
+            const quoteEl = document.getElementById('buyQuote').querySelector('span');
+            if (!currentMint || isCurrentTokenGraduated || !currentBondingCurve || !cachedGlobal) { quoteEl.textContent = '—'; return; }
+            const solInput = parseFloat(document.getElementById('solAmount').value);
+            if (!solInput || solInput <= 0) { quoteEl.textContent = '—'; return; }
+
+            try {
+                const solAmount = new BN(Math.floor(solInput * LAMPORTS_PER_SOL));
+                const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: currentBondingCurve.tokenTotalSupply, bondingCurve: currentBondingCurve, amount: solAmount });
+                quoteEl.textContent = `${(amount.toNumber() / 1e6).toLocaleString('en-US', { maximumFractionDigits: 2 })} Tokens`;
+            } catch (e) {
+                quoteEl.textContent = 'Error';
+            }
+        }
+
+        async function updateSellQuote() {
+            const quoteEl = document.getElementById('sellQuote').querySelector('span');
+            if (!currentMint || isCurrentTokenGraduated || !currentBondingCurve || !cachedGlobal) { quoteEl.textContent = '—'; return; }
+            const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
+            if (!tokenInput || tokenInput <= 0) { quoteEl.textContent = '—'; return; }
+
+            try {
+                const amount = new BN(Math.floor(tokenInput * 1e6));
+                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: currentBondingCurve.tokenTotalSupply, bondingCurve: currentBondingCurve, amount });
+                quoteEl.textContent = `${(solAmount.toNumber() / LAMPORTS_PER_SOL).toFixed(6)} SOL`;
+            } catch (e) {
+                quoteEl.textContent = 'Error';
+            }
+        }
 
         document.getElementById('buyBtn').addEventListener('click', async () => {
+            if (isCurrentTokenGraduated) return alert('Token graduado. Usa Jupiter o Raydium.');
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Comprando...'; statusEl.classList.remove('error');
             try {
                 if (!currentMint) throw new Error('Carga un token primero.');
@@ -595,25 +646,25 @@
                 if (!solInput || solInput <= 0) throw new Error('SOL inválido.');
 
                 const solAmount = new BN(Math.floor(solInput * LAMPORTS_PER_SOL));
-                const buyState = await onlineSdk.fetchBuyState(currentMint, userPublicKey);
-                const global = await onlineSdk.fetchGlobal();
-                const feeConfig = await onlineSdk.fetchFeeConfig();
+                const buyState = await withTimeout(onlineSdk.fetchBuyState(currentMint, userPublicKey));
+                
+                if (buyState.bondingCurve.complete) throw new Error('La curva se ha completado. Ve a Raydium.');
 
-                const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
+                const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
                 const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
 
-                instructions.push(
-                    ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
-                    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
-                );
+                instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }), ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
 
-                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
+                
+                statusEl.textContent = '✍️ Firma en Phantom...';
                 const signed = await wallet.signTransaction(tx);
                 
+                statusEl.textContent = 'Enviando a la red...';
                 const sig = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+                await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
                 statusEl.textContent = `✅ Compra OK.`;
                 await loadTokenData(currentMint.toBase58());
@@ -624,32 +675,37 @@
         });
 
         document.getElementById('sellBtn').addEventListener('click', async () => {
+            if (isCurrentTokenGraduated) return alert('Token graduado. Usa Jupiter o Raydium.');
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Vendiendo...'; statusEl.classList.remove('error');
             try {
                 if (!currentMint) throw new Error('Carga un token primero.');
                 const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
                 if (!tokenInput || tokenInput <= 0) throw new Error('Cantidad inválida.');
+                if (tokenInput > userTokenBalance) throw new Error('No tienes suficientes tokens.');
 
-                const amount = new BN(Math.floor(tokenInput * 1_000_000));
-                const sellState = await onlineSdk.fetchSellState(currentMint, userPublicKey);
-                const global = await onlineSdk.fetchGlobal();
-                const feeConfig = await onlineSdk.fetchFeeConfig();
+                const amount = new BN(Math.floor(tokenInput * 1e6));
+                const sellState = await withTimeout(onlineSdk.fetchSellState(currentMint, userPublicKey));
 
-                const solAmount = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
-                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
+                if (sellState.bondingCurve.complete) throw new Error('La curva se ha completado. Ve a Raydium.');
 
-                instructions.push(
-                    ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }),
-                    ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 })
-                );
+                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
+                
+                const instructions = await PUMP_SDK.sellInstructions({ 
+                    ...sellState, global: cachedGlobal, feeConfig: cachedFeeConfig, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 
+                });
 
-                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+                instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }), ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
+
+                const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
+                
+                statusEl.textContent = '✍️ Firma en Phantom...';
                 const signed = await wallet.signTransaction(tx);
                 
+                statusEl.textContent = 'Enviando a la red...';
                 const sig = await connection.sendRawTransaction(signed.serialize());
-                await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+                await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
                 statusEl.textContent = `✅ Venta OK.`;
                 await loadTokenData(currentMint.toBase58());
