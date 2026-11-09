@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,6 @@
             --ui: #e9ecff;
             --mut: #8b91b8;
             --c: #ffb347;
-            --green: #22c55e;
             --red: #ef4444;
             --font-mono: 'Share Tech Mono', ui-monospace, monospace;
         }
@@ -33,12 +32,12 @@
 
         .app-container { 
             display: grid; 
-            grid-template-columns: 340px 1fr; 
+            grid-template-columns: 360px 1fr; 
             gap: 16px; 
             width: 100%; 
-            max-width: 1200px; 
-            height: 95vh; 
-            max-height: 850px; 
+            max-width: 1250px; 
+            height: 98vh; 
+            max-height: 900px; 
             z-index: 1;
         }
         
@@ -65,17 +64,17 @@
         
         button { 
             background: linear-gradient(135deg, var(--sol-purple), #7a35d6); 
-            color: white; border: none; padding: 10px 14px; border-radius: 10px; 
-            cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 0.85rem; 
+            color: white; border: none; padding: 12px 14px; border-radius: 10px; 
+            cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 0.9rem; 
             box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3); 
         }
         button:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(153, 69, 255, 0.5); }
         button:disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; }
         
-        input { 
-            padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); 
+        input[type="text"], input[type="number"] { 
+            padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); 
             background: rgba(0,0,0,.3); color: #fff; margin-bottom: 8px; 
-            width: 100%; font-size: 0.85rem; outline: none; transition: border 0.2s; 
+            width: 100%; font-size: 0.9rem; outline: none; transition: border 0.2s; 
         }
         input:focus { border-color: var(--sol-purple); background: rgba(0,0,0,.5); }
         
@@ -89,45 +88,125 @@
         }
         .wallet-balance { font-family: var(--font-mono); font-size: 1.1rem; color: var(--sol-green); font-weight: bold; text-shadow: 0 0 10px rgba(20,241,149,.4); }
         
-        .token-card { 
-            display: flex; gap: 12px; background: rgba(0,0,0,.4); 
-            border: 1px solid rgba(255,255,255,.1); padding: 12px; 
-            border-radius: 12px; align-items: center; margin-bottom: 12px; position: relative; overflow: hidden;
+        /* Custom File Upload */
+        .custom-file-upload {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(0,0,0,.3);
+            border: 1px dashed rgba(255,255,255,.2);
+            border-radius: 8px;
+            padding: 14px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+            color: var(--mut);
+            font-size: 0.85rem;
         }
-        .token-card::before {
-            content: ''; position: absolute; top: 50%; left: 32px; width: 50px; height: 50px;
-            border: 1px dashed rgba(20, 241, 149, 0.4); border-radius: 50%; transform: translate(-50%, -50%);
-            animation: spin 10s linear infinite; pointer-events: none;
+        .custom-file-upload:hover {
+            border-color: var(--sol-purple);
+            background: rgba(153, 69, 255, 0.05);
+            color: var(--ui);
         }
-        @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        .custom-file-upload input[type="file"] {
+            display: none;
+        }
+
+        /* PLANET TOKEN CARD */
+        .planet-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0,0,0,.4);
+            border: 1px solid rgba(255,255,255,.1);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
         
-        .token-card img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; z-index: 1; border: 2px solid rgba(255,255,255,.2); }
-        .token-info { flex: 1; overflow: hidden; z-index: 1; }
-        .token-name { font-weight: bold; font-size: 1.1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .token-symbol { color: var(--sol-green); font-size: 0.8rem; font-family: var(--font-mono); }
+        .planet-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
         
-        .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+        .planet-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            z-index: 2;
+            border: 3px solid rgba(255,255,255,.2);
+            box-shadow: 0 0 20px rgba(20, 241, 149, 0.5), inset 0 0 15px rgba(0,0,0,.8);
+            animation: float 6s ease-in-out infinite;
+            background: #111;
+        }
+        
+        .planet-ring {
+            position: absolute;
+            width: 130px;
+            height: 40px;
+            border: 2px solid rgba(153, 69, 255, 0.5);
+            border-radius: 50%;
+            transform: rotate(-20deg);
+            z-index: 1;
+            animation: spinRing 12s linear infinite;
+            box-shadow: 0 0 15px rgba(153, 69, 255, 0.3);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes spinRing {
+            0% { transform: rotate(-20deg); }
+            100% { transform: rotate(340deg); }
+        }
+        
+        .planet-info { flex: 1; overflow: hidden; z-index: 2; }
+        .planet-name { font-weight: 800; font-size: 1.8rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; margin-bottom: 4px; }
+        .planet-symbol { color: var(--sol-green); font-size: 1rem; font-family: var(--font-mono); letter-spacing: 1px; }
+        
+        .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
         .metric-box { 
             background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.05); 
-            padding: 6px; border-radius: 10px; text-align: center; 
+            padding: 10px; border-radius: 12px; text-align: center; 
         }
-        .metric-box span { display: block; font-size: 0.6rem; color: var(--mut); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .metric-box strong { font-family: var(--font-mono); font-size: 0.85rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
+        .metric-box span { display: block; font-size: 0.65rem; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .metric-box strong { font-family: var(--font-mono); font-size: 1.1rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
         .metric-box.real strong { color: var(--sol-green); text-shadow: 0 0 10px rgba(20, 241, 149, 0.4); }
         
         .chart-container { 
-            flex: 1; min-height: 160px; width: 100%; position: relative; 
+            flex: 1; min-height: 200px; width: 100%; position: relative; 
             background: rgba(0,0,0,.2); border-radius: 12px; 
-            border: 1px solid rgba(255,255,255,.05); overflow: hidden; margin-bottom: 12px; 
+            border: 1px solid rgba(255,255,255,.05); overflow: hidden; margin-bottom: 16px; 
         }
         
-        .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        /* Trade Grid Alignment */
+        .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .trade-col { display: flex; flex-direction: column; }
+        
+        .trade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 8px;
+            min-height: 24px;
+        }
+        
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
-        .quick-buttons button { background: rgba(255,255,255,.05); color: var(--ui); font-size: 0.75rem; padding: 6px; border: 1px solid rgba(255,255,255,.1); box-shadow: none; }
+        .quick-buttons button { background: rgba(255,255,255,.05); color: var(--ui); font-size: 0.8rem; padding: 8px; border: 1px solid rgba(255,255,255,.1); box-shadow: none; border-radius: 8px; }
         .quick-buttons button:hover { background: rgba(255,255,255,.15); color: #fff; border-color: var(--c); }
         
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(20, 241, 149, 0); } 100% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0); } }
-        .graduated-badge { font-size:0.7rem; background:var(--sol-green); color:#000; padding:2px 8px; border-radius:20px; font-weight:bold; animation: pulse 2s infinite; }
+        .graduated-badge { font-size:0.75rem; background:var(--sol-green); color:#000; padding:4px 10px; border-radius:20px; font-weight:bold; animation: pulse 2s infinite; position: absolute; top: 20px; right: 20px; }
         
         .my-tokens-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
         .my-token-item { 
@@ -140,11 +219,11 @@
         .my-token-symbol { font-weight: bold; color: #fff; font-size: 0.8rem; margin-bottom: 2px; }
         .my-token-mint { font-size: 0.6rem; color: var(--mut); font-family: var(--font-mono); }
         
-        .quote-text { font-size: 0.75rem; color: var(--mut); margin-bottom: 8px; min-height: 16px; }
+        .quote-text { font-size: 0.8rem; color: var(--mut); margin-bottom: 8px; min-height: 18px; }
         .quote-text span { color: var(--sol-green); font-weight: bold; font-family: var(--font-mono); }
         
-        .balance-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--mut); margin-bottom: 4px; }
-        .balance-row span { color: var(--sol-green); font-family: var(--font-mono); font-weight: bold; }
+        .balance-text { font-size: 0.8rem; color: var(--mut); font-family: var(--font-mono); }
+        .balance-text span { color: var(--sol-green); font-weight: bold; }
 
         .a { color: var(--sol-purple); text-decoration: none; font-weight: bold; }
         .a:hover { text-decoration: underline; }
@@ -156,6 +235,7 @@
     <canvas id="space-bg"></canvas>
 
     <div class="app-container">
+        <!-- LEFT PANEL: CREATE & SELECT -->
         <div class="panel">
             <h1><span>🚀 Launchpad</span></h1>
             
@@ -164,85 +244,101 @@
                     <div style="font-size: 0.65rem; color: var(--mut);">WALLET SOL</div>
                     <div id="walletBalance" class="wallet-balance">0.00 SOL</div>
                 </div>
-                <button id="connectBtn" style="width:auto; margin:0; padding: 8px 12px; font-size: 0.75rem;">Conectar</button>
+                <button id="connectBtn" style="width:auto; margin:0; padding: 8px 12px; font-size: 0.75rem;">Connect</button>
             </div>
-            <p id="walletStatus" class="status" style="margin-top:0; margin-bottom:12px; font-size: 0.65rem;">No conectado</p>
+            <p id="walletStatus" class="status" style="margin-top:0; margin-bottom:12px; font-size: 0.65rem;">Not connected</p>
 
             <div class="panel-scroll">
-                <h2>Crear Token</h2>
-                <input id="tokenName" placeholder="Nombre del Token" />
-                <input id="tokenSymbol" placeholder="Símbolo (ej. MTK)" />
-                <input id="tokenImage" type="file" accept="image/*" />
-                <button id="createTokenBtn" disabled style="width:100%;">Crear + Compra Inicial (0.01 SOL)</button>
+                <h2>Create Token</h2>
+                <input id="tokenName" type="text" placeholder="Token Name" />
+                <input id="tokenSymbol" type="text" placeholder="Symbol (e.g. MTK)" />
+                
+                <!-- CUSTOM FILE UPLOAD UI -->
+                <label class="custom-file-upload" id="fileUploadLabel">
+                    <input type="file" id="tokenImage" accept="image/*" />
+                    <span id="fileUploadText">📷 Click to upload image</span>
+                </label>
+
+                <button id="createTokenBtn" disabled style="width:100%;">Create + Initial Buy (0.01 SOL)</button>
                 <p id="createStatus" class="status"></p>
 
-                <h2 style="margin-top: 15px;">Mis Tokens Creados</h2>
+                <h2 style="margin-top: 15px;">My Created Tokens</h2>
                 <div id="savedTokensList" class="my-tokens-grid" style="display: none;"></div>
             </div>
         </div>
 
+        <!-- RIGHT PANEL: ACTIVE TOKEN -->
         <div class="panel">
-            <h2>Token Activo</h2>
-            <div style="display:flex; gap:8px; margin-bottom: 12px;">
-                <input id="mintAddressInput" placeholder="Mint Address" style="margin-bottom:0;" />
-                <button id="loadTokenBtn" style="width:auto;">Cargar</button>
+            <h2>Active Token</h2>
+            <div style="display:flex; gap:8px; margin-bottom: 16px;">
+                <input id="mintAddressInput" type="text" placeholder="Mint Address" style="margin-bottom:0;" />
+                <button id="loadTokenBtn" style="width:auto;">Load</button>
             </div>
 
-            <div id="tokenDisplay" style="display:none; flex: 1; flex-direction: column;">
-                <div class="token-card">
-                    <img id="tokenImagePreview" src="https://placehold.co/100x100/1f1f28/14F195?text=Coin" alt="Token" />
-                    <div class="token-info">
-                        <div class="token-name" id="displayName">—</div>
-                        <div class="token-symbol" id="displaySymbol">—</div>
+            <div id="tokenDisplay" style="display:none; flex: 1; flex-direction: column; min-height: 0;">
+                
+                <!-- HERO PLANET SECTION -->
+                <div class="planet-header">
+                    <div id="graduatedBadge" class="graduated-badge" style="display:none;">GRADUATED</div>
+                    <div class="planet-container">
+                        <div class="planet-ring"></div>
+                        <img id="tokenImagePreview" class="planet-img" src="https://placehold.co/100x100/1f1f28/14F195?text=Coin" alt="Token" />
                     </div>
-                    <div id="graduatedBadge" class="graduated-badge" style="display:none;">GRADUADO</div>
+                    <div class="planet-info">
+                        <div class="planet-name" id="displayName">—</div>
+                        <div class="planet-symbol" id="displaySymbol">—</div>
+                    </div>
                 </div>
 
+                <!-- METRICS -->
                 <div class="metrics-row">
-                    <div class="metric-box"><span>Mcap Virtual</span><strong id="mcap">—</strong></div>
-                    <div class="metric-box real"><span>SOL Real</span><strong id="realSol">—</strong></div>
-                    <div class="metric-box"><span>Precio</span><strong id="price">—</strong></div>
-                    <div class="metric-box"><span>Progreso</span><strong id="progress">—</strong></div>
+                    <div class="metric-box"><span>Virtual MCap</span><strong id="mcap">—</strong></div>
+                    <div class="metric-box real"><span>Real SOL</span><strong id="realSol">—</strong></div>
+                    <div class="metric-box"><span>Price</span><strong id="price">—</strong></div>
+                    <div class="metric-box"><span>Progress</span><strong id="progress">—</strong></div>
                 </div>
                 
+                <!-- CHART -->
                 <div id="chartContainer" class="chart-container"></div>
-            </div>
 
-            <div id="tradeSection" style="display:none;">
-                <div class="trade-grid">
-                    <!-- COMPRAR -->
-                    <div>
-                        <h2>Comprar</h2>
-                        <div class="quick-buttons">
-                            <button onclick="setSolAmount(0.01)">0.01</button>
-                            <button onclick="setSolAmount(0.05)">0.05</button>
-                            <button onclick="setSolAmount(0.1)">0.1</button>
-                            <button onclick="setSolAmount(0.5)">0.5</button>
+                <!-- TRADE SECTION -->
+                <div id="tradeSection" style="display:none;">
+                    <div class="trade-grid">
+                        <!-- BUY -->
+                        <div class="trade-col">
+                            <div class="trade-header">
+                                <h2 style="color: var(--sol-green); margin: 0;">Buy</h2>
+                            </div>
+                            <div class="quick-buttons">
+                                <button onclick="setSolAmount(0.01)">0.01</button>
+                                <button onclick="setSolAmount(0.05)">0.05</button>
+                                <button onclick="setSolAmount(0.1)">0.1</button>
+                                <button onclick="setSolAmount(0.5)">0.5</button>
+                            </div>
+                            <input id="solAmount" type="text" placeholder="SOL to spend" oninput="updateBuyQuote()" />
+                            <p class="quote-text" id="buyQuote">You will receive: <span>—</span></p>
+                            <button id="buyBtn" disabled style="width:100%;">Buy</button>
                         </div>
-                        <input id="solAmount" type="number" step="0.001" placeholder="SOL a gastar" oninput="updateBuyQuote()" />
-                        <p class="quote-text" id="buyQuote">Recibirás: <span>—</span></p>
-                        <button id="buyBtn" disabled style="width:100%;">Comprar</button>
+                        
+                        <!-- SELL -->
+                        <div class="trade-col">
+                            <div class="trade-header">
+                                <h2 style="color: var(--red); margin: 0;">Sell</h2>
+                                <div class="balance-text">Balance: <span id="userTokenBalanceDisplay">0.00</span></div>
+                            </div>
+                            <div class="quick-buttons">
+                                <button onclick="setSellPercent(0.25)">25%</button>
+                                <button onclick="setSellPercent(0.50)">50%</button>
+                                <button onclick="setSellPercent(0.75)">75%</button>
+                                <button onclick="setSellPercent(1.00)">100%</button>
+                            </div>
+                            <input id="tokenAmountToSell" type="text" placeholder="Amount of Tokens" oninput="updateSellQuote()" />
+                            <p class="quote-text" id="sellQuote">You will receive: <span>—</span></p>
+                            <button id="sellBtn" disabled style="width:100%; background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">Sell</button>
+                        </div>
                     </div>
-                    
-                    <!-- VENDER -->
-                    <div>
-                        <h2>Vender</h2>
-                        <div class="balance-row">
-                            <span>Tu balance:</span>
-                            <span id="userTokenBalanceDisplay">0.00</span>
-                        </div>
-                        <div class="quick-buttons">
-                            <button onclick="setSellPercent(0.25)">25%</button>
-                            <button onclick="setSellPercent(0.50)">50%</button>
-                            <button onclick="setSellPercent(0.75)">75%</button>
-                            <button onclick="setSellPercent(1.00)">100%</button>
-                        </div>
-                        <input id="tokenAmountToSell" type="number" step="any" placeholder="Cantidad de Tokens" oninput="updateSellQuote()" />
-                        <p class="quote-text" id="sellQuote">Recibirás: <span>—</span></p>
-                        <button id="sellBtn" disabled style="width:100%; background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">Vender</button>
-                    </div>
+                    <p id="tradeStatus" class="status" style="text-align: center;"></p>
                 </div>
-                <p id="tradeStatus" class="status"></p>
             </div>
         </div>
     </div>
@@ -259,7 +355,6 @@
     </script>
 
     <script type="module">
-        // JWT DE PINATA HARDCODEADO
         const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyZjcwOGYwYy1iNGQzLTRjZmUtOTFiMi1jYmVjNTcxZmM5ZDciLCJlbWFpbCI6ImV2aWRlbmNld2ViM0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNzJmZTRmMGI2ZjliZjk2ZTQ0ODQiLCJzY29wZWRLZXlTZWNyZXQiOiIyZjZmYmQ4ZDI5OWI4ZDVmMzcwYzgwNjFjYTE1MDA2NzI5NjhlN2FhYWJlZjBiNDhiOWU4YzdkNGIzYTBjNmJhIiwiZXhwIjoxODI1NzExODU5fQ.5Xll5N_DAJi4B4N8wD2DwqhAyeOQN55M9ZAv-HOPPi8';
 
         // BACKGROUND
@@ -318,8 +413,14 @@
         let cachedFeeConfig = null;
         let userTokenBalance = 0;
 
+        // Handle commas and dots in inputs
+        function parseLocaleNumber(stringNumber) {
+            if (!stringNumber) return 0;
+            return parseFloat(stringNumber.toString().replace(',', '.'));
+        }
+
         async function withTimeout(promise, timeoutMs = 15000) {
-            return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de red.')), timeoutMs))]);
+            return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout. Try again.')), timeoutMs))]);
         }
 
         async function fetchTokenImage(metadataUri) {
@@ -351,7 +452,7 @@
                 });
                 resizeObserver.observe(container);
                 chartInitialized = true;
-            } catch (e) { console.error("Error chart:", e); }
+            } catch (e) { console.error("Chart error:", e); }
         }
 
         async function updateWalletBalance() {
@@ -359,16 +460,16 @@
             try {
                 const balance = await withTimeout(connection.getBalance(userPublicKey));
                 document.getElementById('walletBalance').textContent = `${(balance / LAMPORTS_PER_SOL).toFixed(3)} SOL`;
-            } catch (e) { console.warn('Error balance', e); }
+            } catch (e) { console.warn('Balance error', e); }
         }
 
         document.getElementById('connectBtn').addEventListener('click', async () => {
-            if (!window.solana || !window.solana.isPhantom) return alert('Instala Phantom en Devnet.');
+            if (!window.solana || !window.solana.isPhantom) return alert('Install Phantom on Devnet.');
             try {
                 const resp = await window.solana.connect();
                 userPublicKey = resp.publicKey;
                 wallet = window.solana;
-                document.getElementById('walletStatus').textContent = `Conectado`;
+                document.getElementById('walletStatus').textContent = `Connected`;
                 document.getElementById('connectBtn').style.display = 'none';
                 ['createTokenBtn', 'loadTokenBtn'].forEach(id => document.getElementById(id).disabled = false);
                 await updateWalletBalance();
@@ -381,34 +482,39 @@
 
         document.getElementById('tokenImage').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) { activeImageUrl = URL.createObjectURL(file); document.getElementById('tokenImagePreview').src = activeImageUrl; }
+            if (file) { 
+                activeImageUrl = URL.createObjectURL(file); 
+                document.getElementById('tokenImagePreview').src = activeImageUrl; 
+                document.getElementById('fileUploadText').textContent = '✅ Image selected';
+                document.getElementById('fileUploadLabel').style.borderColor = 'var(--sol-green)';
+            }
         });
 
         async function uploadToPinata(file, name, symbol) {
             const imgForm = new FormData(); imgForm.append('file', file);
             const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', { method: 'POST', headers: { Authorization: `Bearer ${PINATA_JWT}` }, body: imgForm });
-            if (!imgRes.ok) throw new Error('Error en imagen Pinata');
+            if (!imgRes.ok) throw new Error('Pinata image error');
             const imageUri = `https://gateway.pinata.cloud/ipfs/${(await imgRes.json()).IpfsHash}`;
 
             const metadata = { name, symbol, image: imageUri, description: '' };
             const metaForm = new FormData();
             metaForm.append('file', new Blob([JSON.stringify(metadata)], { type: 'application/json' }), 'metadata.json');
             const metaRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', { method: 'POST', headers: { Authorization: `Bearer ${PINATA_JWT}` }, body: metaForm });
-            if (!metaRes.ok) throw new Error('Error en metadata Pinata');
+            if (!metaRes.ok) throw new Error('Pinata metadata error');
             return `https://gateway.pinata.cloud/ipfs/${(await metaRes.json()).IpfsHash}`;
         }
 
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
-            statusEl.textContent = 'Subiendo a IPFS...'; statusEl.classList.remove('error');
+            statusEl.textContent = 'Uploading to IPFS...'; statusEl.classList.remove('error');
             try {
                 const name = document.getElementById('tokenName').value.trim();
                 const symbol = document.getElementById('tokenSymbol').value.trim();
                 const imgFile = document.getElementById('tokenImage').files[0];
-                if (!name || !symbol || !imgFile) throw new Error('Llena todos los campos.');
+                if (!name || !symbol || !imgFile) throw new Error('Fill all fields.');
 
                 const metadataUri = await withTimeout(uploadToPinata(imgFile, name, symbol), 20000);
-                statusEl.textContent = 'Creando token en la curva...';
+                statusEl.textContent = 'Creating token...';
 
                 const mintKeypair = Keypair.generate();
                 const global = await withTimeout(onlineSdk.fetchGlobal());
@@ -429,15 +535,15 @@
                 const tx = new VersionedTransaction(messageV0);
                 tx.sign([mintKeypair]);
 
-                statusEl.textContent = '✍️ Firma en Phantom...';
+                statusEl.textContent = '✍️ Sign in Phantom...';
                 const signed = await wallet.signTransaction(tx);
                 
-                statusEl.textContent = 'Enviando a la red...';
+                statusEl.textContent = 'Sending to network...';
                 const txId = await connection.sendRawTransaction(signed.serialize());
                 await withTimeout(connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
 
                 const mintAddress = mintKeypair.publicKey.toBase58();
-                statusEl.textContent = `✅ Token creado.\nMint: ${mintAddress}`;
+                statusEl.textContent = `✅ Token created.\nMint: ${mintAddress}`;
                 
                 document.getElementById('mintAddressInput').value = mintAddress;
                 document.getElementById('displayName').textContent = name;
@@ -454,6 +560,20 @@
                     await supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]);
                     loadSavedTokens();
                 } catch (e) { console.warn('Supabase offline'); }
+
+                // --- AUTO-CLEAR UI AFTER 5 SECONDS ---
+                setTimeout(() => {
+                    if (statusEl.textContent.includes('Token created')) {
+                        statusEl.textContent = '';
+                        document.getElementById('tokenName').value = '';
+                        document.getElementById('tokenSymbol').value = '';
+                        document.getElementById('tokenImage').value = '';
+                        document.getElementById('fileUploadText').textContent = '📷 Click to upload image';
+                        document.getElementById('fileUploadLabel').style.borderColor = 'rgba(255,255,255,.2)';
+                        activeImageUrl = null;
+                    }
+                }, 5000);
+
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
             }
@@ -462,12 +582,12 @@
         async function loadSavedTokens() {
             const listContainer = document.getElementById('savedTokensList');
             listContainer.style.display = 'grid';
-            listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">Buscando tokens...</div>';
+            listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">Loading tokens...</div>';
             try {
                 const { data, error } = await supabase.from('launchpad_tokens').select('*').eq('creator_wallet', userPublicKey.toBase58());
                 if (error) throw error;
                 if (!data || data.length === 0) {
-                    listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">No tienes tokens aún.</div>';
+                    listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">No tokens yet.</div>';
                     return;
                 }
                 listContainer.innerHTML = '';
@@ -505,7 +625,7 @@
                 if (accounts.value.length > 0) {
                     return accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
                 }
-            } catch (e) { console.warn(e); }
+            } catch (e) { /* Ignore if account doesn't exist yet */ }
             return 0;
         }
 
@@ -521,7 +641,7 @@
                 const vToken = currentBondingCurve.virtualTokenReserves;
                 const rSol = currentBondingCurve.realQuoteReserves ? currentBondingCurve.realQuoteReserves : currentBondingCurve.realSolReserves;
                 
-                if (!vSol || !vToken || !rSol) throw new Error('Curva no reconocida.');
+                if (!vSol || !vToken || !rSol) throw new Error('Curve not recognized.');
 
                 const mcapLamports = vSol.mul(currentBondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
@@ -534,7 +654,6 @@
                 let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, ''); 
                 if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
 
-                // Fetch user token balance
                 userTokenBalance = await fetchUserTokenBalance();
                 document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
@@ -553,9 +672,9 @@
                     document.getElementById('buyBtn').disabled = true;
                     document.getElementById('sellBtn').disabled = true;
                     document.getElementById('tradeStatus').innerHTML = `
-                        <span style="color:var(--sol-green); font-weight:bold;">✅ Token Graduado (Liquidez migrada).</span><br>
-                        Comercia este token en: 
-                        <a href="https://jup.ag/swap/SOL-${mintStr}" target="_blank" class="a">Jupiter</a> o 
+                        <span style="color:var(--sol-green); font-weight:bold;">✅ Token Graduated (Liquidity migrated).</span><br>
+                        Trade this token on: 
+                        <a href="https://jup.ag/swap/SOL-${mintStr}" target="_blank" class="a">Jupiter</a> or 
                         <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=${mintStr}" target="_blank" class="a">Raydium</a>.
                     `;
                 } else {
@@ -599,7 +718,7 @@
 
         window.setSellPercent = (pct) => {
             if (!userTokenBalance || userTokenBalance <= 0) {
-                document.getElementById('tradeStatus').textContent = 'No tienes tokens para vender.';
+                document.getElementById('tradeStatus').textContent = "You don't have tokens to sell.";
                 return;
             }
             const amount = Math.floor(userTokenBalance * pct * 1e6) / 1e6;
@@ -610,7 +729,7 @@
         async function updateBuyQuote() {
             const quoteEl = document.getElementById('buyQuote').querySelector('span');
             if (!currentMint || isCurrentTokenGraduated || !currentBondingCurve || !cachedGlobal) { quoteEl.textContent = '—'; return; }
-            const solInput = parseFloat(document.getElementById('solAmount').value);
+            const solInput = parseLocaleNumber(document.getElementById('solAmount').value);
             if (!solInput || solInput <= 0) { quoteEl.textContent = '—'; return; }
 
             try {
@@ -625,7 +744,7 @@
         async function updateSellQuote() {
             const quoteEl = document.getElementById('sellQuote').querySelector('span');
             if (!currentMint || isCurrentTokenGraduated || !currentBondingCurve || !cachedGlobal) { quoteEl.textContent = '—'; return; }
-            const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
+            const tokenInput = parseLocaleNumber(document.getElementById('tokenAmountToSell').value);
             if (!tokenInput || tokenInput <= 0) { quoteEl.textContent = '—'; return; }
 
             try {
@@ -638,17 +757,17 @@
         }
 
         document.getElementById('buyBtn').addEventListener('click', async () => {
-            if (isCurrentTokenGraduated) return alert('Token graduado. Usa Jupiter o Raydium.');
-            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Comprando...'; statusEl.classList.remove('error');
+            if (isCurrentTokenGraduated) return alert('Token graduated. Use Jupiter or Raydium.');
+            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Buying...'; statusEl.classList.remove('error');
             try {
-                if (!currentMint) throw new Error('Carga un token primero.');
-                const solInput = parseFloat(document.getElementById('solAmount').value);
-                if (!solInput || solInput <= 0) throw new Error('SOL inválido.');
+                if (!currentMint) throw new Error('Load a token first.');
+                const solInput = parseLocaleNumber(document.getElementById('solAmount').value);
+                if (!solInput || solInput <= 0) throw new Error('Invalid SOL.');
 
                 const solAmount = new BN(Math.floor(solInput * LAMPORTS_PER_SOL));
                 const buyState = await withTimeout(onlineSdk.fetchBuyState(currentMint, userPublicKey));
                 
-                if (buyState.bondingCurve.complete) throw new Error('La curva se ha completado. Ve a Raydium.');
+                if (buyState.bondingCurve.complete) throw new Error('Curve completed. Go to Raydium.');
 
                 const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
                 const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
@@ -659,14 +778,14 @@
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 
-                statusEl.textContent = '✍️ Firma en Phantom...';
+                statusEl.textContent = '✍️ Sign in Phantom...';
                 const signed = await wallet.signTransaction(tx);
                 
-                statusEl.textContent = 'Enviando a la red...';
+                statusEl.textContent = 'Sending to network...';
                 const sig = await connection.sendRawTransaction(signed.serialize());
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
-                statusEl.textContent = `✅ Compra OK.`;
+                statusEl.textContent = `✅ Buy successful.`;
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
             } catch (err) {
@@ -675,18 +794,18 @@
         });
 
         document.getElementById('sellBtn').addEventListener('click', async () => {
-            if (isCurrentTokenGraduated) return alert('Token graduado. Usa Jupiter o Raydium.');
-            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Vendiendo...'; statusEl.classList.remove('error');
+            if (isCurrentTokenGraduated) return alert('Token graduated. Use Jupiter or Raydium.');
+            const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Selling...'; statusEl.classList.remove('error');
             try {
-                if (!currentMint) throw new Error('Carga un token primero.');
-                const tokenInput = parseFloat(document.getElementById('tokenAmountToSell').value);
-                if (!tokenInput || tokenInput <= 0) throw new Error('Cantidad inválida.');
-                if (tokenInput > userTokenBalance) throw new Error('No tienes suficientes tokens.');
+                if (!currentMint) throw new Error('Load a token first.');
+                const tokenInput = parseLocaleNumber(document.getElementById('tokenAmountToSell').value);
+                if (!tokenInput || tokenInput <= 0) throw new Error('Invalid amount.');
+                if (tokenInput > userTokenBalance) throw new Error('Insufficient token balance.');
 
                 const amount = new BN(Math.floor(tokenInput * 1e6));
                 const sellState = await withTimeout(onlineSdk.fetchSellState(currentMint, userPublicKey));
 
-                if (sellState.bondingCurve.complete) throw new Error('La curva se ha completado. Ve a Raydium.');
+                if (sellState.bondingCurve.complete) throw new Error('Curve completed. Go to Raydium.');
 
                 const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
                 
@@ -700,14 +819,14 @@
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 
-                statusEl.textContent = '✍️ Firma en Phantom...';
+                statusEl.textContent = '✍️ Sign in Phantom...';
                 const signed = await wallet.signTransaction(tx);
                 
-                statusEl.textContent = 'Enviando a la red...';
+                statusEl.textContent = 'Sending to network...';
                 const sig = await connection.sendRawTransaction(signed.serialize());
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
-                statusEl.textContent = `✅ Venta OK.`;
+                statusEl.textContent = `✅ Sell successful.`;
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
             } catch (err) {
