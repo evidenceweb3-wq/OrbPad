@@ -128,7 +128,8 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes spinRing { 0% { transform: rotate(-20deg); } 100% { transform: rotate(340deg); } }
         
-        .planet-info { flex: 1; overflow: hidden; z-index: 2; }
+        .planet-info { flex: 1; overflow: hidden; z-index: 2; display: flex; justify-content: space-between; align-items: center; }
+        .planet-text { overflow: hidden; }
         .planet-name { font-weight: 800; font-size: 1.6rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
         .planet-symbol { color: var(--sol-green); font-size: 0.9rem; font-family: var(--font-mono); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
         
@@ -138,6 +139,14 @@
             padding: 4px 10px; border-radius: 6px; font-size: 1.1rem; font-weight: bold;
             color: var(--sol-green); font-family: var(--font-mono); text-shadow: 0 0 10px rgba(20, 241, 149, 0.5);
         }
+
+        /* PRICE CHANGE BADGE */
+        .price-change {
+            font-size: 0.85rem; font-weight: bold; padding: 4px 8px; border-radius: 6px;
+            font-family: var(--font-mono); margin-left: auto;
+        }
+        .price-change.up { background: rgba(20, 241, 149, 0.15); color: var(--sol-green); border: 1px solid rgba(20, 241, 149, 0.3); }
+        .price-change.down { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
         .metric-box { 
@@ -149,9 +158,9 @@
         .metric-box.real strong { color: var(--sol-green); text-shadow: 0 0 10px rgba(20, 241, 149, 0.4); }
         
         /* TABS & CHART */
-        .chart-tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+        .chart-tabs { display: flex; gap: 8px; margin-bottom: 8px; position: relative; z-index: 10; }
         .chart-tab {
-            background: transparent; border: none; color: var(--mut); padding: 4px 12px;
+            background: transparent; border: none; color: var(--mut); padding: 6px 12px;
             font-size: 0.8rem; cursor: pointer; border-radius: 6px; font-weight: bold;
             box-shadow: none; transition: 0.2s;
         }
@@ -168,6 +177,7 @@
         /* TRADES LIST */
         .trades-container {
             position: absolute; inset: 0; overflow-y: auto; display: none; flex-direction: column;
+            background: rgba(0,0,0,0.4); z-index: 5;
         }
         .trade-row {
             display: flex; justify-content: space-between; padding: 10px 12px;
@@ -267,19 +277,22 @@
                         <img id="tokenImagePreview" class="planet-img" src="https://placehold.co/100x100/1f1f28/14F195?text=Coin" alt="Token" />
                     </div>
                     <div class="planet-info">
-                        <div class="planet-name" id="displayName">—</div>
-                        <div class="planet-symbol">
-                            <span id="displaySymbol">—</span>
-                            <div class="live-price-box"><span id="price">—</span></div>
+                        <div class="planet-text">
+                            <div class="planet-name" id="displayName">—</div>
+                            <div class="planet-symbol">
+                                <span id="displaySymbol">—</span>
+                                <div class="live-price-box"><span id="price">—</span></div>
+                            </div>
                         </div>
+                        <div id="priceChange" class="price-change up">+0.00%</div>
                     </div>
                 </div>
 
                 <!-- METRICS -->
                 <div class="metrics-row">
-                    <div class="metric-box"><span>Virtual MCap</span><strong id="mcap">—</strong></div>
+                    <div class="metric-box"><span>Virtual MCap (SOL)</span><strong id="mcapSol">—</strong></div>
+                    <div class="metric-box"><span>Virtual MCap (USD)</span><strong id="mcapUsd">—</strong></div>
                     <div class="metric-box real"><span>Real SOL</span><strong id="realSol">—</strong></div>
-                    <div class="metric-box"><span>Progress</span><strong id="progress">—</strong></div>
                 </div>
                 
                 <!-- TABS & CONTENT -->
@@ -406,6 +419,19 @@
         let cachedFeeConfig = null;
         let userTokenBalance = 0;
         let pollingInterval = null;
+        let currentSolPriceUsd = 150; // Default, will fetch live
+
+        // Fetch SOL price for USD conversion
+        async function fetchSolPrice() {
+            try {
+                const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT');
+                if (r.ok) {
+                    const d = await r.json();
+                    currentSolPriceUsd = parseFloat(d.price);
+                }
+            } catch (e) { /* Ignore */ }
+        }
+        fetchSolPrice();
 
         // Handle commas and dots in inputs
         function parseLocaleNumber(stringNumber) {
@@ -435,10 +461,19 @@
                     layout: { background: { type: 'solid', color: 'transparent' }, textColor: '#8b91b8' },
                     grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
                     rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)' },
-                    timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true },
+                    timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: true },
                     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                    localization: {
+                        priceFormatter: (price) => `${price.toFixed(2)} SOL`,
+                        timeFormatter: (time) => new Date(time * 1000).toLocaleTimeString(),
+                    }
                 });
-                areaSeries = chart.addAreaSeries({ lineColor: '#14F195', topColor: 'rgba(20, 241, 149, 0.4)', bottomColor: 'rgba(20, 241, 149, 0.0)', lineWidth: 2 });
+                areaSeries = chart.addAreaSeries({ 
+                    lineColor: '#14F195', 
+                    topColor: 'rgba(20, 241, 149, 0.4)', 
+                    bottomColor: 'rgba(20, 241, 149, 0.0)', 
+                    lineWidth: 2 
+                });
                 const resizeObserver = new ResizeObserver(entries => {
                     if (entries.length === 0 || entries[0].target !== container) return;
                     const newRect = entries[0].contentRect;
@@ -452,30 +487,25 @@
         // ==========================================
         // LOCAL STORAGE: CHART & TRADES
         // ==========================================
-        const CHART_KEY_PREFIX = 'pump_chart_';
+        const CHART_KEY_PREFIX = 'pump_chart_mcap_'; // Changed to store mcap
         const TRADES_KEY_PREFIX = 'pump_trades_';
 
-        function saveChartPoint(mintStr, priceSol) {
+        function saveChartPoint(mintStr, mcapSol) {
             try {
                 const key = CHART_KEY_PREFIX + mintStr;
                 let history = JSON.parse(localStorage.getItem(key) || '[]');
                 const now = Math.floor(Date.now() / 1000);
                 
-                // Avoid spamming exact same second, just update it
                 if (history.length > 0 && history[history.length - 1].time >= now) {
-                    history[history.length - 1].value = priceSol;
+                    history[history.length - 1].value = mcapSol;
                 } else {
-                    history.push({ time: now, value: priceSol });
+                    history.push({ time: now, value: mcapSol });
                 }
 
-                // Keep last 500 points max
                 if (history.length > 500) history = history.slice(history.length - 500);
-                
                 localStorage.setItem(key, JSON.stringify(history));
                 
-                if (areaSeries) {
-                    areaSeries.setData(history);
-                }
+                if (areaSeries) areaSeries.setData(history);
             } catch (e) { console.warn('Chart save error:', e); }
         }
 
@@ -489,12 +519,11 @@
                     tokenAmount: parseFloat(tokenAmount),
                     time: Date.now()
                 });
-                // Keep last 50 trades
                 localStorage.setItem(key, JSON.stringify(trades.slice(0, 50)));
             } catch (e) { console.warn('Trade save error:', e); }
         }
 
-        function switchTab(tab) {
+        window.switchTab = function(tab) {
             if (tab === 'chart') {
                 document.getElementById('tabChart').classList.add('active');
                 document.getElementById('tabTrades').classList.remove('active');
@@ -516,8 +545,6 @@
             const mintStr = currentMint.toBase58();
             
             list.innerHTML = '';
-            
-            // 1. Load local trades
             const localTrades = JSON.parse(localStorage.getItem(TRADES_KEY_PREFIX + mintStr) || '[]');
             
             if (localTrades.length > 0) {
@@ -535,7 +562,6 @@
                 list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--mut);">No local trades yet.</div>';
             }
 
-            // 2. Try fetching external data (DexScreener)
             try {
                 const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintStr}`);
                 if (res.ok) {
@@ -666,7 +692,6 @@
                     loadSavedTokens();
                 } catch (e) { console.warn('Supabase offline'); }
 
-                // --- AUTO-CLEAR UI AFTER 5 SECONDS ---
                 setTimeout(() => {
                     if (statusEl.textContent.includes('Token created')) {
                         statusEl.textContent = '';
@@ -750,6 +775,7 @@
 
                 const mcapLamports = vSol.mul(currentBondingCurve.tokenTotalSupply).div(vToken);
                 const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
+                const mcapUsd = mcapSol * currentSolPriceUsd;
                 const realSol = rSol.toNumber() / LAMPORTS_PER_SOL;
                 
                 const GRADUATION_TARGET = 69;
@@ -762,11 +788,23 @@
                 userTokenBalance = await fetchUserTokenBalance();
                 document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-                // --- UPDATE METRICS ---
-                document.getElementById('mcap').textContent = `${mcapSol.toFixed(2)} SOL`;
+                document.getElementById('mcapSol').textContent = `${mcapSol.toFixed(2)} SOL`;
+                document.getElementById('mcapUsd').textContent = `$${mcapUsd.toFixed(2)}`;
                 document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
-                document.getElementById('progress').textContent = `${progressPct.toFixed(1)}%`;
+                
+                // Price Change Calculation (from chart data)
+                const history = JSON.parse(localStorage.getItem(CHART_KEY_PREFIX + mintStr) || '[]');
+                let changePct = 0;
+                if (history.length > 1) {
+                    const firstMcap = history[0].value;
+                    const lastMcap = history[history.length - 1].value;
+                    if (firstMcap > 0) changePct = ((lastMcap - firstMcap) / firstMcap) * 100;
+                }
+                
+                const changeEl = document.getElementById('priceChange');
+                changeEl.textContent = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
+                changeEl.className = `price-change ${changePct >= 0 ? 'up' : 'down'}`;
                 
                 document.getElementById('tokenDisplay').style.display = 'flex';
                 document.getElementById('tradeSection').style.display = 'block';
@@ -801,14 +839,12 @@
                     }
                 }
 
-                // --- UPDATE CHART & HISTORY ---
                 initChartIfNeeded();
-                saveChartPoint(mintStr, priceSol);
+                saveChartPoint(mintStr, mcapSol);
 
                 updateBuyQuote();
                 updateSellQuote();
 
-                // Setup polling for live updates
                 if (pollingInterval) clearInterval(pollingInterval);
                 pollingInterval = setInterval(() => {
                     if (currentMint && currentMint.toBase58() === mintStr) {
@@ -858,9 +894,14 @@
             if (!tokenInput || tokenInput <= 0) { quoteEl.textContent = '—'; return; }
 
             try {
-                const amount = new BN(Math.floor(tokenInput * 1e6));
-                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: currentBondingCurve.tokenTotalSupply, bondingCurve: currentBondingCurve, amount });
-                quoteEl.textContent = `${(solAmount.toNumber() / LAMPORTS_PER_SOL).toFixed(6)} SOL`;
+                const MAX_SAFE_CHUNK = new BN(35000000000);
+                let amount = new BN(Math.floor(tokenInput * 1e6));
+                
+                // Clamp for quote calculation to avoid UI breaking
+                let safeAmount = amount.gt(MAX_SAFE_CHUNK) ? MAX_SAFE_CHUNK : amount;
+                
+                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: currentBondingCurve.tokenTotalSupply, bondingCurve: currentBondingCurve, amount: safeAmount });
+                quoteEl.textContent = `${(solAmount.toNumber() / LAMPORTS_PER_SOL).toFixed(6)} SOL${amount.gt(MAX_SAFE_CHUNK) ? ' (MAX)' : ''}`;
             } catch (e) {
                 quoteEl.textContent = 'Error';
             }
@@ -897,7 +938,6 @@
                 
                 statusEl.textContent = `✅ Buy successful.`;
                 
-                // Save local trade log
                 saveTrade(currentMint.toBase58(), 'BUY', solInput, amount.toNumber() / 1e6);
 
                 await loadTokenData(currentMint.toBase58());
@@ -907,6 +947,9 @@
             }
         });
 
+        // ==========================================
+        // CLAMPED SELL LOGIC (FIXES OVERFLOW)
+        // ==========================================
         document.getElementById('sellBtn').addEventListener('click', async () => {
             if (isCurrentTokenGraduated) return alert('Token graduated. Use Jupiter or Raydium.');
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Selling...'; statusEl.classList.remove('error');
@@ -916,15 +959,35 @@
                 if (!tokenInput || tokenInput <= 0) throw new Error('Invalid amount.');
                 if (tokenInput > userTokenBalance) throw new Error('Insufficient token balance.');
 
-                const amount = new BN(Math.floor(tokenInput * 1e6));
-                const sellState = await withTimeout(onlineSdk.fetchSellState(currentMint, userPublicKey));
+                let amount = new BN(Math.floor(tokenInput * 1e6));
+                const MAX_SAFE_CHUNK = new BN(35000000000); // ~35 Billion raw units limit
 
+                // CLAMP LOGIC: If user asks for too much, we reduce it to the max safe amount
+                if (amount.gt(MAX_SAFE_CHUNK)) {
+                    amount = MAX_SAFE_CHUNK;
+                    statusEl.textContent = `⚠️ Amount too large. Clamping to max safe sell (35,000 Tokens)...`;
+                }
+
+                const sellState = await withTimeout(onlineSdk.fetchSellState(currentMint, userPublicKey));
                 if (sellState.bondingCurve.complete) throw new Error('Curve completed. Go to Raydium.');
 
-                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: sellState.bondingCurve.tokenTotalSupply, bondingCurve: sellState.bondingCurve, amount });
+                const solAmount = getSellSolAmountFromTokenAmount({ 
+                    global: cachedGlobal, 
+                    feeConfig: cachedFeeConfig, 
+                    mintSupply: sellState.bondingCurve.tokenTotalSupply, 
+                    bondingCurve: sellState.bondingCurve, 
+                    amount: amount 
+                });
                 
                 const instructions = await PUMP_SDK.sellInstructions({ 
-                    ...sellState, global: cachedGlobal, feeConfig: cachedFeeConfig, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 
+                    ...sellState, 
+                    global: cachedGlobal, 
+                    feeConfig: cachedFeeConfig, 
+                    mint: currentMint, 
+                    user: userPublicKey, 
+                    amount, 
+                    solAmount, 
+                    slippage: 0.15 
                 });
 
                 instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }), ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
@@ -941,9 +1004,8 @@
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
                 
                 statusEl.textContent = `✅ Sell successful.`;
-
-                // Save local trade log
-                saveTrade(currentMint.toBase58(), 'SELL', solAmount.toNumber() / LAMPORTS_PER_SOL, tokenInput);
+                
+                saveTrade(currentMint.toBase58(), 'SELL', solAmount.toNumber() / LAMPORTS_PER_SOL, amount.toNumber() / 1e6);
 
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
