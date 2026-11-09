@@ -15,233 +15,92 @@
             --red: #ef4444;
             --font-mono: 'Share Tech Mono', ui-monospace, monospace;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background: radial-gradient(120% 90% at 50% 40%, #10122b 0%, #070815 55%, #03040a 100%);
-            color: var(--ui); 
-            height: 100vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            overflow: hidden; 
-        }
-
+        body { font-family: system-ui, -apple-system, sans-serif; background: radial-gradient(120% 90% at 50% 40%, #10122b 0%, #070815 55%, #03040a 100%); color: var(--ui); height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         #space-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-
-        .app-container { 
-            display: grid; 
-            grid-template-columns: 360px 1fr; 
-            gap: 16px; 
-            width: 100%; 
-            max-width: 1250px; 
-            height: 98vh; 
-            max-height: 900px; 
-            z-index: 1;
-        }
-        
-        .panel { 
-            background: linear-gradient(180deg, rgba(14,17,38,.75), rgba(9,11,24,.85));
-            backdrop-filter: blur(20px) saturate(150%);
-            -webkit-backdrop-filter: blur(20px) saturate(150%);
-            border: 1px solid rgba(255,255,255,.08); 
-            border-radius: 20px; 
-            padding: 16px; 
-            display: flex; 
-            flex-direction: column; 
-            box-shadow: 0 20px 50px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.02); 
-            overflow: hidden; 
-        }
-        
+        .app-container { display: grid; grid-template-columns: 360px 1fr; gap: 16px; width: 100%; max-width: 1250px; height: 98vh; max-height: 900px; z-index: 1; }
+        .panel { background: linear-gradient(180deg, rgba(14,17,38,.75), rgba(9,11,24,.85)); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.02); overflow: hidden; }
         .panel-scroll { overflow-y: auto; flex: 1; padding-right: 4px; }
         .panel-scroll::-webkit-scrollbar { width: 4px; }
         .panel-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
-        
         h1 { font-size: 1.4rem; color: #fff; letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
         h1 span { background: linear-gradient(135deg, #fff 0%, #ffd27a 50%, #ffb347 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         h2 { font-size: 0.85rem; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; margin-bottom: 8px; font-weight: 600; }
-        
-        button { 
-            background: linear-gradient(135deg, var(--sol-purple), #7a35d6); 
-            color: white; border: none; padding: 12px 14px; border-radius: 10px; 
-            cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 0.9rem; 
-            box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3); 
-        }
+        button { background: linear-gradient(135deg, var(--sol-purple), #7a35d6); color: white; border: none; padding: 12px 14px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(153, 69, 255, 0.3); }
         button:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(153, 69, 255, 0.5); }
         button:disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; }
-        
-        input[type="text"], input[type="number"] { 
-            padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); 
-            background: rgba(0,0,0,.3); color: #fff; margin-bottom: 8px; 
-            width: 100%; font-size: 0.9rem; outline: none; transition: border 0.2s; 
-        }
+        input[type="text"], input[type="number"] { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: rgba(0,0,0,.3); color: #fff; margin-bottom: 8px; width: 100%; font-size: 0.9rem; outline: none; transition: border 0.2s; }
         input:focus { border-color: var(--sol-purple); background: rgba(0,0,0,.5); }
-        
         .status { font-size: 0.75rem; color: var(--sol-green); margin-top: 4px; word-break: break-all; white-space: pre-wrap; line-height: 1.3; text-shadow: 0 0 8px rgba(20, 241, 149, 0.3); }
         .error { color: var(--red) !important; text-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
-        
-        .wallet-box { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(0,0,0,.3); padding: 10px 12px; border-radius: 10px; 
-            border: 1px solid rgba(255,255,255,.08); margin-bottom: 12px; 
-        }
+        .wallet-box { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,.3); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); margin-bottom: 12px; }
         .wallet-balance { font-family: var(--font-mono); font-size: 1.1rem; color: var(--sol-green); font-weight: bold; text-shadow: 0 0 10px rgba(20,241,149,.4); }
-        
-        /* Custom File Upload */
-        .custom-file-upload {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            background: rgba(0,0,0,.3); border: 1px dashed rgba(255,255,255,.2);
-            border-radius: 8px; padding: 14px; cursor: pointer; margin-bottom: 8px;
-            transition: all 0.2s; color: var(--mut); font-size: 0.85rem;
-        }
+        .custom-file-upload { display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(0,0,0,.3); border: 1px dashed rgba(255,255,255,.2); border-radius: 8px; padding: 14px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; color: var(--mut); font-size: 0.85rem; }
         .custom-file-upload:hover { border-color: var(--sol-purple); background: rgba(153, 69, 255, 0.05); color: var(--ui); }
         .custom-file-upload input[type="file"] { display: none; }
-
-        /* PLANET TOKEN CARD */
-        .planet-header {
-            display: flex; align-items: center; gap: 20px;
-            background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.1);
-            padding: 20px; border-radius: 16px; margin-bottom: 16px;
-            position: relative; overflow: hidden;
-        }
-        
-        .planet-container {
-            position: relative; width: 100px; height: 100px;
-            display: flex; justify-content: center; align-items: center; flex-shrink: 0;
-        }
-        
-        .planet-img {
-            width: 75px; height: 75px; border-radius: 50%; object-fit: cover; z-index: 2;
-            border: 3px solid rgba(255,255,255,.2);
-            box-shadow: 0 0 25px rgba(20, 241, 149, 0.6), inset 0 0 15px rgba(0,0,0,.8);
-            animation: float 6s ease-in-out infinite; background: #111;
-        }
-        
-        .planet-ring {
-            position: absolute; width: 110px; height: 35px;
-            border: 2px solid rgba(153, 69, 255, 0.6); border-radius: 50%;
-            transform: rotate(-20deg); z-index: 1; animation: spinRing 12s linear infinite;
-            box-shadow: 0 0 20px rgba(153, 69, 255, 0.5);
-        }
-        
+        .planet-header { display: flex; align-items: center; gap: 20px; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.1); padding: 20px; border-radius: 16px; margin-bottom: 16px; position: relative; overflow: hidden; }
+        .planet-container { position: relative; width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .planet-img { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; z-index: 2; border: 3px solid rgba(255,255,255,.2); box-shadow: 0 0 25px rgba(20, 241, 149, 0.6), inset 0 0 15px rgba(0,0,0,.8); animation: float 6s ease-in-out infinite; background: #111; }
+        .planet-ring { position: absolute; width: 110px; height: 35px; border: 2px solid rgba(153, 69, 255, 0.6); border-radius: 50%; transform: rotate(-20deg); z-index: 1; animation: spinRing 12s linear infinite; box-shadow: 0 0 20px rgba(153, 69, 255, 0.5); }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes spinRing { 0% { transform: rotate(-20deg); } 100% { transform: rotate(340deg); } }
-        
         .planet-info { flex: 1; overflow: hidden; z-index: 2; display: flex; justify-content: space-between; align-items: center; }
         .planet-text { overflow: hidden; }
         .planet-name { font-weight: 800; font-size: 1.6rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
         .planet-symbol { color: var(--sol-green); font-size: 0.9rem; font-family: var(--font-mono); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-        
-        /* LIVE PRICE DISPLAY */
-        .live-price-box {
-            background: rgba(20, 241, 149, 0.1); border: 1px solid rgba(20, 241, 149, 0.3);
-            padding: 4px 10px; border-radius: 6px; font-size: 1.1rem; font-weight: bold;
-            color: var(--sol-green); font-family: var(--font-mono); text-shadow: 0 0 10px rgba(20, 241, 149, 0.5);
-        }
-
-        /* PRICE CHANGE BADGE */
-        .price-change {
-            font-size: 0.85rem; font-weight: bold; padding: 4px 8px; border-radius: 6px;
-            font-family: var(--font-mono); margin-left: auto;
-        }
+        .live-price-box { background: rgba(20, 241, 149, 0.1); border: 1px solid rgba(20, 241, 149, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; color: var(--sol-green); font-family: var(--font-mono); text-shadow: 0 0 10px rgba(20, 241, 149, 0.5); }
+        .price-change { font-size: 0.85rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; font-family: var(--font-mono); margin-left: auto; }
         .price-change.up { background: rgba(20, 241, 149, 0.15); color: var(--sol-green); border: 1px solid rgba(20, 241, 149, 0.3); }
         .price-change.down { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
-
         .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-        .metric-box { 
-            background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.05); 
-            padding: 10px; border-radius: 12px; text-align: center; 
-        }
+        .metric-box { background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.05); padding: 10px; border-radius: 12px; text-align: center; }
         .metric-box span { display: block; font-size: 0.65rem; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
         .metric-box strong { font-family: var(--font-mono); font-size: 1.05rem; color: var(--c); text-shadow: 0 0 10px rgba(255, 179, 71, 0.4); }
         .metric-box.real strong { color: var(--sol-green); text-shadow: 0 0 10px rgba(20, 241, 149, 0.4); }
-        
-        /* COPY BUTTON */
-        .copy-btn {
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-            color: white; padding: 0 12px; border-radius: 8px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 1rem;
-        }
+        .copy-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
         .copy-btn:hover { background: rgba(255,255,255,0.2); }
-
-        /* TABS & CHART */
         .chart-tabs { display: flex; gap: 8px; margin-bottom: 8px; position: relative; z-index: 10; }
-        .chart-tab {
-            background: transparent; border: none; color: var(--mut); padding: 6px 12px;
-            font-size: 0.8rem; cursor: pointer; border-radius: 6px; font-weight: bold;
-            box-shadow: none; transition: 0.2s;
-        }
+        .chart-tab { background: transparent; border: none; color: var(--mut); padding: 6px 12px; font-size: 0.8rem; cursor: pointer; border-radius: 6px; font-weight: bold; box-shadow: none; transition: 0.2s; }
         .chart-tab:hover { background: rgba(255,255,255,0.05); color: #fff; transform: none; box-shadow: none; }
         .chart-tab.active { background: rgba(153, 69, 255, 0.2); color: var(--sol-purple); border: 1px solid rgba(153, 69, 255, 0.3); }
-
-        .content-wrapper { 
-            flex: 1; min-height: 200px; width: 100%; position: relative; 
-            background: rgba(0,0,0,.2); border-radius: 12px; 
-            border: 1px solid rgba(255,255,255,.05); overflow: hidden; margin-bottom: 16px; 
-        }
+        .content-wrapper { flex: 1; min-height: 200px; width: 100%; position: relative; background: rgba(0,0,0,.2); border-radius: 12px; border: 1px solid rgba(255,255,255,.05); overflow: hidden; margin-bottom: 16px; }
         .chart-container { width: 100%; height: 100%; position: absolute; inset: 0; }
-        
-        /* TRADES LIST */
-        .trades-container {
-            position: absolute; inset: 0; overflow-y: auto; display: none; flex-direction: column;
-            background: rgba(0,0,0,0.4); z-index: 5;
-        }
-        .trade-row {
-            display: flex; justify-content: space-between; padding: 10px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05); font-family: var(--font-mono); font-size: 0.85rem;
-        }
+        .trades-container { position: absolute; inset: 0; overflow-y: auto; display: none; flex-direction: column; background: rgba(0,0,0,0.4); z-index: 5; }
+        .trade-row { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: var(--font-mono); font-size: 0.85rem; }
         .trade-row:hover { background: rgba(255,255,255,0.02); }
         .trade-type { font-weight: bold; }
         .trade-type.buy { color: var(--sol-green); }
         .trade-type.sell { color: var(--red); }
-        
         .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .trade-col { display: flex; flex-direction: column; }
-        
         .trade-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; min-height: 24px; }
-        
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
         .quick-buttons button { background: rgba(255,255,255,.05); color: var(--ui); font-size: 0.8rem; padding: 8px; border: 1px solid rgba(255,255,255,.1); box-shadow: none; border-radius: 8px; }
         .quick-buttons button:hover { background: rgba(255,255,255,.15); color: #fff; border-color: var(--c); }
-        
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(20, 241, 149, 0); } 100% { box-shadow: 0 0 0 0 rgba(20, 241, 149, 0); } }
         .graduated-badge { font-size:0.75rem; background:var(--sol-green); color:#000; padding:4px 10px; border-radius:20px; font-weight:bold; animation: pulse 2s infinite; position: absolute; top: 15px; right: 15px; }
-        
         .my-tokens-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
-        .my-token-item { 
-            background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.08); 
-            border-radius: 8px; padding: 8px; display: flex; flex-direction: column; 
-            align-items: center; cursor: pointer; transition: 0.2s; position: relative;
-        }
+        .my-token-item { background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; position: relative; }
         .my-token-item:hover { border-color: var(--sol-green); background: rgba(20, 241, 149, 0.05); }
         .my-token-item img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-bottom: 6px; background: #222; }
         .my-token-symbol { font-weight: bold; color: #fff; font-size: 0.8rem; margin-bottom: 2px; }
         .my-token-mint { font-size: 0.6rem; color: var(--mut); font-family: var(--font-mono); }
-        
         .quote-text { font-size: 0.8rem; color: var(--mut); margin-bottom: 8px; min-height: 18px; }
         .quote-text span { color: var(--sol-green); font-weight: bold; font-family: var(--font-mono); }
-        
         .balance-text { font-size: 0.8rem; color: var(--mut); font-family: var(--font-mono); }
         .balance-text span { color: var(--sol-green); font-weight: bold; }
-
         .a { color: var(--sol-purple); text-decoration: none; font-weight: bold; }
         .a:hover { text-decoration: underline; }
-        
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 6px; vertical-align: middle; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
-
     <canvas id="space-bg"></canvas>
-
     <div class="app-container">
-        <!-- LEFT PANEL: CREATE & SELECT -->
         <div class="panel">
             <h1><span>🚀 Launchpad</span></h1>
-            
             <div class="wallet-box">
                 <div>
                     <div style="font-size: 0.65rem; color: var(--mut);">WALLET SOL</div>
@@ -250,27 +109,20 @@
                 <button id="connectBtn" style="width:auto; margin:0; padding: 8px 12px; font-size: 0.75rem;">Connect</button>
             </div>
             <p id="walletStatus" class="status" style="margin-top:0; margin-bottom:12px; font-size: 0.65rem;">Not connected</p>
-
             <div class="panel-scroll">
                 <h2>Create Token</h2>
                 <input id="tokenName" type="text" placeholder="Token Name" />
                 <input id="tokenSymbol" type="text" placeholder="Symbol (e.g. MTK)" />
-                
-                <!-- CUSTOM FILE UPLOAD UI -->
                 <label class="custom-file-upload" id="fileUploadLabel">
                     <input type="file" id="tokenImage" accept="image/*" />
                     <span id="fileUploadText">📷 Click to upload image</span>
                 </label>
-
                 <button id="createTokenBtn" disabled style="width:100%;">Create + Initial Buy (0.01 SOL)</button>
                 <p id="createStatus" class="status"></p>
-
                 <h2 style="margin-top: 15px;">My Created Tokens</h2>
                 <div id="savedTokensList" class="my-tokens-grid" style="display: none;"></div>
             </div>
         </div>
-
-        <!-- RIGHT PANEL: ACTIVE TOKEN -->
         <div class="panel">
             <h2>Active Token</h2>
             <div style="display:flex; gap:8px; margin-bottom: 16px;">
@@ -278,10 +130,7 @@
                 <button id="copyMintBtn" class="copy-btn" title="Copy Mint">📋</button>
                 <button id="loadTokenBtn" style="width:auto;">Load</button>
             </div>
-
             <div id="tokenDisplay" style="display:none; flex: 1; flex-direction: column; min-height: 0;">
-                
-                <!-- HERO PLANET SECTION -->
                 <div class="planet-header">
                     <div id="graduatedBadge" class="graduated-badge" style="display:none;">GRADUATED</div>
                     <div class="planet-container">
@@ -299,37 +148,25 @@
                         <div id="priceChange" class="price-change up">+0.00%</div>
                     </div>
                 </div>
-
-                <!-- METRICS -->
                 <div class="metrics-row">
                     <div class="metric-box"><span>Virtual MCap (SOL)</span><strong id="mcapSol">—</strong></div>
                     <div class="metric-box"><span>Virtual MCap (USD)</span><strong id="mcapUsd">—</strong></div>
                     <div class="metric-box real"><span>Real SOL</span><strong id="realSol">—</strong></div>
                 </div>
-                
-                <!-- TABS & CONTENT -->
                 <div class="chart-tabs">
                     <button class="chart-tab active" id="tabChart" onclick="switchTab('chart')">📈 Chart</button>
                     <button class="chart-tab" id="tabTrades" onclick="switchTab('trades')">🧾 Trades</button>
                 </div>
-                
                 <div class="content-wrapper">
                     <div id="chartContainer" class="chart-container"></div>
                     <div id="tradesContainer" class="trades-container">
-                        <div id="tradesList" style="padding: 20px; text-align: center; color: var(--mut);">
-                            <span class="spinner"></span> Loading trades...
-                        </div>
+                        <div id="tradesList" style="padding: 20px; text-align: center; color: var(--mut);"><span class="spinner"></span> Loading trades...</div>
                     </div>
                 </div>
-
-                <!-- TRADE SECTION -->
                 <div id="tradeSection" style="display:none;">
                     <div class="trade-grid">
-                        <!-- BUY -->
                         <div class="trade-col">
-                            <div class="trade-header">
-                                <h2 style="color: var(--sol-green); margin: 0;">Buy</h2>
-                            </div>
+                            <div class="trade-header"><h2 style="color: var(--sol-green); margin: 0;">Buy</h2></div>
                             <div class="quick-buttons">
                                 <button onclick="setSolAmount(0.01)">0.01</button>
                                 <button onclick="setSolAmount(0.05)">0.05</button>
@@ -340,8 +177,6 @@
                             <p class="quote-text" id="buyQuote">You will receive: <span>—</span></p>
                             <button id="buyBtn" disabled style="width:100%;">Buy</button>
                         </div>
-                        
-                        <!-- SELL -->
                         <div class="trade-col">
                             <div class="trade-header">
                                 <h2 style="color: var(--red); margin: 0;">Sell</h2>
@@ -363,7 +198,6 @@
             </div>
         </div>
     </div>
-
     <script type="importmap">
         {
             "imports": {
@@ -374,11 +208,8 @@
             }
         }
     </script>
-
     <script type="module">
         const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIyZjcwOGYwYy1iNGQzLTRjZmUtOTFiMi1jYmVjNTcxZmM5ZDciLCJlbWFpbCI6ImV2aWRlbmNld2ViM0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNzJmZTRmMGI2ZjliZjk2ZTQ0ODQiLCJzY29wZWRLZXlTZWNyZXQiOiIyZjZmYmQ4ZDI5OWI4ZDVmMzcwYzgwNjFjYTE1MDA2NzI5NjhlN2FhYWJlZjBiNDhiOWU4YzdkNGIzYTBjNmJhIiwiZXhwIjoxODI1NzExODU5fQ.5Xll5N_DAJi4B4N8wD2DwqhAyeOQN55M9ZAv-HOPPi8';
-
-        // BACKGROUND
         const canvas = document.getElementById('space-bg');
         const ctx = canvas.getContext('2d');
         let W = window.innerWidth, H = window.innerHeight;
@@ -397,73 +228,34 @@
                 const px = cx + Math.cos(angle) * radius; const py = cy + Math.sin(angle) * (H * 0.15 * (i + 1));
                 ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2); ctx.fill();
             }
-            stars.forEach(s => {
-                s.a += s.speed; ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(s.a) * 0.3})`;
-                ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
-            });
+            stars.forEach(s => { s.a += s.speed; ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(s.a) * 0.3})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill(); });
             requestAnimationFrame(drawBackground);
         }
         drawBackground();
-
-        // WEB3
         const SUPABASE_URL = 'https://dzqoxbdnysxqylvwluzz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_R6Hb2unSpr4ssW9Cl_9VkA_KyfZzIux';
-
         import { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL, VersionedTransaction, TransactionMessage, ComputeBudgetProgram } from '@solana/web3.js';
         import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount, newBondingCurve } from '@nirholas/pump-sdk';
         import { createClient } from '@supabase/supabase-js';
         import BN from 'bn.js';
-
         const connection = new Connection('https://devnet.helius-rpc.com/?api-key=f600a1bb-1023-469b-8b21-1f424fe50931', 'confirmed');
         const onlineSdk = new OnlinePumpSdk(connection);
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let wallet = null;
-        let userPublicKey = null;
-        let currentMint = null;
-        let activeImageUrl = null;
-        
-        let chart = null;
-        let areaSeries = null;
-        let chartInitialized = false;
-        let isCurrentTokenGraduated = false;
-        
-        let currentBondingCurve = null;
-        let cachedGlobal = null;
-        let cachedFeeConfig = null;
-        let userTokenBalance = 0;
-        let pollingInterval = null;
+        let wallet = null, userPublicKey = null, currentMint = null, activeImageUrl = null;
+        let chart = null, areaSeries = null, chartInitialized = false, isCurrentTokenGraduated = false;
+        let currentBondingCurve = null, cachedGlobal = null, cachedFeeConfig = null, userTokenBalance = 0, pollingInterval = null;
         let currentSolPriceUsd = 150;
-
         async function fetchSolPrice() {
-            try {
-                const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT');
-                if (r.ok) {
-                    const d = await r.json();
-                    currentSolPriceUsd = parseFloat(d.price);
-                }
-            } catch (e) { /* Ignore */ }
+            try { const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT'); if (r.ok) { const d = await r.json(); currentSolPriceUsd = parseFloat(d.price); } } catch (e) {}
         }
         fetchSolPrice();
-
-        function parseLocaleNumber(stringNumber) {
-            if (!stringNumber) return 0;
-            return parseFloat(stringNumber.toString().replace(',', '.'));
-        }
-
+        function parseLocaleNumber(stringNumber) { if (!stringNumber) return 0; return parseFloat(stringNumber.toString().replace(',', '.')); }
         async function withTimeout(promise, timeoutMs = 15000) {
             return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout. Try again.')), timeoutMs))]);
         }
-
         async function fetchTokenImage(metadataUri) {
-            try {
-                const res = await fetch(metadataUri);
-                if (!res.ok) return 'https://placehold.co/100x100/1f1f28/14F195?text=?';
-                const json = await res.json();
-                return json.image || 'https://placehold.co/100x100/1f1f28/14F195?text=?';
-            } catch (e) { return 'https://placehold.co/100x100/1f1f28/14F195?text=?'; }
+            try { const res = await fetch(metadataUri); if (!res.ok) return 'https://placehold.co/100x100/1f1f28/14F195?text=?'; const json = await res.json(); return json.image || 'https://placehold.co/100x100/1f1f28/14F195?text=?'; } catch (e) { return 'https://placehold.co/100x100/1f1f28/14F195?text=?'; }
         }
-
         function initChartIfNeeded() {
             if (chartInitialized) return;
             const container = document.getElementById('chartContainer');
@@ -475,17 +267,9 @@
                     rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)' },
                     timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: true },
                     crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                    localization: {
-                        priceFormatter: (price) => `${price.toFixed(2)} SOL`,
-                        timeFormatter: (time) => new Date(time * 1000).toLocaleTimeString(),
-                    }
+                    localization: { priceFormatter: (price) => `${price.toFixed(2)} SOL`, timeFormatter: (time) => new Date(time * 1000).toLocaleTimeString() }
                 });
-                areaSeries = chart.addAreaSeries({ 
-                    lineColor: '#14F195', 
-                    topColor: 'rgba(20, 241, 149, 0.4)', 
-                    bottomColor: 'rgba(20, 241, 149, 0.0)', 
-                    lineWidth: 2 
-                });
+                areaSeries = chart.addAreaSeries({ lineColor: '#14F195', topColor: 'rgba(20, 241, 149, 0.4)', bottomColor: 'rgba(20, 241, 149, 0.0)', lineWidth: 2 });
                 const resizeObserver = new ResizeObserver(entries => {
                     if (entries.length === 0 || entries[0].target !== container) return;
                     const newRect = entries[0].contentRect;
@@ -495,51 +279,29 @@
                 chartInitialized = true;
             } catch (e) { console.error("Chart error:", e); }
         }
-
         const CHART_KEY_PREFIX = 'pump_chart_mcap_';
         const TRADES_KEY_PREFIX = 'pump_trades_';
         let dexCache = { time: 0, data: null };
-
         function saveChartPoint(mintStr, mcapSol) {
             try {
                 const key = CHART_KEY_PREFIX + mintStr;
                 let history = JSON.parse(localStorage.getItem(key) || '[]');
                 const now = Math.floor(Date.now() / 1000);
-                
-                if (history.length > 0 && history[history.length - 1].time >= now) {
-                    history[history.length - 1].value = mcapSol;
-                } else {
-                    history.push({ time: now, value: mcapSol });
-                }
-
+                if (history.length > 0 && history[history.length - 1].time >= now) { history[history.length - 1].value = mcapSol; }
+                else { history.push({ time: now, value: mcapSol }); }
                 if (history.length > 500) history = history.slice(history.length - 500);
                 localStorage.setItem(key, JSON.stringify(history));
-                
-                if (areaSeries) {
-                    if (history.length <= 2) {
-                        areaSeries.setData(history);
-                        chart.timeScale().fitContent();
-                    } else {
-                        areaSeries.update(history[history.length - 1]);
-                    }
-                }
+                if (areaSeries) { if (history.length <= 2) { areaSeries.setData(history); chart.timeScale().fitContent(); } else { areaSeries.update(history[history.length - 1]); } }
             } catch (e) { console.warn('Chart save error:', e); }
         }
-
         function saveTrade(mintStr, type, solAmount, tokenAmount) {
             try {
                 const key = TRADES_KEY_PREFIX + mintStr;
                 let trades = JSON.parse(localStorage.getItem(key) || '[]');
-                trades.unshift({
-                    type,
-                    solAmount: parseFloat(solAmount),
-                    tokenAmount: parseFloat(tokenAmount),
-                    time: Date.now()
-                });
+                trades.unshift({ type, solAmount: parseFloat(solAmount), tokenAmount: parseFloat(tokenAmount), time: Date.now() });
                 localStorage.setItem(key, JSON.stringify(trades.slice(0, 50)));
             } catch (e) { console.warn('Trade save error:', e); }
         }
-
         window.switchTab = function(tab) {
             if (tab === 'chart') {
                 document.getElementById('tabChart').classList.add('active');
@@ -555,90 +317,51 @@
                 loadRecentTrades();
             }
         }
-
         async function loadRecentTrades() {
             const list = document.getElementById('tradesList');
             if (!currentMint) return;
             const mintStr = currentMint.toBase58();
-            
             list.innerHTML = '';
             const localTrades = JSON.parse(localStorage.getItem(TRADES_KEY_PREFIX + mintStr) || '[]');
-            
             if (localTrades.length > 0) {
                 localTrades.forEach(t => {
                     const date = new Date(t.time).toLocaleTimeString();
-                    list.innerHTML += `
-                        <div class="trade-row">
-                            <span class="trade-type ${t.type.toLowerCase()}">${t.type}</span>
-                            <span>${t.solAmount.toFixed(3)} SOL</span>
-                            <span style="color:#888">${date}</span>
-                        </div>
-                    `;
+                    list.innerHTML += `<div class="trade-row"><span class="trade-type ${t.type.toLowerCase()}">${t.type}</span><span>${t.solAmount.toFixed(3)} SOL</span><span style="color:#888">${date}</span></div>`;
                 });
             } else {
                 list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--mut);">No local trades yet.</div>';
             }
-
-            // Caching DexScreener to prevent rate limits
-            if (Date.now() - dexCache.time < 30000 && dexCache.data) {
-                appendDexData(dexCache.data, list);
-                return;
-            }
-
+            if (Date.now() - dexCache.time < 30000 && dexCache.data) { appendDexData(dexCache.data, list); return; }
             list.innerHTML += `<div style="padding: 10px; text-align: center; color: var(--mut);"><span class="spinner"></span> Fetching external data...</div>`;
-
             try {
                 const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintStr}`);
                 if (res.ok) {
                     const json = await res.json();
-                    if (json.pairs && json.pairs.length > 0) {
-                        dexCache = { time: Date.now(), data: json.pairs[0] };
-                        appendDexData(json.pairs[0], list);
-                    } else {
-                        const sp = list.querySelector('.spinner');
-                        if(sp) sp.parentElement.remove();
-                    }
+                    if (json.pairs && json.pairs.length > 0) { dexCache = { time: Date.now(), data: json.pairs[0] }; appendDexData(json.pairs[0], list); }
+                    else { const sp = list.querySelector('.spinner'); if(sp) sp.parentElement.remove(); }
                 }
-            } catch(e) { /* Ignore */ }
+            } catch(e) {}
         }
-
         function appendDexData(pair, list) {
             const spinner = list.querySelector('.spinner');
             if (spinner) spinner.parentElement.remove();
-
             list.innerHTML += `
                 <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.02); border-top: 1px solid #333;">
                     <div style="color:var(--sol-purple); font-size:0.75rem; margin-bottom:4px;">External Market Data (DexScreener)</div>
-                    <div class="trade-row" style="border:none;">
-                        <span style="color:var(--mut);">24h Buys</span>
-                        <span class="trade-type buy">${pair.txns.h24.buys}</span>
-                    </div>
-                    <div class="trade-row" style="border:none;">
-                        <span style="color:var(--mut);">24h Sells</span>
-                        <span class="trade-type sell">${pair.txns.h24.sells}</span>
-                    </div>
-                    <div class="trade-row" style="border:none;">
-                        <span style="color:var(--mut);">24h Volume</span>
-                        <span>$${parseFloat(pair.volume.h24).toFixed(2)}</span>
-                    </div>
-                </div>
-            `;
+                    <div class="trade-row" style="border:none;"><span style="color:var(--mut);">24h Buys</span><span class="trade-type buy">${pair.txns.h24.buys}</span></div>
+                    <div class="trade-row" style="border:none;"><span style="color:var(--mut);">24h Sells</span><span class="trade-type sell">${pair.txns.h24.sells}</span></div>
+                    <div class="trade-row" style="border:none;"><span style="color:var(--mut);">24h Volume</span><span>$${parseFloat(pair.volume.h24).toFixed(2)}</span></div>
+                </div>`;
         }
-
         async function updateWalletBalance() {
             if (!userPublicKey) return;
-            try {
-                const balance = await withTimeout(connection.getBalance(userPublicKey));
-                document.getElementById('walletBalance').textContent = `${(balance / LAMPORTS_PER_SOL).toFixed(3)} SOL`;
-            } catch (e) { console.warn('Balance error', e); }
+            try { const balance = await withTimeout(connection.getBalance(userPublicKey)); document.getElementById('walletBalance').textContent = `${(balance / LAMPORTS_PER_SOL).toFixed(3)} SOL`; } catch (e) { console.warn('Balance error', e); }
         }
-
         document.getElementById('connectBtn').addEventListener('click', async () => {
             if (!window.solana || !window.solana.isPhantom) return alert('Install Phantom on Devnet.');
             try {
                 const resp = await window.solana.connect();
-                userPublicKey = resp.publicKey;
-                wallet = window.solana;
+                userPublicKey = resp.publicKey; wallet = window.solana;
                 document.getElementById('walletStatus').textContent = `Connected`;
                 document.getElementById('connectBtn').style.display = 'none';
                 ['createTokenBtn', 'loadTokenBtn'].forEach(id => document.getElementById(id).disabled = false);
@@ -649,34 +372,24 @@
                 document.getElementById('walletStatus').classList.add('error');
             }
         });
-
         document.getElementById('copyMintBtn').addEventListener('click', () => {
             const val = document.getElementById('mintAddressInput').value.trim();
-            if (val) {
-                navigator.clipboard.writeText(val);
-                const btn = document.getElementById('copyMintBtn');
-                const oldText = btn.innerHTML;
-                btn.innerHTML = '✅';
-                setTimeout(() => btn.innerHTML = oldText, 2000);
-            }
+            if (val) { navigator.clipboard.writeText(val); const btn = document.getElementById('copyMintBtn'); const oldText = btn.innerHTML; btn.innerHTML = '✅'; setTimeout(() => btn.innerHTML = oldText, 2000); }
         });
-
         document.getElementById('tokenImage').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) { 
-                activeImageUrl = URL.createObjectURL(file); 
-                document.getElementById('tokenImagePreview').src = activeImageUrl; 
+            if (file) {
+                activeImageUrl = URL.createObjectURL(file);
+                document.getElementById('tokenImagePreview').src = activeImageUrl;
                 document.getElementById('fileUploadText').textContent = '✅ Image selected';
                 document.getElementById('fileUploadLabel').style.borderColor = 'var(--sol-green)';
             }
         });
-
         async function uploadToPinata(file, name, symbol) {
             const imgForm = new FormData(); imgForm.append('file', file);
             const imgRes = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', { method: 'POST', headers: { Authorization: `Bearer ${PINATA_JWT}` }, body: imgForm });
             if (!imgRes.ok) throw new Error('Pinata image error');
             const imageUri = `https://gateway.pinata.cloud/ipfs/${(await imgRes.json()).IpfsHash}`;
-
             const metadata = { name, symbol, image: imageUri, description: '' };
             const metaForm = new FormData();
             metaForm.append('file', new Blob([JSON.stringify(metadata)], { type: 'application/json' }), 'metadata.json');
@@ -684,7 +397,6 @@
             if (!metaRes.ok) throw new Error('Pinata metadata error');
             return `https://gateway.pinata.cloud/ipfs/${(await metaRes.json()).IpfsHash}`;
         }
-
         document.getElementById('createTokenBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('createStatus');
             statusEl.textContent = 'Uploading to IPFS...'; statusEl.classList.remove('error');
@@ -693,55 +405,36 @@
                 const symbol = document.getElementById('tokenSymbol').value.trim();
                 const imgFile = document.getElementById('tokenImage').files[0];
                 if (!name || !symbol || !imgFile) throw new Error('Fill all fields.');
-
                 const metadataUri = await withTimeout(uploadToPinata(imgFile, name, symbol), 20000);
                 statusEl.textContent = 'Creating token...';
-
                 const mintKeypair = Keypair.generate();
                 const global = await withTimeout(onlineSdk.fetchGlobal());
                 const feeConfig = await withTimeout(onlineSdk.fetchFeeConfig());
-                
                 const solToSpend = new BN(0.01 * LAMPORTS_PER_SOL);
                 const initialCurve = newBondingCurve(global);
                 const tokensOut = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: null, bondingCurve: initialCurve, amount: solToSpend });
-
-                const instructions = await PUMP_SDK.createV2AndBuyInstructions({
-                    global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, 
-                    creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, 
-                    slippage: 0.10, mayhemMode: false, cashback: false
-                });
-
+                const instructions = await PUMP_SDK.createV2AndBuyInstructions({ global, feeConfig, mint: mintKeypair.publicKey, name, symbol, uri: metadataUri, creator: userPublicKey, user: userPublicKey, amount: tokensOut, solAmount: solToSpend, slippage: 0.10, mayhemMode: false, cashback: false });
                 const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
                 tx.sign([mintKeypair]);
-
                 statusEl.textContent = '✍️ Sign in Phantom...';
                 const signed = await wallet.signTransaction(tx);
-                
                 statusEl.textContent = 'Sending to network...';
                 const txId = await connection.sendRawTransaction(signed.serialize());
                 await withTimeout(connection.confirmTransaction({ signature: txId, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
-
                 const mintAddress = mintKeypair.publicKey.toBase58();
                 statusEl.textContent = `✅ Token created.\nMint: ${mintAddress}`;
-                
                 document.getElementById('mintAddressInput').value = mintAddress;
                 document.getElementById('displayName').textContent = name;
                 document.getElementById('displaySymbol').textContent = symbol;
                 document.getElementById('tokenImagePreview').src = activeImageUrl;
                 document.getElementById('tokenDisplay').style.display = 'flex';
                 document.getElementById('tradeSection').style.display = 'block';
-                
                 setTimeout(initChartIfNeeded, 100);
                 await loadTokenData(mintAddress);
-                await updateWalletBalance(); 
-                
-                try {
-                    await supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]);
-                    loadSavedTokens();
-                } catch (e) { console.warn('Supabase offline'); }
-
+                await updateWalletBalance();
+                try { await supabase.from('launchpad_tokens').insert([{ mint_address: mintAddress, name, symbol, metadata_uri: metadataUri, creator_wallet: userPublicKey.toBase58() }]); loadSavedTokens(); } catch (e) { console.warn('Supabase offline'); }
                 setTimeout(() => {
                     if (statusEl.textContent.includes('Token created')) {
                         statusEl.textContent = '';
@@ -753,12 +446,10 @@
                         activeImageUrl = null;
                     }
                 }, 5000);
-
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
             }
         });
-
         async function loadSavedTokens() {
             const listContainer = document.getElementById('savedTokensList');
             listContainer.style.display = 'grid';
@@ -766,131 +457,174 @@
             try {
                 const { data, error } = await supabase.from('launchpad_tokens').select('*').eq('creator_wallet', userPublicKey.toBase58());
                 if (error) throw error;
-                if (!data || data.length === 0) {
-                    listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">No tokens yet.</div>';
-                    return;
-                }
+                if (!data || data.length === 0) { listContainer.innerHTML = '<div style="grid-column: span 2; text-align: center; font-size: 0.7rem; color: var(--mut); padding: 10px;">No tokens yet.</div>'; return; }
                 listContainer.innerHTML = '';
                 data.forEach(token => {
                     const item = document.createElement('div');
                     item.className = 'my-token-item';
-                    item.innerHTML = `
-                        <img src="https://placehold.co/100x100/1f1f28/14F195?text=..." class="token-logo-${token.mint_address}" />
-                        <div class="my-token-symbol">${token.symbol}</div>
-                        <div class="my-token-mint">${token.mint_address.substring(0, 4)}...</div>
-                    `;
-                    fetchTokenImage(token.metadata_uri).then(imgUrl => {
-                        const imgEl = item.querySelector('.token-logo-' + token.mint_address);
-                        if (imgEl) imgEl.src = imgUrl;
-                    });
+                    item.innerHTML = `<img src="https://placehold.co/100x100/1f1f28/14F195?text=..." class="token-logo-${token.mint_address}" /><div class="my-token-symbol">${token.symbol}</div><div class="my-token-mint">${token.mint_address.substring(0, 4)}...</div>`;
+                    fetchTokenImage(token.metadata_uri).then(imgUrl => { const imgEl = item.querySelector('.token-logo-' + token.mint_address); if (imgEl) imgEl.src = imgUrl; });
                     item.onclick = () => {
                         document.getElementById('mintAddressInput').value = token.mint_address;
                         document.getElementById('displayName').textContent = token.name;
                         document.getElementById('displaySymbol').textContent = token.symbol;
-                        
-                        // Show instant UI loading feedback
                         document.getElementById('tokenDisplay').style.display = 'flex';
                         document.getElementById('tradeSection').style.display = 'block';
                         document.getElementById('tradeStatus').textContent = '⏳ Loading token...';
                         document.getElementById('tradeStatus').classList.remove('error');
                         document.getElementById('buyBtn').disabled = true;
                         document.getElementById('sellBtn').disabled = true;
-
                         loadTokenData(token.mint_address);
                     };
                     listContainer.appendChild(item);
                 });
-            } catch (e) {
-                listContainer.innerHTML = `<div style="grid-column: span 2; text-align: center; color: var(--red); font-size: 0.7rem;">Error: ${e.message}</div>`;
-            }
+            } catch (e) { listContainer.innerHTML = `<div style="grid-column: span 2; text-align: center; color: var(--red); font-size: 0.7rem;">Error: ${e.message}</div>`; }
         }
-
         document.getElementById('loadTokenBtn').addEventListener('click', () => {
             document.getElementById('tradeStatus').textContent = '⏳ Loading token...';
             document.getElementById('buyBtn').disabled = true;
             document.getElementById('sellBtn').disabled = true;
             loadTokenData(document.getElementById('mintAddressInput').value.trim());
         });
-
         async function fetchUserTokenBalance() {
             if (!userPublicKey || !currentMint) return 0;
-            try {
-                const accounts = await connection.getParsedTokenAccountsByOwner(userPublicKey, { mint: currentMint });
-                if (accounts.value.length > 0) {
-                    return accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0;
-                }
-            } catch (e) { /* Ignore */ }
+            try { const accounts = await connection.getParsedTokenAccountsByOwner(userPublicKey, { mint: currentMint }); if (accounts.value.length > 0) return accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount || 0; } catch (e) {}
             return 0;
         }
-
-        // ==========================================
-        // OPTIMIZED LOAD TOKEN DATA (Parallel Fetch)
-        // ==========================================
+        // Helper: read a BN field safely across SDK versions
+        function readBN(curve, names) {
+            for (const n of names) { if (curve && curve[n] != null) return curve[n]; }
+            return null;
+        }
+        // Helper: safely convert any BN-like to Number via string (avoids Assertion failed on toNumber overflow)
+        function bnToNum(v) {
+            if (v == null) return NaN;
+            try {
+                if (typeof v === 'number') return v;
+                if (typeof v === 'string') return parseFloat(v);
+                if (typeof v.toString === 'function') return parseFloat(v.toString());
+            } catch (e) {}
+            return NaN;
+        }
+        // Handle missing bonding curve (graduated / migrated / invalid)
+        async function handleMissingCurve(mintStr) {
+            try {
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintStr}`);
+                if (!res.ok) return false;
+                const data = await res.json();
+                if (!data.pairs || data.pairs.length === 0) return false;
+                const pair = data.pairs[0];
+                const priceUsd = parseFloat(pair.priceUsd || 0);
+                const mcap = parseFloat(pair.marketCap || pair.fdv || 0);
+                isCurrentTokenGraduated = true;
+                document.getElementById('mcapSol').textContent = '—';
+                document.getElementById('mcapUsd').textContent = `$${mcap.toFixed(2)}`;
+                document.getElementById('realSol').textContent = '—';
+                document.getElementById('price').textContent = `$${priceUsd.toFixed(8)}`;
+                document.getElementById('priceChange').textContent = '—';
+                document.getElementById('priceChange').className = 'price-change up';
+                document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                document.getElementById('graduatedBadge').style.display = 'block';
+                document.getElementById('buyBtn').disabled = true;
+                document.getElementById('sellBtn').disabled = true;
+                document.getElementById('tradeStatus').innerHTML = `
+                    <span style="color:var(--sol-green); font-weight:bold;">✅ Token Graduated (bonding curve closed / liquidity migrated).</span><br>
+                    Trade this token on: 
+                    <a href="https://jup.ag/swap/SOL-${mintStr}" target="_blank" class="a">Jupiter</a> or 
+                    <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=${mintStr}" target="_blank" class="a">Raydium</a>.`;
+                document.getElementById('tradeStatus').classList.remove('error');
+                loadTokenImage(mintStr);
+                return true;
+            } catch (e) { return false; }
+        }
+        async function loadTokenImage(mintStr) {
+            if (activeImageUrl && document.getElementById('mintAddressInput').value === mintStr) {
+                document.getElementById('tokenImagePreview').src = activeImageUrl; return;
+            }
+            document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=Coin';
+            try {
+                const { data } = await supabase.from('launchpad_tokens').select('metadata_uri').eq('mint_address', mintStr).single();
+                if (data && data.metadata_uri) {
+                    const imgUrl = await fetchTokenImage(data.metadata_uri);
+                    if (currentMint && currentMint.toBase58() === mintStr) document.getElementById('tokenImagePreview').src = imgUrl;
+                }
+            } catch (e) {}
+        }
         async function loadTokenData(mintStr) {
             if (!mintStr) return;
-            
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
+            let mintPubkey;
+            try { mintPubkey = new PublicKey(mintStr); }
+            catch (e) {
+                document.getElementById('tradeStatus').textContent = '❌ Invalid mint address format.';
+                document.getElementById('tradeStatus').classList.add('error');
+                return;
             }
-
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
             try {
-                currentMint = new PublicKey(mintStr);
-
-                // 1. Fetch ALL necessary data in parallel simultaneously (FAST)
-                const [curve, globalData, feeConf, balance] = await withTimeout(
-                    Promise.all([
-                        onlineSdk.fetchBondingCurve(currentMint),
-                        onlineSdk.fetchGlobal(),
-                        onlineSdk.fetchFeeConfig(),
-                        fetchUserTokenBalance()
-                    ]), 20000);
-
+                currentMint = mintPubkey;
+                isCurrentTokenGraduated = false;
+                // Attempt bonding curve fetch — may fail for graduated/delisted tokens
+                let curve = null;
+                try { curve = await withTimeout(onlineSdk.fetchBondingCurve(currentMint), 15000); }
+                catch (e) { console.warn('Bonding curve fetch failed:', e?.message || e); }
+                if (!curve) {
+                    const handled = await handleMissingCurve(mintStr);
+                    if (handled) return;
+                    throw new Error('Bonding curve not found. Token may not exist on pump.fun.');
+                }
+                const [globalData, feeConf, balance] = await withTimeout(Promise.all([
+                    onlineSdk.fetchGlobal(),
+                    onlineSdk.fetchFeeConfig(),
+                    fetchUserTokenBalance()
+                ]), 20000);
                 currentBondingCurve = curve;
                 cachedGlobal = globalData;
                 cachedFeeConfig = feeConf;
                 userTokenBalance = balance;
-                
-                // 2. Math
-                const vSol = currentBondingCurve.virtualQuoteReserves ? currentBondingCurve.virtualQuoteReserves : currentBondingCurve.virtualSolReserves;
-                const vToken = currentBondingCurve.virtualTokenReserves;
-                const rSol = currentBondingCurve.realQuoteReserves ? currentBondingCurve.realQuoteReserves : currentBondingCurve.realSolReserves;
-                
-                if (!vSol || !vToken || !rSol) throw new Error('Curve data not recognized.');
-
-                const mcapLamports = vSol.mul(currentBondingCurve.tokenTotalSupply).div(vToken);
-                const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
+                // Safe field reads
+                const vSol = readBN(curve, ['virtualQuoteReserves', 'virtualSolReserves']);
+                const vToken = readBN(curve, ['virtualTokenReserves']);
+                const rSol = readBN(curve, ['realQuoteReserves', 'realSolReserves']);
+                const totalSupply = readBN(curve, ['tokenTotalSupply', 'token_total_supply']);
+                if (vSol == null || vToken == null || rSol == null || totalSupply == null) {
+                    throw new Error('Incomplete curve data. Token may be migrated or invalid.');
+                }
+                const vSolNum = bnToNum(vSol);
+                const vTokenNum = bnToNum(vToken);
+                const rSolNum = bnToNum(rSol);
+                const totalSupplyNum = bnToNum(totalSupply);
+                if (!isFinite(vSolNum) || !isFinite(vTokenNum) || !isFinite(rSolNum) || !isFinite(totalSupplyNum)) {
+                    throw new Error('Invalid curve numbers.');
+                }
+                if (vTokenNum === 0 || totalSupplyNum === 0) {
+                    const handled = await handleMissingCurve(mintStr);
+                    if (handled) return;
+                    throw new Error('Token reserves are zero. Token may have graduated.');
+                }
+                // All math with floats — no BN.div, no overflow
+                const mcapSol = (vSolNum * totalSupplyNum / vTokenNum) / LAMPORTS_PER_SOL;
                 const mcapUsd = mcapSol * currentSolPriceUsd;
-                const realSol = rSol.toNumber() / LAMPORTS_PER_SOL;
-                
+                const realSol = rSolNum / LAMPORTS_PER_SOL;
                 const GRADUATION_TARGET = 69;
-                const progressPct = Math.min((realSol / GRADUATION_TARGET) * 100, 100); 
-                
-                const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
-                let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, ''); 
+                const progressPct = Math.min((realSol / GRADUATION_TARGET) * 100, 100);
+                const priceSol = (vSolNum / vTokenNum) / 1000;
+                let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, '');
                 if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
-
-                // 3. Update UI instantly
                 document.getElementById('userTokenBalanceDisplay').textContent = userTokenBalance.toLocaleString('en-US', { maximumFractionDigits: 2 });
                 document.getElementById('mcapSol').textContent = `${mcapSol.toFixed(2)} SOL`;
                 document.getElementById('mcapUsd').textContent = `$${mcapUsd.toFixed(2)}`;
                 document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
-                
                 const history = JSON.parse(localStorage.getItem(CHART_KEY_PREFIX + mintStr) || '[]');
                 let changePct = 0;
                 if (history.length > 1) {
-                    const firstMcap = history[0].value;
-                    const lastMcap = history[history.length - 1].value;
+                    const firstMcap = history[0].value, lastMcap = history[history.length - 1].value;
                     if (firstMcap > 0) changePct = ((lastMcap - firstMcap) / firstMcap) * 100;
                 }
-                
                 const changeEl = document.getElementById('priceChange');
                 changeEl.textContent = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
                 changeEl.className = `price-change ${changePct >= 0 ? 'up' : 'down'}`;
-
-                isCurrentTokenGraduated = currentBondingCurve.complete || progressPct >= 99.9;
-
+                isCurrentTokenGraduated = !!curve.complete || progressPct >= 99.9;
                 if (isCurrentTokenGraduated) {
                     document.getElementById('graduatedBadge').style.display = 'block';
                     document.getElementById('buyBtn').disabled = true;
@@ -899,46 +633,21 @@
                         <span style="color:var(--sol-green); font-weight:bold;">✅ Token Graduated (Liquidity migrated).</span><br>
                         Trade this token on: 
                         <a href="https://jup.ag/swap/SOL-${mintStr}" target="_blank" class="a">Jupiter</a> or 
-                        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=${mintStr}" target="_blank" class="a">Raydium</a>.
-                    `;
+                        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=${mintStr}" target="_blank" class="a">Raydium</a>.`;
                 } else {
                     document.getElementById('graduatedBadge').style.display = 'none';
                     document.getElementById('buyBtn').disabled = false;
                     document.getElementById('sellBtn').disabled = false;
-                    document.getElementById('tradeStatus').textContent = ''; // Clear loading state
+                    document.getElementById('tradeStatus').textContent = '';
                 }
-
-                // 4. Load Image Asynchronously (Does not block UI)
-                if (activeImageUrl && document.getElementById('mintAddressInput').value === mintStr) {
-                    document.getElementById('tokenImagePreview').src = activeImageUrl;
-                } else {
-                    document.getElementById('tokenImagePreview').src = 'https://placehold.co/100x100/1f1f28/14F195?text=Coin';
-                    supabase.from('launchpad_tokens').select('metadata_uri').eq('mint_address', mintStr).single().then(({ data }) => {
-                        if (data && data.metadata_uri && currentMint.toBase58() === mintStr) {
-                            fetchTokenImage(data.metadata_uri).then(imgUrl => {
-                                if (currentMint.toBase58() === mintStr) {
-                                    document.getElementById('tokenImagePreview').src = imgUrl;
-                                }
-                            });
-                        }
-                    }).catch(e => console.warn('Img fetch error', e));
-                }
-
-                // 5. Chart
+                loadTokenImage(mintStr);
                 initChartIfNeeded();
                 saveChartPoint(mintStr, mcapSol);
-
-                // 6. Quotes
                 updateBuyQuote();
                 updateSellQuote();
-
-                // 7. Polling
                 pollingInterval = setInterval(() => {
-                    if (currentMint && currentMint.toBase58() === mintStr) {
-                        pollTokenData(mintStr);
-                    }
+                    if (currentMint && currentMint.toBase58() === mintStr) pollTokenData(mintStr);
                 }, 10000);
-
             } catch (e) {
                 console.error(e);
                 document.getElementById('tradeStatus').textContent = `❌ Error loading: ${e.message}`;
@@ -947,96 +656,72 @@
                 document.getElementById('sellBtn').disabled = true;
             }
         }
-
-        // Silent polling to prevent UI jumping
         async function pollTokenData(mintStr) {
             try {
                 const curve = await withTimeout(onlineSdk.fetchBondingCurve(new PublicKey(mintStr)));
+                if (!curve) return;
                 currentBondingCurve = curve;
-                
-                const vSol = curve.virtualQuoteReserves ? curve.virtualQuoteReserves : curve.virtualSolReserves;
-                const vToken = curve.virtualTokenReserves;
-                const rSol = curve.realQuoteReserves ? curve.realQuoteReserves : curve.realSolReserves;
-                
-                if (!vSol || !vToken || !rSol) return;
-
-                const mcapLamports = vSol.mul(curve.tokenTotalSupply).div(vToken);
-                const mcapSol = mcapLamports.toNumber() / LAMPORTS_PER_SOL;
+                const vSol = readBN(curve, ['virtualQuoteReserves', 'virtualSolReserves']);
+                const vToken = readBN(curve, ['virtualTokenReserves']);
+                const rSol = readBN(curve, ['realQuoteReserves', 'realSolReserves']);
+                const totalSupply = readBN(curve, ['tokenTotalSupply', 'token_total_supply']);
+                if (vSol == null || vToken == null || rSol == null || totalSupply == null) return;
+                const vSolNum = bnToNum(vSol), vTokenNum = bnToNum(vToken), rSolNum = bnToNum(rSol), totalSupplyNum = bnToNum(totalSupply);
+                if (!isFinite(vSolNum) || !isFinite(vTokenNum) || vTokenNum === 0 || totalSupplyNum === 0) return;
+                const mcapSol = (vSolNum * totalSupplyNum / vTokenNum) / LAMPORTS_PER_SOL;
                 const mcapUsd = mcapSol * currentSolPriceUsd;
-                const realSol = rSol.toNumber() / LAMPORTS_PER_SOL;
-                
-                const priceSol = (vSol.toNumber() / 1e9) / (vToken.toNumber() / 1e6);
-                let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, ''); 
+                const realSol = rSolNum / LAMPORTS_PER_SOL;
+                const priceSol = (vSolNum / vTokenNum) / 1000;
+                let priceStr = priceSol.toFixed(9).replace(/0+$/, '').replace(/\.$/, '');
                 if (priceStr === '0' || priceStr === '') priceStr = priceSol.toExponential(4);
-
                 document.getElementById('mcapSol').textContent = `${mcapSol.toFixed(2)} SOL`;
                 document.getElementById('mcapUsd').textContent = `$${mcapUsd.toFixed(2)}`;
                 document.getElementById('realSol').textContent = `${realSol.toFixed(2)} SOL`;
                 document.getElementById('price').textContent = `${priceStr} SOL`;
-                
                 if (document.getElementById('solAmount').value) updateBuyQuote();
                 if (document.getElementById('tokenAmountToSell').value) updateSellQuote();
-
                 saveChartPoint(mintStr, mcapSol);
             } catch (e) { console.warn("Polling error:", e); }
         }
-
-        window.setSolAmount = (val) => { 
-            document.getElementById('solAmount').value = val; 
-            updateBuyQuote();
-        };
-
+        window.setSolAmount = (val) => { document.getElementById('solAmount').value = val; updateBuyQuote(); };
         window.setSellPercent = (pct) => {
-            if (!userTokenBalance || userTokenBalance <= 0) {
-                document.getElementById('tradeStatus').textContent = "You don't have tokens to sell.";
-                return;
-            }
+            if (!userTokenBalance || userTokenBalance <= 0) { document.getElementById('tradeStatus').textContent = "You don't have tokens to sell."; return; }
             const amount = Math.floor(userTokenBalance * pct * 1e6) / 1e6;
-            document.getElementById('tokenAmountToSell').value = amount; 
+            document.getElementById('tokenAmountToSell').value = amount;
             updateSellQuote();
         };
-
         async function updateBuyQuote() {
             const quoteEl = document.getElementById('buyQuote').querySelector('span');
             if (!currentMint || isCurrentTokenGraduated || !currentBondingCurve || !cachedGlobal) { quoteEl.textContent = '—'; return; }
             const solInput = parseLocaleNumber(document.getElementById('solAmount').value);
             if (!solInput || solInput <= 0) { quoteEl.textContent = '—'; return; }
-
             try {
                 const solAmount = new BN(Math.floor(solInput * LAMPORTS_PER_SOL));
-                const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: currentBondingCurve.tokenTotalSupply, bondingCurve: currentBondingCurve, amount: solAmount });
-                quoteEl.textContent = `${(amount.toNumber() / 1e6).toLocaleString('en-US', { maximumFractionDigits: 2 })} Tokens`;
-            } catch (e) {
-                quoteEl.textContent = 'Error';
-            }
+                const totalSupply = readBN(currentBondingCurve, ['tokenTotalSupply', 'token_total_supply']);
+                const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: totalSupply, bondingCurve: currentBondingCurve, amount: solAmount });
+                quoteEl.textContent = `${(bnToNum(amount) / 1e6).toLocaleString('en-US', { maximumFractionDigits: 2 })} Tokens`;
+            } catch (e) { quoteEl.textContent = '—'; }
         }
-
         async function updateSellQuote() {
             const quoteEl = document.getElementById('sellQuote').querySelector('span');
             if (!currentMint || isCurrentTokenGraduated || !currentBondingCurve || !cachedGlobal) { quoteEl.textContent = '—'; return; }
             const tokenInput = parseLocaleNumber(document.getElementById('tokenAmountToSell').value);
             if (!tokenInput || tokenInput <= 0) { quoteEl.textContent = '—'; return; }
-
             try {
+                const vSolBN = readBN(currentBondingCurve, ['virtualQuoteReserves', 'virtualSolReserves']);
+                const vSolNum = bnToNum(vSolBN);
+                if (!vSolNum || vSolNum <= 0) { quoteEl.textContent = '—'; return; }
                 const U64_MAX = new BN('18446744073709551615');
-                const vSol = currentBondingCurve.virtualQuoteReserves ? currentBondingCurve.virtualQuoteReserves : currentBondingCurve.virtualSolReserves;
-                
-                // Calculate the exact mathematical max safe chunk dynamically
+                const vSol = new BN(vSolBN.toString());
                 const maxSafeRaw = U64_MAX.div(vSol);
-                const MAX_SAFE_CHUNK = maxSafeRaw.sub(new BN(1000000)); // 1M buffer
-
-                let amount = new BN(Math.floor(tokenInput * 1e6));
-                
-                // Clamp for quote calculation to avoid UI breaking
-                let safeAmount = amount.gt(MAX_SAFE_CHUNK) ? MAX_SAFE_CHUNK : amount;
-                
-                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: currentBondingCurve.tokenTotalSupply, bondingCurve: currentBondingCurve, amount: safeAmount });
-                quoteEl.textContent = `${(solAmount.toNumber() / LAMPORTS_PER_SOL).toFixed(6)} SOL${amount.gt(MAX_SAFE_CHUNK) ? ' (MAX)' : ''}`;
-            } catch (e) {
-                quoteEl.textContent = 'Error';
-            }
+                const MAX_SAFE_CHUNK = maxSafeRaw.sub(new BN(1000000));
+                const amount = new BN(Math.floor(tokenInput * 1e6));
+                const safeAmount = amount.gt(MAX_SAFE_CHUNK) ? MAX_SAFE_CHUNK : amount;
+                const totalSupply = readBN(currentBondingCurve, ['tokenTotalSupply', 'token_total_supply']);
+                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: totalSupply, bondingCurve: currentBondingCurve, amount: safeAmount });
+                quoteEl.textContent = `${(bnToNum(solAmount) / LAMPORTS_PER_SOL).toFixed(6)} SOL${amount.gt(MAX_SAFE_CHUNK) ? ' (MAX)' : ''}`;
+            } catch (e) { quoteEl.textContent = '—'; }
         }
-
         document.getElementById('buyBtn').addEventListener('click', async () => {
             if (isCurrentTokenGraduated) return alert('Token graduated. Use Jupiter or Raydium.');
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Buying...'; statusEl.classList.remove('error');
@@ -1044,40 +729,29 @@
                 if (!currentMint) throw new Error('Load a token first.');
                 const solInput = parseLocaleNumber(document.getElementById('solAmount').value);
                 if (!solInput || solInput <= 0) throw new Error('Invalid SOL.');
-
                 const solAmount = new BN(Math.floor(solInput * LAMPORTS_PER_SOL));
                 const buyState = await withTimeout(onlineSdk.fetchBuyState(currentMint, userPublicKey));
-                
                 if (buyState.bondingCurve.complete) throw new Error('Curve completed. Go to Raydium.');
-
-                const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: buyState.bondingCurve.tokenTotalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
+                const totalSupply = readBN(buyState.bondingCurve, ['tokenTotalSupply', 'token_total_supply']);
+                const amount = getBuyTokenAmountFromSolAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: totalSupply, bondingCurve: buyState.bondingCurve, amount: solAmount });
                 const instructions = await onlineSdk.buyInstructions({ ...buyState, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.10 });
-
                 instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }), ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
-
                 const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-                
                 statusEl.textContent = '✍️ Sign in Phantom...';
                 const signed = await wallet.signTransaction(tx);
-                
                 statusEl.textContent = 'Sending to network...';
                 const sig = await connection.sendRawTransaction(signed.serialize());
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
-                
                 statusEl.textContent = `✅ Buy successful.`;
-                
-                saveTrade(currentMint.toBase58(), 'BUY', solInput, amount.toNumber() / 1e6);
-
+                saveTrade(currentMint.toBase58(), 'BUY', solInput, bnToNum(amount) / 1e6);
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
             } catch (err) {
                 statusEl.textContent = `❌ ${err.message}`; statusEl.classList.add('error');
             }
         });
-
-        // Dynamic Clamped Sell Logic
         document.getElementById('sellBtn').addEventListener('click', async () => {
             if (isCurrentTokenGraduated) return alert('Token graduated. Use Jupiter or Raydium.');
             const statusEl = document.getElementById('tradeStatus'); statusEl.textContent = 'Selling...'; statusEl.classList.remove('error');
@@ -1086,59 +760,34 @@
                 const tokenInput = parseLocaleNumber(document.getElementById('tokenAmountToSell').value);
                 if (!tokenInput || tokenInput <= 0) throw new Error('Invalid amount.');
                 if (tokenInput > userTokenBalance) throw new Error('Insufficient token balance.');
-
                 const sellState = await withTimeout(onlineSdk.fetchSellState(currentMint, userPublicKey));
                 if (sellState.bondingCurve.complete) throw new Error('Curve completed. Go to Raydium.');
-
+                const vSolBN = readBN(sellState.bondingCurve, ['virtualQuoteReserves', 'virtualSolReserves']);
+                const vSolNum = bnToNum(vSolBN);
+                if (!vSolNum || vSolNum <= 0) throw new Error('Invalid curve data for sell.');
                 const U64_MAX = new BN('18446744073709551615');
-                const vSol = sellState.bondingCurve.virtualQuoteReserves ? sellState.bondingCurve.virtualQuoteReserves : sellState.bondingCurve.virtualSolReserves;
-                
+                const vSol = new BN(vSolBN.toString());
                 const maxSafeRaw = U64_MAX.div(vSol);
                 const MAX_SAFE_CHUNK = maxSafeRaw.sub(new BN(1000000));
-
                 let amount = new BN(Math.floor(tokenInput * 1e6));
-
                 if (amount.gt(MAX_SAFE_CHUNK)) {
                     amount = MAX_SAFE_CHUNK;
-                    statusEl.textContent = `⚠️ Amount too large. Clamping to max safe sell (${(amount.toNumber()/1e6).toLocaleString()} Tokens)...`;
+                    statusEl.textContent = `⚠️ Amount too large. Clamping to max safe sell (${(bnToNum(amount)/1e6).toLocaleString()} Tokens)...`;
                 }
-
-                const solAmount = getSellSolAmountFromTokenAmount({ 
-                    global: cachedGlobal, 
-                    feeConfig: cachedFeeConfig, 
-                    mintSupply: sellState.bondingCurve.tokenTotalSupply, 
-                    bondingCurve: sellState.bondingCurve, 
-                    amount: amount 
-                });
-                
-                const instructions = await PUMP_SDK.sellInstructions({ 
-                    ...sellState, 
-                    global: cachedGlobal, 
-                    feeConfig: cachedFeeConfig, 
-                    mint: currentMint, 
-                    user: userPublicKey, 
-                    amount, 
-                    solAmount, 
-                    slippage: 0.15 
-                });
-
+                const totalSupply = readBN(sellState.bondingCurve, ['tokenTotalSupply', 'token_total_supply']);
+                const solAmount = getSellSolAmountFromTokenAmount({ global: cachedGlobal, feeConfig: cachedFeeConfig, mintSupply: totalSupply, bondingCurve: sellState.bondingCurve, amount });
+                const instructions = await PUMP_SDK.sellInstructions({ ...sellState, global: cachedGlobal, feeConfig: cachedFeeConfig, mint: currentMint, user: userPublicKey, amount, solAmount, slippage: 0.15 });
                 instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 1000000 }), ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
-
                 const { blockhash, lastValidBlockHeight } = await withTimeout(connection.getLatestBlockhash('confirmed'));
                 const messageV0 = new TransactionMessage({ payerKey: userPublicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
                 const tx = new VersionedTransaction(messageV0);
-                
                 statusEl.textContent = '✍️ Sign in Phantom...';
                 const signed = await wallet.signTransaction(tx);
-                
                 statusEl.textContent = 'Sending to network...';
                 const sig = await connection.sendRawTransaction(signed.serialize());
                 await withTimeout(connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed'), 30000);
-                
                 statusEl.textContent = `✅ Sell successful.`;
-                
-                saveTrade(currentMint.toBase58(), 'SELL', solAmount.toNumber() / LAMPORTS_PER_SOL, amount.toNumber() / 1e6);
-
+                saveTrade(currentMint.toBase58(), 'SELL', bnToNum(solAmount) / LAMPORTS_PER_SOL, bnToNum(amount) / 1e6);
                 await loadTokenData(currentMint.toBase58());
                 await updateWalletBalance();
             } catch (err) {
